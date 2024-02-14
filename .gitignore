@@ -256,3 +256,6 @@ cython_debug/
 
 # .vscode folder
 .vscode/
+
+#folder for testings
+testings/
