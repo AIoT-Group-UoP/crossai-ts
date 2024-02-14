@@ -24,7 +24,8 @@ setup(
         "scikit-learn==1.4.0",
         "seaborn>=0.12.2",
         "pydub==0.25.1",
-        "soundfile==0.12.1"
+        "soundfile==0.12.1",
+        "pyyaml==6.0.1"
     ],
     python_requires=">=3.10"
 )
