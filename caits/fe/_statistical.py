@@ -61,3 +61,15 @@ def kurtosis(signal: np.ndarray) -> float:
         float: The kurtosis of the audio signal.
     """
     return scipy.stats.kurtosis(signal)
+
+
+def root_mean_square(signal: np.ndarray) -> float:
+    """Computes the Root Mean Square (RMS) of an audio signal.
+
+    Args:
+        signal: The input signal as a numpy.ndarray.
+
+    Returns:
+        float: The RMS of the audio signal.
+    """
+    return np.sqrt(np.mean(np.square(signal)))
