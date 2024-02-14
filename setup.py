@@ -7,6 +7,7 @@ setup(
         "caits",
         "caits.ai",
         "caits.ai.nn1d",
+        "caits.loading"
     ],
     url="https://github.com/AIoT-Group-UoP/crossai-ts",
     license="Apache License 2.0",
@@ -22,6 +23,8 @@ setup(
         "scipy==1.12.0",
         "scikit-learn==1.4.0",
         "seaborn>=0.12.2",
+        "pydub==0.25.1",
+        "soundfile==0.12.1"
     ],
     python_requires=">=3.10"
 )
