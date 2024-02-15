@@ -78,10 +78,8 @@ def rms_value(sig: np.ndarray) -> float:
     # Calculate square
     for i in range(0, n):
         square += (sig[i] ** 2)
-
     # Calculate Mean
     mean = (square / float(n))
-
     # Calculate Root
     root = math.sqrt(mean)
 
