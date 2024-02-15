@@ -36,7 +36,6 @@ class Transformer(BaseEstimator, TransformerMixin):
             CAI: A new CAI object with the transformed data.
         """
         transformed_X = []
-
         for df in X.X:
             # Apply the function column-wise
             transformed_df = df.apply(
