@@ -1,0 +1,58 @@
+import matplotlib.pyplot as plt
+from typing import Optional, Union
+import os
+
+
+def export_fig(
+    fig_object: plt.Figure,
+    fig_id: str,
+    save_path: Optional[str] = None,
+    export: str = "save",
+    tight_layout: bool = True,
+    fig_extension: str = "png",
+    resolution: Union[float, str] = "figure"
+) -> None:
+    """
+    Exports a matplotlib figure object by saving, showing, or doing both.
+
+    Args:
+        fig_object: The matplotlib figure object to export.
+        fig_id: Unique identifier for the figure. Used in naming the saved
+                file.
+        save_path: The path of the local saving directory. Required if 'export'
+                   includes 'save'.
+        export: Determines the action to perform - 'save', 'show', or 'both'.
+                Defaults to 'save'.
+        tight_layout: Whether to apply tight layout adjustment before
+                      exporting. Defaults to True.
+        fig_extension: Format of the figure file if saving. Defaults to 'png'.
+        resolution: Resolution of the exported figure if saving. Can be a float
+                    or 'figure'. Defaults to 'figure'.
+
+    Returns:
+        None. The figure is either saved, shown, or both, based on the 'export'
+              argument.
+    """
+    if 'save' in export and not save_path:
+        raise ValueError("Save path must be provided to save the figure.")
+
+    if tight_layout:
+        fig_object.tight_layout()
+
+    if 'save' in export:
+        if not os.path.isdir(save_path):
+            raise FileNotFoundError(f"Provided path '{save_path}' does not \
+                                      exist or is not a directory.")
+
+        file_path = os.path.join(save_path, f"{fig_id}.{fig_extension}")
+        dpi = resolution if isinstance(resolution, float) else None
+        fig_object.savefig(file_path, format=fig_extension,
+                           bbox_inches="tight", dpi=dpi)
+        print(f"Figure saved to {file_path}")
+
+    if 'show' in export:
+        plt.show()
+
+    if 'save' not in export and 'show' not in export:
+        raise ValueError("Invalid export option. Use 'save', 'show', \
+                          or 'both'.")
