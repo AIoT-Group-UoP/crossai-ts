@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.signal
 import scipy.stats
+import math
 
 
 def std_value(signal: np.ndarray) -> float:
@@ -63,13 +64,25 @@ def kurtosis(signal: np.ndarray) -> float:
     return scipy.stats.kurtosis(signal)
 
 
-def rms(signal: np.ndarray) -> float:
-    """Computes the Root Mean Square (RMS) of an audio signal.
+def rms_value(sig: np.ndarray) -> float:
+    """Computes the Root Mean Square value of a signal.
 
     Args:
-        signal: The input signal as a numpy.ndarray.
+        sig: Input signal as a numpy.ndarray.
 
     Returns:
-        float: The RMS of the audio signal.
+        float: The Root Mean Square value of the signal.
     """
-    return np.sqrt(np.mean(np.square(signal)))
+    square = 0
+    n = np.size(sig, 0)
+    # Calculate square
+    for i in range(0, n):
+        square += (sig[i] ** 2)
+
+    # Calculate Mean
+    mean = (square / float(n))
+
+    # Calculate Root
+    root = math.sqrt(mean)
+
+    return root
