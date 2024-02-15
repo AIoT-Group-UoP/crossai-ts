@@ -66,9 +66,10 @@ def rolling_rms(
         padding_mode: A string with the padding mode to use when padding the
             signal. Defaults to "constant". Check numpy.pad for more
             information about the relevant padding modes.
+            https://numpy.org/doc/stable/reference/generated/numpy.pad.html
 
     Returns:
-
+        numpy.ndarray: The RMS of the input signal.
     """
     # Pad the signal on both sides
     pad_width = frame_length // 2
