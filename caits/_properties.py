@@ -48,3 +48,41 @@ def instantaneous_amplitude_hbt(signal: np.ndarray) -> np.ndarray:
     analytic_signal = hilbert(signal)
     ia = np.abs(analytic_signal)
     return ia
+
+
+def rolling_rms(
+        signal: np.ndarray,
+        frame_length: float,
+        hop_length: float,
+        padding_mode: str = "constant"
+    ) -> np.ndarray:
+    """Calculates the rolling Root Mean Square (RMS) of a signal in
+    time-domain.
+
+    Args:
+        signal: The input signal as a numpy.ndarray.
+        frame_length: The length of the frame in samples.
+        hop_length: The number of samples to advance between frames (overlap).
+        padding_mode: A string with the padding mode to use when padding the
+            signal. Defaults to "constant". Check numpy.pad for more
+            information about the relevant padding modes.
+
+    Returns:
+
+    """
+    # Pad the signal on both sides
+    pad_width = frame_length // 2
+    padded_signal = np.pad(signal, pad_width, mode=padding_mode)
+
+    # Calculate the number of frames
+    num_frames = 1 + (len(padded_signal) - frame_length) // hop_length
+
+    # Initialize an array to store the RMS values
+    rms_values = np.zeros(num_frames)
+
+    # Calculate RMS for each frame
+    for i in range(num_frames):
+        frame = padded_signal[i * hop_length:i * hop_length + frame_length]
+        rms_values[i] = np.sqrt(np.mean(frame**2))
+
+    return rms_values
