@@ -7,7 +7,9 @@ setup(
         "caits",
         "caits.ai",
         "caits.ai.nn1d",
+        "caits.ai.nn2d",
         "caits.loading",
+        "caits.fe",
         "caits.transformers"
     ],
     url="https://github.com/AIoT-Group-UoP/crossai-ts",
