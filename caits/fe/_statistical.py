@@ -74,7 +74,7 @@ def rms_value(sig: np.ndarray) -> float:
         float: The Root Mean Square value of the signal.
     """
     square = 0
-    n = np.size(sig, 0)
+    n = len(sig)
     # Calculate square
     for i in range(0, n):
         square += (sig[i] ** 2)
