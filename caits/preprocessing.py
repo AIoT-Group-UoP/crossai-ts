@@ -1,5 +1,4 @@
 import numpy as np
-from scipy import signal
 
 
 def normalize_signal(
@@ -21,7 +20,12 @@ def normalize_signal(
         return sig / max(sig.max(), -sig.min())
 
 
-def resample_signal(sig, native_sr, g_sr, d_type=np.float32):
+def resample_signal(
+        sig: np.ndarray,
+        native_sr: int,
+        g_sr: int,
+        d_type: np.dtype = np.float32
+) -> np.ndarray:
     """Resamples an input audio buffer to the goal sampling rate. Linear
     resampling using numpy is significantly faster than Librosa's default
     technique.
@@ -29,11 +33,11 @@ def resample_signal(sig, native_sr, g_sr, d_type=np.float32):
     Args:
         sig: The input signal as a numpy.ndarray.
         native_sr: The native sampling rate of the input signal as integer.
-        g_sr(int): The goal sampling rate as integer.
+        g_sr: The goal sampling rate as integer.
         d_type: The data type of the resampled audio buffer.
 
     Returns:
-
+        np.ndarray: The resampled signal.
     """
     duration = len(sig) / native_sr
     n_target_samples = int(duration * g_sr)
