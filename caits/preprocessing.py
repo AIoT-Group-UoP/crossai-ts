@@ -4,7 +4,7 @@ import numpy as np
 def normalize_signal(
         sig: np.ndarray
 ) -> np.ndarray:
-    """Normalizes a signal to the range [-1, 1].
+    """Normalizes a signal to the proper range.
 
     Args:
         sig: An array-like input signal.
