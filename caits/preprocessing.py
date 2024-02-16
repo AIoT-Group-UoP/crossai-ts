@@ -21,29 +21,25 @@ def normalize_signal(
         return sig / max(sig.max(), -sig.min())
 
 
-def resample_signal(
-        sig: np.ndarray,
-        target: int
-) -> np.ndarray:
-    """Resamples a signal to a new length using linear interpolation.
+def resample_signal(sig, native_sr, g_sr, d_type=np.float32):
+    """Resamples an input audio buffer to the goal sampling rate. Linear
+    resampling using numpy is significantly faster than Librosa's default
+    technique.
 
     Args:
-        sig: An array-like input signal.
-        target: Integer length of the desired resampled signal.
+        sig: The input signal as a numpy.ndarray.
+        native_sr: The native sampling rate of the input signal as integer.
+        g_sr(int): The goal sampling rate as integer.
+        d_type: The data type of the resampled audio buffer.
 
     Returns:
-        array-like: The resampled signal.
+
     """
-    old_length = sig.shape[0]
-    old_indices = np.arange(old_length)
-    new_indices = np.linspace(0, old_length - 1, target)
-
-    if sig.ndim == 1:
-        return np.interp(new_indices, old_indices, sig)
-    else:
-        resampled_signal = np.zeros((target, signal.shape[1]))
-        for i in range(signal.shape[1]):
-            resampled_signal[:, i] = np.interp(new_indices, old_indices,
-                                               signal[:, i])
-
-        return resampled_signal
+    duration = len(sig) / native_sr
+    n_target_samples = int(duration * g_sr)
+    time_x_source = np.linspace(0, duration, len(sig),
+                                dtype=d_type)
+    time_x = np.linspace(0, duration, n_target_samples,
+                         dtype=d_type)
+    resampled_buffer = np.interp(time_x, time_x_source, sig)
+    return resampled_buffer
