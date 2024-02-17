@@ -9,16 +9,16 @@ def _wav_loader(
         mode: str = "soundfile",
         file_path: str = None,
         channels: List[str] = ["channel_1"]
-) -> Union[pd.DataFrame, dict]:
+) -> pd.DataFrame:
     """Loads an audio file into a DataFrame.
 
     Args:
-        mode:
-        file_path:
-        channels:
+        mode: "scipy" | "pydub" | "soundfile"
+        file_path: Path to the audio file.
+        channels: List of channel names.
 
     Returns:
-
+        A DataFrame containing the audio data.
     """
     if mode == "scipy":
         from scipy.io import wavfile
@@ -44,7 +44,7 @@ def audio_loader(
         format: str = "wav",
         channels: list = ["channel_1"],
         export: str = "dict"
-) -> pd.DataFrame | dict:
+) -> Union[pd.DataFrame, dict]:
     """Loads audio files from a directory into a DataFrame.
 
     Args:
@@ -95,8 +95,8 @@ def audio_loader(
         }
 
 
-def wav_specs_check(wav_file_path) -> dict:
-    """Check the specifications of a WAV file.
+def wav_specs_check(wav_file_path: str) -> dict:
+    """Checks the specifications of a WAV file.
 
     It returns the sample rate, the number of channels and other information
     regarding the wav file.
