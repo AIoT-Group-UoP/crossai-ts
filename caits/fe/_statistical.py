@@ -84,3 +84,26 @@ def rms_value(sig: np.ndarray) -> float:
     root = math.sqrt(mean)
 
     return root
+
+
+def signal_stats(
+        arr: np.ndarray,
+        name: str
+) -> dict:
+    """Computes the basic statistical information of signal.
+
+    Args:
+        arr: A 2D NumPy array.
+        name: A string with the name of the input array.
+
+    Returns:
+        Dict: A dictionary containing the mean, max, min, and STD calculations
+        of the signal.
+    """
+
+    return {
+        f"{name}_mean": np.mean(arr),
+        f"{name}_max": np.max(arr),
+        f"{name}_min": np.min(arr),
+        f"{name}_std": np.std(arr)
+    }

@@ -17,7 +17,10 @@ def amplitude_envelope_hbt(signal: np.ndarray) -> np.ndarray:
     return ae
 
 
-def instantaneous_frequency_hbt(signal: np.ndarray, fs: int) -> np.ndarray:
+def instantaneous_frequency_hbt(
+        signal: np.ndarray,
+        fs: int
+) -> np.ndarray:
     """Calculates the instantaneous frequency of a signal by computing first
     the analytic signal using the Hilbert transform.
 
@@ -55,7 +58,7 @@ def rolling_rms(
         frame_length: float,
         hop_length: float,
         padding_mode: str = "constant"
-    ) -> np.ndarray:
+) -> np.ndarray:
     """Calculates the rolling Root Mean Square (RMS) of a signal in
     time-domain.
 
@@ -87,3 +90,31 @@ def rolling_rms(
         rms_values[i] = np.sqrt(np.mean(frame**2))
 
     return rms_values
+
+
+def sma_signal(signal) -> np.ndarray:
+    """Calculates the rolling Simple Moving Average (SMA) between the axes
+    of a multi-axis signal in time-domain.
+        Formula: sum(abs(signal))
+
+    Args:
+        signal: The input signal as a numpy.ndarray.
+
+    Returns:
+        numpy.ndarray: The SMA of the input signal.
+    """
+    return np.sum(np.abs(signal), axis=1)
+
+
+def magnitude_signal(signal: np.ndarray) -> np.ndarray:
+    """Calculates the Magnitude between the axes of a multi-axis signal in
+    time-domain.
+        Formula: sqrt(sum(signal^2))
+
+    Args:
+        signal: The input signal as a numpy.ndarray.
+
+    Returns:
+        numpy.ndarray: The magnitude of the input signal.
+    """
+    return np.sqrt(np.sum(signal**2, axis=1))
