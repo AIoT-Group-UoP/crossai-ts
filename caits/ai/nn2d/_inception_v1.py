@@ -6,7 +6,7 @@ from tensorflow.keras.layers import Conv2D, Dense, AveragePooling2D, \
 from tensorflow.keras.initializers import Initializer, GlorotUniform, Constant
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras.constraints import MaxNorm
-from crossai.ai import dense_drop_block
+from caits.ai import dense_drop_block
 
 
 # Implementation of InceptionV1 NN model based on:
