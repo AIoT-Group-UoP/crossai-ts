@@ -12,7 +12,7 @@ from typing import Union, Callable, List, Tuple
 
 # This architecture is based on ResNet 50 (2015)
 # Paper: https://arxiv.org/pdf/1512.03385.pdf
-def ResNet34(
+def ResNet50(
     input_shape: tuple,
     include_top: bool = True,
     num_classes: int = 1,
