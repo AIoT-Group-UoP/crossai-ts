@@ -2,7 +2,7 @@ from typing import Union, Callable
 from tensorflow.keras.layers import Input, Dense, Conv2D, MaxPooling2D
 from tensorflow.keras.layers import GlobalAveragePooling2D, Flatten
 from tensorflow.keras import Model
-from crossai.ai import dropout_layer_1d, dropout_layer_2d
+from caits.ai import dropout_layer_1d, dropout_layer_2d
 
 
 def CNN2D(
