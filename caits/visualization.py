@@ -1,6 +1,7 @@
-import matplotlib.pyplot as plt
-from typing import Optional, Union
 import os
+from typing import Optional, Union
+import numpy as np
+import matplotlib.pyplot as plt
 
 
 def export_fig(
@@ -56,3 +57,41 @@ def export_fig(
     if 'save' not in export and 'show' not in export:
         raise ValueError("Invalid export option. Use 'save', 'show', \
                           or 'both'.")
+
+
+def plot_signal(
+        sig: np.ndarray,
+        sr: int = None,
+        mode: str = "samples",
+        name: str = "Signal",
+        channels: Tuple = None
+) -> None:
+    """Plots a signal.
+
+    Args:
+        sig: The input signal as a numpy.ndarray.
+        sr: The sampling rate of the input signal as integer.
+        mode: The mode of the plot. Either "samples" or "time".
+        name: The name of the plot as a string.
+        channels: The channel names as a tuple of strings.
+
+    Returns:
+
+    """
+    import matplotlib.pyplot as plt
+    plt.figure()
+
+    if mode == "time":
+        t = np.linspace(0, len(sig) / sr, num=len(sig))
+        plt.plot(t, sig)
+        plt.xlabel("Time")
+    elif mode == "samples":
+        plt.plot(sig)
+        plt.xlabel("Samples")
+    if channels:
+        plt.gca().legend(channels)
+    plt.ylabel("Amplitude")
+    if channels:
+        plt.legend(channels)
+    plt.title(name)
+    plt.show()
