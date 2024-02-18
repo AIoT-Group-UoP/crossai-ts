@@ -14,5 +14,3 @@ __credits__ = ("Academia and enterprise individuals who are AI and Time "
                "Things Group (AIoT Group) in the Internet of Things "
                "Laboratory (IoT Lab) - Computer Engineering and Informatics "
                "Department, University of Patras, Greece.")
-
-from ._properties import *
