@@ -1,6 +1,7 @@
-import matplotlib.pyplot as plt
-from typing import Optional, Union
 import os
+from typing import Optional, Union
+import numpy as np
+import matplotlib.pyplot as plt
 
 
 def export_fig(
