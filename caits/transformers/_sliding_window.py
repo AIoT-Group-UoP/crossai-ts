@@ -1,4 +1,5 @@
 from sklearn.base import BaseEstimator, TransformerMixin
+from caits.windowing import sliding_window_df
 from ._data_object import CAI
 
 
@@ -37,15 +38,12 @@ class SlidingWindow(BaseEstimator, TransformerMixin):
         new_y = []
         new_id = []
 
-        step_size = self.window_size - self.overlap
-
         for df, label, id_ in zip(X.X, X.y, X._id):
-            num_rows = df.shape[0]
-            for start in range(0, num_rows - self.window_size + 1, step_size):
-                end = start + self.window_size
-                windowed_df = df.iloc[start:end]
-                transformed_X.append(windowed_df)
-                new_y.append(label)
-                new_id.append(id_)
+            windows = sliding_window_df(
+                df=df, ws=self.window_size, overlap=self.overlap
+            )
+            transformed_X.extend(windows)
+            new_y.extend([label] * len(windows))
+            new_id.extend([id_] * len(windows))
 
         return CAI(transformed_X, new_y, new_id)
