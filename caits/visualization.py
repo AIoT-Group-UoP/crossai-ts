@@ -98,3 +98,21 @@ def plot_spectrogram(
     plt.title(plot_title)
     plt.colorbar(label='Intensity [dB]')
     plt.show()
+
+
+def plot_mel_spectrogram(mel_spectrogram):
+    """Plots a Mel spectrogram.
+
+    Args:
+        mel_spectrogram: np.ndarray
+            Mel spectrogram.
+
+    Returns:
+
+    """
+    plt.imshow(mel_spectrogram, aspect='auto', origin='lower')
+    plt.colorbar()
+    plt.xlabel('Time')
+    plt.ylabel('Mel Frequency')
+    plt.title('Mel Spectrogram')
+    plt.show()
