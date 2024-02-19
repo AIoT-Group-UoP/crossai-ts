@@ -27,13 +27,13 @@ def s3_csv_loader(
         A DataFrame containing the CSV data.
     """
 
-    s3 = boto3.client('s3', endpoint_url=endpoint_url)
+    s3 = boto3.client("s3", endpoint_url=endpoint_url)
 
     all_features = []
     all_y = []
     all_id = []
 
-    paginator = s3.get_paginator('list_objects_v2')
+    paginator = s3.get_paginator("list_objects_v2")
     for result in paginator.paginate(Bucket=bucket, Prefix=prefix):
         if "Contents" in result:
             for key in result["Contents"]:
@@ -41,8 +41,7 @@ def s3_csv_loader(
                 if file_path.endswith(".csv"):
                     try:
                         obj = s3.get_object(Bucket=bucket, Key=file_path)
-                        df = pd.read_csv(obj['Body'], header=header,
-                                         names=channels)
+                        df = pd.read_csv(obj["Body"], header=header, names=channels)
                         all_features.append(df)
                         all_y.append(file_path.split("/")[-2])
                         all_id.append(file_path.split("/")[-1])

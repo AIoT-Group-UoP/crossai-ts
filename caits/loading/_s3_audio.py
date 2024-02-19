@@ -20,7 +20,6 @@ def _s3_wav_loader(
     Returns:
         A DataFrame containing the audio data.
     """
-    
     # Create a file object from bytes
     file_obj = io.BytesIO(file_content)
     
@@ -54,13 +53,13 @@ def s3_audio_loader(
     Returns:
 
     """
-    s3 = boto3.client('s3', endpoint_url=endpoint_url)
+    s3 = boto3.client("s3", endpoint_url=endpoint_url)
 
     all_features = []
     all_y = []
     all_id = []
 
-    paginator = s3.get_paginator('list_objects_v2')
+    paginator = s3.get_paginator("list_objects_v2")
     for result in paginator.paginate(Bucket=bucket, Prefix=prefix):
         if "Contents" in result:
             for key in result["Contents"]:
@@ -68,7 +67,7 @@ def s3_audio_loader(
                 if file_path.endswith(f".{format}"):
                     try:
                         obj = s3.get_object(Bucket=bucket, Key=file_path)
-                        audio_data = _s3_wav_loader(obj['Body'].read(), channels)
+                        audio_data = _s3_wav_loader(obj["Body"].read(), channels)
                         all_features.append(audio_data)
                         all_y.append(file_path.split("/")[-2])
                         all_id.append(file_path.split("/")[-1])
