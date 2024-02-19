@@ -29,7 +29,8 @@ setup(
         "seaborn>=0.12.2",
         "pydub==0.25.1",
         "soundfile==0.12.1",
-        "pyyaml==6.0.1"
+        "pyyaml==6.0.1",
+        "boto3==1.29.2"
     ],
     python_requires=">=3.10"
 )
