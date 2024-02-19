@@ -2,7 +2,7 @@ from typing import Union, Callable
 import tensorflow as tf
 from tensorflow.keras.layers import Input, Bidirectional, LSTM, Dense
 from tensorflow.keras.models import Model
-from crossai.ai import dropout_layer_1d
+from caits.ai import dropout_layer_1d
 
 
 # Implementation of NN model for 1D based on:
