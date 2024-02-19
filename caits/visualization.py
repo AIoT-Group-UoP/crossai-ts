@@ -95,3 +95,61 @@ def plot_signal(
         plt.legend(channels)
     plt.title(name)
     plt.show()
+
+        
+def plot_spectrogram(
+        f: np.ndarray,
+        t: np.ndarray,
+        spec: np.ndarray,
+        factor: int = 1,
+        log: str = None,
+        plot_title: str = "Spectrogram"
+) -> None:
+    """Plots the spectrogram.
+
+    Args:
+        f: The array of sample frequencies in np.ndarray.
+        t: The array of segment times in np.ndarray.
+        spec: The spectrogram to plot in 2D np.ndarray.
+        factor: The factor to multiply the log scale with. Defaults to 10.
+        log: The log scale to use. If None, defaults to 10 * np.log10(spec).
+        plot_title: The title of the plot. Defaults to "Spectrogram".
+
+    Returns:
+
+    """
+
+    if log == "log10":
+        spec_plot = factor * np.log10(spec)  # Convert to dB: 10 * log10(spec)
+    elif log == "log2":
+        spec_plot = factor * np.log2(spec)
+    elif log == "log":
+        spec_plot = factor * np.log(spec)
+    elif log is None:
+        spec_plot = factor * spec
+    else:
+        raise ValueError("log must be 'log10', 'log2', 'log', or None")
+
+    plt.pcolormesh(t, f, spec_plot, shading='gouraud')
+    plt.ylabel('Frequency [Hz]')
+    plt.xlabel('Time [sec]')
+    plt.title(plot_title)
+    plt.colorbar(label='Intensity [dB]')
+    plt.show()
+
+
+def plot_mel_spectrogram(mel_spectrogram: np.ndarray) -> None:
+    """Plots a Mel spectrogram.
+
+    Args:
+        mel_spectrogram: The array of mel spectrogram in np.ndarray.
+
+    Returns:
+
+    """
+    plt.imshow(mel_spectrogram, aspect='auto', origin='lower')
+    plt.colorbar()
+    plt.xlabel('Time')
+    plt.ylabel('Mel Frequency')
+    plt.title('Mel Spectrogram')
+    plt.show()        
