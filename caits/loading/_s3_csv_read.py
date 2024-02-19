@@ -24,7 +24,7 @@ def s3_csv_loader(
             It can be "dict" or "df".
 
     Returns:
-
+        A DataFrame containing the CSV data.
     """
 
     s3 = boto3.client('s3', endpoint_url=endpoint_url)
