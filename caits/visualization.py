@@ -66,7 +66,7 @@ def plot_spectrogram(
         factor: int = 1,
         log: str = None,
         plot_title: str = "Spectrogram"
-):
+) -> None:
     """Plots the spectrogram.
 
     Args:
@@ -100,12 +100,11 @@ def plot_spectrogram(
     plt.show()
 
 
-def plot_mel_spectrogram(mel_spectrogram):
+def plot_mel_spectrogram(mel_spectrogram: np.ndarray) -> None:
     """Plots a Mel spectrogram.
 
     Args:
-        mel_spectrogram: np.ndarray
-            Mel spectrogram.
+        mel_spectrogram: The array of mel spectrogram in np.ndarray.
 
     Returns:
 
