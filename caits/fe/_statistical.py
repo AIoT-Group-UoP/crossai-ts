@@ -1,89 +1,143 @@
 import numpy as np
 import scipy.signal
-import scipy.stats
+from scipy.stats import kurtosis, moment, skew
 import math
 
 
-def std_value(signal: np.ndarray) -> float:
+def std_value(array: np.ndarray) -> float:
     """Computes the standard deviation of an audio signal.
 
     Args:
-        signal: The input signal as a numpy.ndarray.
+        array: The input signal as a numpy.ndarray.
 
     Returns:
         float: The standard deviation of the audio signal.
     """
-    return np.std(signal)
+    return np.std(array)
 
 
-def mean_value(signal: np.ndarray) -> float:
+def mean_value(array: np.ndarray) -> float:
     """Computes the mean of an audio signal.
 
     Args:
-        signal: The input signal as a numpy.ndarray.
+        array: The input signal as a numpy.ndarray.
 
     Returns:
         float: The mean of the audio signal.
     """
-    return np.mean(signal)
+    return np.mean(array)
 
 
-def max_value(signal: np.ndarray) -> float:
+def max_value(array: np.ndarray) -> float:
     """Computes the maximum value of an audio signal.
 
     Args:
-        signal: The input signal as a numpy.ndarray.
+        array: The input signal as a numpy.ndarray.
 
     Returns:
         float: The maximum value of the audio signal.
     """
-    return np.max(signal)
+    return np.max(array)
 
 
-def min_value(signal: np.ndarray) -> float:
+def min_value(array: np.ndarray) -> float:
     """Computes the minimum value of a signal.
 
     Args:
-        signal: The input signal as a numpy.ndarray.
+        array: The input signal as a numpy.ndarray.
 
     Returns:
         float: The minimum value of the audio signal.
     """
-    return np.min(signal)
+    return np.min(array)
 
 
-def kurtosis_value(signal: np.ndarray) -> float:
+def kurtosis_value(array: np.ndarray) -> float:
     """Computes the kurtosis of an audio signal.
 
     Args:
-        signal: The input signal as a numpy.ndarray.
+        array: The input signal as a numpy.ndarray.
 
     Returns:
         float: The kurtosis of the audio signal.
     """
-    return scipy.stats.kurtosis(signal)
+    return kurtosis(array)
 
 
-def rms_value(sig: np.ndarray) -> float:
+def sample_skewness(array):
+    """
+    Calculate the sample skewness of an array using scipy.
+
+    Args:
+        array (numpy.ndarray): Input array.
+
+    Returns:
+        float: Sample skewness of the array.
+
+    Raises:
+        ValueError: If the input array has less than 3 elements.
+
+    Examples:
+        >>> arr = np.array([1, 2, 3, 4, 5])
+        >>> sample_skewness(arr)
+        0.0
+    """
+    if len(array) < 3:
+        raise ValueError("Input array must have at least 3 elements")
+
+    return skew(array, bias=False)
+
+
+def rms_value(array: np.ndarray) -> float:
     """Computes the Root Mean Square value of a signal.
 
     Args:
-        sig: Input signal as a numpy.ndarray.
+        array: Input signal as a numpy.ndarray.
 
     Returns:
         float: The Root Mean Square value of the signal.
     """
     square = 0
-    n = len(sig)
+    n = len(array)
     # Calculate square
     for i in range(0, n):
-        square += (sig[i] ** 2)
+        square += (array[i] ** 2)
     # Calculate Mean
     mean = (square / float(n))
     # Calculate Root
     root = math.sqrt(mean)
 
     return root
+
+
+def central_moments(array):
+    """
+    Calculate the 0th, 1st, 2nd, 3rd, and 4th central moments of an array using scipy.
+
+    Args:
+        array (numpy.ndarray): Input array.
+
+    Returns:
+        tuple: A tuple containing the 0th, 1st, 2nd, 3rd, and 4th central moments.
+
+    Raises:
+        ValueError: If the input array is empty.
+
+    Examples:
+        >>> arr = np.array([1, 2, 3, 4, 5])
+        >>> central_moments(arr)
+        (1.0, 0.0, 2.5, 0.0, 26.0)
+    """
+    if len(array) == 0:
+        raise ValueError("Input array is empty")
+
+    moment0 = moment(array, moment=0)
+    moment1 = moment(array, moment=1)
+    moment2 = moment(array, moment=2)
+    moment3 = moment(array, moment=3)
+    moment4 = moment(array, moment=4)
+
+    return moment0, moment1, moment2, moment3, moment4
 
 
 def signal_stats(
