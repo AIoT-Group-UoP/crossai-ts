@@ -52,7 +52,7 @@ def min_value(signal: np.ndarray) -> float:
     return np.min(signal)
 
 
-def kurtosis(signal: np.ndarray) -> float:
+def kurtosis_value(signal: np.ndarray) -> float:
     """Computes the kurtosis of an audio signal.
 
     Args:
