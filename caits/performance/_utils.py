@@ -6,7 +6,7 @@ def gen_pred_probs(
     model,
     data: TensorLike,
     repeats: int = 1
-):
+) -> np.ndarray:
     """Executes inference using a TensorFlow or scikit-learn model on provided
     data, optionally repeating the process multiple times. This function is
     designed to accommodate models with different prediction interfaces,
