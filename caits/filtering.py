@@ -146,14 +146,11 @@ def butterworth(
         if method == "sosfilt":
             if zi_enable:
                 tmp = sosfilt_zi(sos)
-                print("initial shape", tmp.shape)
                 if len(tmp.shape) < 3:
                     zi = tmp[:, :, np.newaxis]
-                    print("if shape < 3, transform to: ", zi.shape)
                 else:
                     zi = tmp
-                    print("else zi shape", tmp.shape)
-
+                # return the filtered signal and the final filter delay
                 return sosfilt(sos, array, axis=axis, zi=zi)[0]
             else:
                 return sosfilt(sos, array, axis=axis, **kwargs)
