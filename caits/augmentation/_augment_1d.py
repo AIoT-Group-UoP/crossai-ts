@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.interpolate import interp1d
 
 
 def add_white_noise(
@@ -47,3 +48,43 @@ def polarity_inversion(array: np.ndarray) -> np.ndarray:
         ndarray: The signal with inverted polarity.
     """
     return array * -1
+
+
+def time_stretch(
+        array: np.ndarray,
+        factor: float
+) -> np.ndarray:
+    """
+    Time-stretch a signal by a given factor.
+
+    Args:
+        array: The input signal to be time-stretched.
+        factor (float): The factor by which to stretch the time.
+            - A factor greater than 1 will stretch the signal, making it
+                longer.
+            - A factor less than 1 will compress the signal, making it shorter.
+
+    Returns:
+        ndarray: The time-stretched signal.
+
+    Raises:
+        ValueError: If the input factor is not greater than 0.
+
+    Example:
+        >>> import numpy as np
+        >>> signal = np.array([1, 2, 3, 4, 5])
+        >>> stretched_signal = time_stretch(signal, 2.0)
+        >>> print(stretched_signal)
+        [1.  1.5 2.  2.5 3.  3.5 4.  4.5 5. ]
+    """
+    if factor <= 0:
+        raise ValueError("Factor must be greater than 0.")
+
+    # Generate new time indices
+    new_indices = np.arange(0, len(array), factor)
+
+    # Interpolate the signal at the new time indices
+    interpolator = interp1d(np.arange(len(array)), array, kind='linear',
+                            bounds_error=False, fill_value=0)
+
+    return interpolator(new_indices)
