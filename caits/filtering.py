@@ -70,8 +70,8 @@ from scipy.signal import butter, filtfilt, sosfilt, sosfiltfilt, sosfilt_zi
 def butterworth(
         array: np.ndarray,
         fs: float,
-        cutoff_freq: Union[float, tuple] = None,
         filter_type: str = 'lowpass',
+        cutoff_freq: Union[float, tuple] = None,
         order: int = 5,
         analog: bool = False,
         method: str = 'filtfilt',
@@ -98,12 +98,12 @@ def butterworth(
     Args:
         array (array_like): Input signal.
         fs (float): Sampling frequency of the signal.
+        filter_type (str, optional): Type of the filter ('lowpass', 'highpass',
+            'bandpass', 'bandstop'). Defaults to 'lowpass'.
         cutoff_freq (float or tuple): Cutoff frequency(-ies) of the filter.
             For lowpass and highpass filters, it should be a single frequency.
             For bandpass and bandstop filters, it should be a tuple of two
             frequencies.
-        filter_type (str, optional): Type of the filter ('lowpass', 'highpass',
-            'bandpass', 'bandstop'). Defaults to 'lowpass'.
         order (int, optional): Order of the Butterworth filter. Defaults to 5.
         analog (bool, optional): If True, return the filter coefficients for an
             analog filter. Defaults to False.
@@ -120,20 +120,18 @@ def butterworth(
     Returns:
         array_like: Filtered signal.
     """
+    # Check if filter type is valid
+    if filter_type not in ['lowpass', 'highpass', 'bandpass', 'bandstop']:
+        raise ValueError("Invalid filter type provided. Please choose from "
+                         "'lowpass', 'highpass', 'bandpass', or 'bandstop'.")
 
     nyquist_freq = 0.5 * fs
-
     # Normalize cutoff frequency(-ies)
     if isinstance(cutoff_freq, tuple):
         normalized_cutoff_freq = (cutoff_freq[0] / nyquist_freq,
                                   cutoff_freq[1] / nyquist_freq)
     else:
         normalized_cutoff_freq = cutoff_freq / nyquist_freq
-
-    # Check if filter type is valid
-    if filter_type not in ['lowpass', 'highpass', 'bandpass', 'bandstop']:
-        raise ValueError("Invalid filter type provided. Please choose from "
-                         "'lowpass', 'highpass', 'bandpass', or 'bandstop'.")
 
     # Create Butterworth filter coefficients
     if method == "filtfilt":
@@ -146,10 +144,13 @@ def butterworth(
         if method == "sosfilt":
             if zi_enable:
                 tmp = sosfilt_zi(sos)
+                print("initial shape", tmp.shape)
                 if len(tmp.shape) < 3:
                     zi = tmp[:, :, np.newaxis]
+                    print("if shape < 3, transform to: ", zi.shape)
                 else:
                     zi = tmp
+                    print("else zi shape", tmp.shape)
                 # return the filtered signal and the final filter delay
                 return sosfilt(sos, array, axis=axis, zi=zi)[0]
             else:
