@@ -3,36 +3,55 @@ import wave
 import pandas as pd
 import numpy as np
 from typing import Union, List
+from caits.preprocessing import resample_2d
 
 
 def _wav_loader(
         mode: str = "soundfile",
         file_path: str = None,
-        channels: List[str] = ["channel_1"]
+        channels: List[str] = None,
+        target_sr: int = None
 ) -> pd.DataFrame:
-    """Loads an audio file into a DataFrame.
+    """Loads and optionally resamples a mono or multi-channel audio
+    file into a DataFrame, ensuring the output is always 2D.
 
     Args:
-        mode: "scipy" | "pydub" | "soundfile"
+        mode: Loading mode ("soundfile", "scipy", "pydub").
         file_path: Path to the audio file.
-        channels: List of channel names.
+        channels: List of channel names for the DataFrame.
+                  Defaults None.
+        target_sr: Optional target sampling rate for resampling.
 
     Returns:
-        A DataFrame containing the audio data.
+        pd.DataFrame: Loaded and optionally resampled audio data in 2D shape.
     """
+    # Load audio data
     if mode == "scipy":
         from scipy.io import wavfile
         sample_rate, audio_data = wavfile.read(file_path)
+        if audio_data.ndim == 1:
+            audio_data = audio_data.reshape(-1, 1)
     elif mode == "pydub":
         from pydub import AudioSegment
         audio = AudioSegment.from_wav(file_path)
+        sample_rate = audio.frame_rate
         audio_data = np.array(audio.get_array_of_samples())
+        audio_data = audio_data.reshape((-1, audio.channels))
     elif mode == "soundfile":
         import soundfile as sf
-        audio_data, sample_rate = sf.read(file_path)
+        audio_data, sample_rate = sf.read(file_path, always_2d=True)
     else:
         raise ValueError(f"Unsupported mode: {mode}")
 
+    # Resample if a target sample rate is provided
+    if target_sr is not None and target_sr != sample_rate:
+        audio_data = resample_2d(audio_data, sample_rate, target_sr)
+
+    # Define channel names if not provided
+    if channels is None:
+        channels = [f"channel_{i+1}" for i in range(audio_data.shape[1])]
+
+    # Create DataFrame from the audio data
     df = pd.DataFrame(audio_data, columns=channels)
 
     return df
