@@ -56,7 +56,7 @@ def compute_power_spectrogram(
         nfft: int = None,
         fmin: float = None,
         fmax: float = None
-):
+) -> (np.ndarray, np.ndarray, np.ndarray):
     """Computes the power spectrogram of a signal.
 
     Args:
@@ -90,35 +90,6 @@ def compute_power_spectrogram(
     spec = np.abs(Zxx[freq_mask, :])
     Pxx = np.abs(spec)**2
     return f, t, Pxx
-
-
-def spec_to_power(
-        spec: np.ndarray
-) -> np.ndarray:
-    """Transforms a complex-valued spectrogram to a power spectrogram.
-
-    Args: Input complex-valued spectrogram in np.ndarray.
-
-    Returns:
-        mp.ndarray: The power spectrogram.
-    """
-    return np.abs(spec)**2
-
-
-def power_to_db(
-        power_spectrogram: np.ndarray,
-        ref=1.0
-) -> np.ndarray:
-    """Converts a power spectrogram to decibel (dB) units.
-    Args:
-        power_spectrogram: Input power spectrogram in np.ndarray.
-        ref: Reference power level (in amplitude squared) for dB calculation.
-            Defaults to 1.0.
-
-    Returns:
-        np.ndarray: The power spectrogram in dB.
-    """
-    return 10 * np.log10(power_spectrogram / ref)
 
 
 def compute_mel_spectrogram(
@@ -189,10 +160,10 @@ def _compute_mel_filterbanks(
     Returns:
         mel_filters: np.ndarray with the Mel filterbanks.
     """
-    mel_min = 0 if fmin == 0 else hz_to_mel(fmin)
-    mel_max = hz_to_mel(fmax)
+    mel_min = 0 if fmin == 0 else _hz_to_mel(fmin)
+    mel_max = _hz_to_mel(fmax)
     mel_points = np.linspace(mel_min, mel_max, n_mels + 2)
-    hz_points = mel_to_hz(mel_points)
+    hz_points = _mel_to_hz(mel_points)
     bin_points = np.floor((n_fft + 1) * hz_points / sr).astype(int)
 
     filters = np.zeros((n_mels, n_fft // 2 + 1))
@@ -210,7 +181,7 @@ def _compute_mel_filterbanks(
     return filters
 
 
-def hz_to_mel(freq: float) -> float:
+def _hz_to_mel(freq: float) -> float:
     """Converts Hz to Mel scale.
 
     Args:
@@ -222,7 +193,7 @@ def hz_to_mel(freq: float) -> float:
     return 2595 * np.log10(1 + freq / 700)
 
 
-def mel_to_hz(mel: float) -> float:
+def _mel_to_hz(mel: float) -> float:
     """Converts Mel scale to Hz.
 
     Args:
