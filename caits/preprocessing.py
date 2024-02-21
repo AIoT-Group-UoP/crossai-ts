@@ -47,3 +47,38 @@ def resample_signal(
                          dtype=d_type)
     resampled_buffer = np.interp(time_x, time_x_source, sig)
     return resampled_buffer
+
+
+# TODO: Make it also work for (n_samples, ) arrays for robustness
+def resample_2d(
+        audio_data: np.ndarray,
+        native_sr: int,
+        target_sr: int
+) -> np.ndarray:
+    """Resamples 2D audio data (multi-channel) to a target sampling rate.
+
+    Args:
+        audio_data: The input audio data as a 2D numpy (n_samples, n_channels).
+        native_sr: The native sampling rate of the input audio data.
+        target_sr: The target sampling rate.
+
+    Returns:
+        np.ndarray: The resampled audio data as a 2D numpy.ndarray.
+    """
+
+    # Initialize a list to hold resampled channels
+    resampled_channels = []
+
+    # Iterate through each channel in the audio data
+    for i in range(audio_data.shape[1]):
+        channel_data = audio_data[:, i]
+        resampled_channel_data = resample_signal(channel_data,
+                                                 native_sr,
+                                                 target_sr)
+
+        resampled_channels.append(resampled_channel_data)
+
+    # Stack the resampled channels back into a 2D array
+    resampled_audio_data = np.stack(resampled_channels, axis=1)
+
+    return resampled_audio_data
