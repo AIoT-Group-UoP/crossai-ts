@@ -9,8 +9,8 @@ def add_white_noise(
     """Adds white noise to a signal.
 
     Args:
-        array (ndarray): Input signal.
-        noise_factor (float): Noise factor.
+        array: Input signal.
+        noise_factor: Noise factor.
 
     Returns:
         ndarray: Noisy signal.
@@ -59,7 +59,7 @@ def time_stretch(
 
     Args:
         array: The input signal to be time-stretched.
-        factor (float): The factor by which to stretch the time.
+        factor: The factor by which to stretch the time.
             - A factor greater than 1 will stretch the signal, making it
                 longer.
             - A factor less than 1 will compress the signal, making it shorter.
