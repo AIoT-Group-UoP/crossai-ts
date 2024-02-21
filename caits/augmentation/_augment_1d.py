@@ -88,3 +88,41 @@ def time_stretch(
                             bounds_error=False, fill_value=0)
 
     return interpolator(new_indices)
+
+
+def time_shift(
+        array: np.ndarray,
+        shift_factor: float
+) -> np.ndarray:
+    """Shifts the signal in time by a factor of its length.
+
+    Args:
+        array (ndarray): The input signal to be shifted.
+        shift_factor (float): The factor by which to shift the signal.
+            - A positive factor shifts the signal to the right (delay).
+            - A negative factor shifts the signal to the left (advance).
+            Should be in the range [-1, 1].
+
+    Returns:
+        ndarray: The time-shifted signal.
+
+    Example:
+        >>> import numpy as np
+        >>> signal = np.array([1, 2, 3, 4, 5])
+        >>> shifted_signal = time_shift(signal, 0.5)
+        >>> print(shifted_signal)
+        [0 0 1 2 3]
+    """
+    if shift_factor < -1 or shift_factor > 1:
+        raise ValueError("Shift factor must be in the range [-1, 1].")
+
+    shift_amount = int(len(array) * shift_factor)
+
+    # Pad the signal with zeros for positive shift
+    if shift_amount >= 0:
+        return np.concatenate((np.zeros(shift_amount),
+                               array[:-shift_amount]))
+    # Pad the signal with zeros for negative shift
+    else:
+        return np.concatenate((array[-shift_amount:],
+                               np.zeros(-shift_amount)))
