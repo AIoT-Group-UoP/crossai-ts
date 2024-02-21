@@ -1,11 +1,11 @@
 import numpy as np
 
 
-def add_noise(
+def add_white_noise(
         array: np.ndarray,
         noise_factor: float
 ) -> np.ndarray:
-    """Adds noise to a signal.
+    """Adds white noise to a signal.
 
     Args:
         array (ndarray): Input signal.
