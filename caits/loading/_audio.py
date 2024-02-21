@@ -3,6 +3,8 @@ import wave
 import pandas as pd
 import numpy as np
 from typing import Union, List
+from tqdm import tqdm
+import glob
 from caits.preprocessing import resample_2d
 
 
@@ -61,44 +63,42 @@ def audio_loader(
         dataset_path: str,
         mode: str = "soundfile",
         format: str = "wav",
-        channels: list = ["channel_1"],
-        export: str = "dict"
+        channels: list = ["Channel_1"],
+        export: str = "dict",
+        target_sr: int = None
 ) -> Union[pd.DataFrame, dict]:
-    """Loads audio files from a directory into a DataFrame.
+    """Loads audio files from a directory into a DataFrame
+    or dictionary with optional resampling.
 
     Args:
-        dataset_path:
-        mode:
-        format:
-        channels:
-        export: "dict" | "df"
+        dataset_path: Path to the dataset directory.
+        mode: Loading mode, supports "soundfile", "scipy", or "pydub".
+        format: Audio file format, defaults to "wav".
+        channels: List of channel names for the DataFrame.
+        export: Format to export the loaded data, "dict" or "df" for DataFrame.
+        target_sr: Optional target sampling rate for resampling.
 
     Returns:
-
+        pd.DataFrame or dict: Loaded and optionally resampled audio
+                              data with progress displayed using tqdm.
     """
     all_features = []
     all_y = []
     all_id = []
 
-    for subdir in os.listdir(dataset_path):
-        if subdir != ".DS_Store":
-            print("loading files in dir:", subdir)
-            label_path = os.path.join(dataset_path, subdir)
-            if os.path.isdir(label_path):
-                for file in os.listdir(label_path):
-                    file_path = os.path.join(label_path, file)
-                    try:
-                        if format == "wav":
-                            df = _wav_loader(mode, file_path,
-                                             channels=channels)
-                        else:
-                            raise ValueError(f"Unsupported format: {format}")
+    search_pattern = os.path.join(dataset_path, "**", f"*.{format}")
+    file_paths = glob.glob(search_pattern, recursive=True)
 
-                        all_features.append(df)
-                        all_y.append(subdir)
-                        all_id.append(file)
-                    except Exception as e:
-                        print(f"Error loading file {file_path}: {e}")
+    for file_path in tqdm(file_paths, desc="Loading audio files"):
+        subdir = os.path.basename(os.path.dirname(file_path))
+        file = os.path.basename(file_path)
+        try:
+            df = _wav_loader(mode, file_path, channels, target_sr=target_sr)
+            all_features.append(df)
+            all_y.append(subdir)
+            all_id.append(file)
+        except Exception as e:
+            print(f"Error loading file {file_path}: {e}")
 
     if export == "df":
         return pd.DataFrame({
