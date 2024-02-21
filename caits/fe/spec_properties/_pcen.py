@@ -1,6 +1,6 @@
 # The code is based on the following snippet, however, with some modifications:
 # https://github.com/4p0pt0Z/Audio_blind_source_separation/blob/master/pcen.py
-# The implementation is based on the following paper:
+# The implementation follows the paper by Yuxuan Wang et al.:
 # Wang, Yuxuan, Pascal Getreuer, Thad Hughes, Richard F. Lyon, and Rif A.
 # Saurous. "Trainable frontend for robust and far-field keyword spotting." In
 # 2017 IEEE International Conference on Acoustics, Speech and Signal Processing
