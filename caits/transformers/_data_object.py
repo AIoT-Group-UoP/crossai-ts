@@ -1,10 +1,12 @@
 from typing import List
 from pandas import DataFrame
+import numpy as np
 
 
 class CAI:
     def __init__(
-            self, X: List[DataFrame],
+            self, 
+            X: List[DataFrame],
             y: List[str],
             id: List[str]
     ) -> None:
@@ -53,7 +55,6 @@ class CAI:
         """Provide a string representation of the CAI object."""
         return f"CAI(Dataset with {len(self)} samples)"
 
-    # FIX: Error when batch_size not divisible with CAI len
     def batch(self, batch_size=1):
         """Yields data instances or batches from the dataset."""
         for i in range(0, len(self), batch_size):
@@ -62,3 +63,30 @@ class CAI:
             id_batch = self._id[i:i+batch_size]
 
             yield X_batch, y_batch, id_batch
+
+    def to_numpy(self, dtype=np.float32):
+        """Converts data to NumPy arrays."""
+        X_np = np.array(self.X, dtype=dtype)
+        y_np = np.array(self.y)
+        id_np = np.array(self._id)
+        return X_np, y_np, id_np
+
+    def train_test_split(self, test_size=0.2):
+        """Splits the dataset into training and testing subsets."""
+        total_samples = len(self)
+        test_samples = int(total_samples * test_size)
+        indices = np.arange(total_samples)
+        np.random.shuffle(indices)
+
+        test_indices = indices[:test_samples]
+        train_indices = indices[test_samples:]
+
+        X_train = [self.X[i] for i in train_indices]
+        y_train = [self.y[i] for i in train_indices]
+        id_train = [self._id[i] for i in train_indices]
+
+        X_test = [self.X[i] for i in test_indices]
+        y_test = [self.y[i] for i in test_indices]
+        id_test = [self._id[i] for i in test_indices]
+
+        return CAI(X_train, y_train, id_train), CAI(X_test, y_test, id_test)
