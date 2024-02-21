@@ -1,10 +1,10 @@
-from typing import Union
+from typing import Union, List
 import numpy as np
 from scipy.signal import medfilt
-from scipy.ndimage import median_filter
+from scipy.ndimage import median_filter, gaussian_filter
 
 
-def median_simple(
+def filter_median_simple(
         array: np.ndarray,
         kernel_size: int = None
 ) -> np.ndarray:
@@ -20,13 +20,13 @@ def median_simple(
     Examples:
         >>> import numpy as np
         >>> signal = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9])
-        >>> filtered_signal = median_simple(array, kernel_size=3)
+        >>> filtered_signal = filter_median_simple(array, kernel_size=3)
     """
     filtered_signal = medfilt(array, kernel_size)
     return filtered_signal
 
 
-def median_gen(
+def filter_median_gen(
         array,
         window_size,
         output=None,
@@ -57,7 +57,7 @@ def median_gen(
     Examples:
         >>> import numpy as np
         >>> signal = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9])
-        >>> filtered_signal = median_gen(array, window_size=3)
+        >>> filtered_signal = filter_median_gen(array, window_size=3)
     """
     filtered_signal = median_filter(array, size=window_size, output=output,
                                     mode=mode, cval=cval, origin=origin)
@@ -67,7 +67,7 @@ def median_gen(
 from scipy.signal import butter, filtfilt, sosfilt, sosfiltfilt, sosfilt_zi
 
 
-def butterworth(
+def filter_butterworth(
         array: np.ndarray,
         fs: float,
         filter_type: str = 'lowpass',
@@ -163,3 +163,42 @@ def butterworth(
     else:
         raise ValueError("Invalid method provided. Please choose from "
                          "'filtfilt', 'sosfilt', or 'sosfiltfilt'.")
+
+
+def filter_gaussian(
+        array: np.ndarray,
+        sigma: Union[float, List[float]] = 1,
+        order: Union[int, List[int]] = 0,
+        output=None,
+        mode='reflect',
+        cval=0.0,
+        truncate=4.0
+) -> np.ndarray:
+    """Applies a Gaussian filter to a signal using SciPy.
+
+    Args:
+        array (array_like): The input signal to be filtered.
+        sigma (scalar or sequence of scalars, optional): The standard
+            deviation(s) of the Gaussian filter along each axis. Default is 1.
+        order (int or sequence of ints, optional): The order of the filter
+            along each axis. Default is 0.
+        output (array, optional): The array in which to place the output.
+            Default is None.
+        mode ({'reflect', 'constant', 'nearest', 'mirror', 'wrap'}, optional):
+            The mode parameter determines how the input array is extended
+            beyond its boundaries. Default is 'reflect'.
+        cval (scalar, optional): Value to fill past edges of input if mode is
+            'constant'. Default is 0.0.
+        truncate (scalar, optional): Truncate the filter at this many standard
+            deviations. Default is 4.0.
+
+    Returns:
+        array_like: The filtered signal.
+
+    Examples:
+        >>> import numpy as np
+        >>> signal = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9])
+        >>> filtered_signal = filter_gaussian(signal, sigma=1)
+    """
+    return gaussian_filter(array, sigma=sigma, order=order, output=output,
+                           mode=mode, cval=cval, truncate=truncate)
