@@ -4,7 +4,7 @@ from tensorflow.types.experimental import TensorLike
 
 def gen_pred_probs(
     model,
-    data: TensorLike,
+    X: TensorLike,
     repeats: int = 1
 ) -> np.ndarray:
     """Executes inference using a TensorFlow or scikit-learn model on provided
@@ -19,7 +19,7 @@ def gen_pred_probs(
                function attempts to use `predict_proba` for probabilistic
                outcomes first; if not available, it falls back to `predict`
                for direct predictions.
-        data: The dataset on which predictions are to be made. Expected to be
+        X: The dataset on which predictions are to be made. Expected to be
               formatted appropriately for the model's input requirements.
         repeats: The number of times the prediction process should be repeated.
                  This is useful for assessing model consistency and uncertainty
@@ -31,21 +31,15 @@ def gen_pred_probs(
         analysis of prediction consistency or uncertainty.
     """
 
-    # Initialize a list to hold all predictions
-    all_predictions = []
-
-    for _ in range(repeats):
-        try:
-            # Attempt to use predict_proba for probabilistic outcomes
-            predictions = model.predict_proba(data)
-        except AttributeError:
-            # Fallback to using predict for direct predictions
-            predictions = model.predict(data, verbose=0)
-
-        all_predictions.append(predictions)
+    try:
+        # Attempt to use predict_proba for probabilistic outcomes
+        predictions = [model.predict_proba(X) for s in range(repeats)]
+    except AttributeError:
+        # Fallback to using predict for direct predictions
+        predictions = [model.predict(X, verbose=0) for s in range(repeats)]
 
     # Stack predictions along a new dimension for repeated predictions
-    all_predictions = np.stack(all_predictions, axis=0)
+    all_predictions = np.stack(predictions, axis=0)
 
     return all_predictions
 
