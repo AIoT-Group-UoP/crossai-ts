@@ -81,3 +81,18 @@ def classify_events(
         "substitutions": substitutions,
         "deletions": deletions
     }
+
+
+def detection_ratio(C: int, D: int, S: int) -> float:
+    """Calculates the Detection Ratio for event recognition.
+
+    Args:
+        C: Number of correctly identified events.
+        D: Number of deletions (missed events).
+        S: Number of substitutions (misclassified events).
+
+    Returns:
+        float: The Detection Ratio, a measure of how well the
+        system recognizes events.
+    """
+    return C / (D + C + S) if (D + C + S) > 0 else 0
