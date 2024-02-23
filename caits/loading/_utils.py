@@ -1,4 +1,8 @@
 import yaml
+import os
+import glob
+import json
+from tqdm import tqdm
 
 
 def load_yaml_config(config_path: str) -> dict:
@@ -27,3 +31,36 @@ def load_yaml_config(config_path: str) -> dict:
     except yaml.YAMLError as e:
         raise yaml.YAMLError(f"Error parsing YAML \
                              configuration: {config_path}") from e
+
+
+def json_loader(dataset_path: str) -> dict:
+    """Loads JSON files from a directory, ensuring keys do
+    not include file extensions. Each JSON file's contents are stored
+    as a dictionary under the corresponding key.
+
+    Args:
+        dataset_path: Path to the dataset directory containing JSON files.
+
+    Returns:
+        dict: Dictionary with filenames (without extensions) as
+              keys and JSON contents as values.
+    """
+    json_data = {}
+
+    # Generate a search pattern to find JSON files in the dataset directory
+    search_pattern = os.path.join(dataset_path, "**", "*.json")
+    file_paths = glob.glob(search_pattern, recursive=True)
+
+    for file_path in tqdm(file_paths, desc="Loading JSON files"):
+        # Extract filename without extension
+        filename = os.path.splitext(os.path.basename(file_path))[0]
+        try:
+            with open(file_path, 'r') as f:
+                # Assuming the top-level JSON structure is
+                # an object (i.e., a dictionary)
+                data = json.load(f)
+            json_data[filename] = data
+        except Exception as e:
+            print(f"Error loading file {file_path}: {e}")
+
+    return json_data
