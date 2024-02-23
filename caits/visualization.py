@@ -4,6 +4,57 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
+def plot_prediction_probas(
+        probabilities: np.ndarray,
+        sampling_rate: int,
+        Ws: float,
+        overlap_percentage: float
+) -> None:
+    """Plots prediction probabilities as small horizontal lines, adjusting
+    for window overlap. Only non-overlapping parts of the window segments
+    are plotting for visualization purposes and time-matching of the original
+    time series length and the visualized one.
+
+    Args:
+        predictions: Prediction probabilities, shape (n_instances, n_classes).
+        sampling_rate: Sampling rate of the time series.
+        Ws: Window size in seconds.
+        overlap_percentage: Overlap percentage between windows (0 to 1).
+    """
+    # Convert window size from seconds to samples
+    Ws_samples = int(Ws * sampling_rate)
+
+    # Calculate the step size based on the overlap
+    OP_step = int(Ws_samples * (1 - overlap_percentage))
+
+    # Colors for each class
+    colors = plt.cm.jet(np.linspace(0, 1, probabilities.shape[1]))
+
+    fig, ax = plt.subplots(figsize=(14, 6))
+
+    # Iterate through each class
+    # and plot
+    for i, class_probs in enumerate(probabilities.T):
+        for j, prob in enumerate(class_probs):
+            start_idx = j * OP_step
+            end_idx = start_idx + OP_step
+
+            ax.hlines(prob, start_idx, end_idx, colors=colors[i],
+                      lw=2, label=f'Class {i+1}' if j == 0 else "")
+
+    # Setting labels and title
+    ax.set_xlabel('Samples')
+    ax.set_ylabel('Probability')
+    ax.set_title('Prediction Probabilities Across Time Series Windows')
+
+    # Handling legend for multiple classes
+    handles, labels = ax.get_legend_handles_labels()
+    by_label = dict(zip(labels, handles))  # Remove duplicate labels
+    ax.legend(by_label.values(), by_label.keys())
+
+    plt.show()
+
+    
 def export_fig(
     fig_object: plt.Figure,
     fig_id: str,
