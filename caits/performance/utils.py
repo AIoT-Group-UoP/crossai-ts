@@ -177,3 +177,40 @@ def interpolate_probas(
         interpolated_probabilities[:, i] = interpolated_probs
 
     return interpolated_probabilities
+
+
+def intersection_over_union(
+        predicted_segment: tuple,
+        ground_truth_segment: tuple
+) -> float:
+    """Calculates the Intersection over Union (IoU) for a single pair
+    of predicted and ground truth segments.
+
+    The IoU is a measure of how much the predicted segment overlaps with the
+    ground truth segment. It is defined as the size of the intersection
+    divided by the size of the union of the two segments.
+
+    Args:
+        predicted_segment: A tuple (start, end) representing the start and end
+                           indices of the predicted segment.
+        ground_truth_segment: A tuple (start, end) representing the start and
+                              end indices of the ground truth segment.
+
+    Returns:
+        float: The IoU value, which is a float between 0 and 1.
+               A higher IoU indicates a greater degree of overlap.
+    """
+    start_pred, end_pred = predicted_segment
+    start_gt, end_gt = ground_truth_segment
+
+    # Calculate intersection
+    intersection_start = max(start_pred, start_gt)
+    intersection_end = min(end_pred, end_gt)
+    intersection = max(0, intersection_end - intersection_start)
+
+    # Calculate union
+    union = (end_pred - start_pred) + (end_gt - start_gt) - intersection
+
+    # Compute IoU
+    iou = intersection / union if union > 0 else 0
+    return iou
