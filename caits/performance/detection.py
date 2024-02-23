@@ -46,3 +46,29 @@ def extract_non_overlap_probas(
     non_overlap_probs = probabilities[::step]
 
     return non_overlap_probs
+
+
+def apply_probability_threshold(
+        interpolated_probs: np.ndarray,
+        threshold: float
+) -> np.ndarray:
+    """Applies a probability threshold to the interpolated probabilities
+    matrix. Points exceeding the threshold are left unchanged, while
+    others are set to 0.
+
+    Args:
+        interpolated_probs: 2D array of interpolated probabilities, where each
+                            column represents a class.
+        threshold: Probability threshold. Points below this value are set to 0.
+
+    Returns:
+        numpy.ndarray: The modified interpolated probabilities matrix with the
+                       same shape.
+    """
+    # Apply thresholding
+    modified_probs = np.where(
+        interpolated_probs > threshold,
+        interpolated_probs, 0
+    )
+
+    return modified_probs
