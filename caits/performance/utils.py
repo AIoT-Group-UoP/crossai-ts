@@ -1,4 +1,6 @@
 import numpy as np
+from scipy.interpolate import interp1d
+from typing import Optional
 from tensorflow.types.experimental import TensorLike
 
 
@@ -105,3 +107,110 @@ def compute_predict_trust_metrics(
         results["entropy"] = np.mean(entropy, axis=0)
 
     return results
+
+
+def interpolate_probas(
+        probabilities: np.ndarray,
+        sampling_rate: int,
+        Ws: float,
+        n_points: int = None,
+        kind: Optional[str] = "cubic",
+        clamp: Optional[bool] = True
+) -> np.ndarray:
+    """Interpolates prediction probabilities for a smoother representation
+    over time or samples.
+
+    This function applies cubic interpolation to a matrix of class
+    probabilities associated with instances or window segments in a
+    time series, allowing for the visualization of smoothed probability
+    transitions across classes.
+
+    Args:
+        probabilities: A 2D array where each row represents an
+            instance (or window) and each column a class probability.
+        sampling_rate: The sampling rate of the time series data, used to
+            scale the interpolation points in relation to the original data.
+        Ws: The window size in seconds, defining the temporal span of each
+            instance or window in the original time series.
+        n_points: The number of points for the interpolated output.
+            If None, calculated as `n_instances * sampling_rate * Ws`.
+        kind: The type of interpolation. Deafults to `linear`.
+        clamp: Flag to clamp interpolated values between range [0, 1].
+               Defaults to False.
+
+    Returns:
+        np.ndarray: A 2D array of shape `(n_points, n_classes)` containing the
+            interpolated probabilities for each class. This array offers a
+            continuous and smooth representation of class probabilities
+            over time.
+    """
+    # Determine the shape of the input probability matrix
+    n_instances, n_classes = probabilities.shape
+
+    # Automatically calculate the number of interpolation points
+    # if not provided. Goal here is the number of points to match the
+    # original length of the time series instance
+    if n_points is None:
+        n_points = int(n_instances * sampling_rate * Ws)
+
+    # Initialize the output array for interpolated probabilities
+    interpolated_probabilities = np.zeros((n_points, n_classes))
+
+    # Prepare the original and target x-values for interpolation
+    x_original = np.arange(n_instances)
+    x_interpolated = np.linspace(0, n_instances - 1, n_points)
+
+    # Perform cubic interpolation for each class
+    for i in range(n_classes):
+        # Create the interpolator function for the current class
+        interpolator = interp1d(x_original, probabilities[:, i],
+                                kind=kind, fill_value='extrapolate')
+
+        # Apply interpolation and store the results
+        interpolated_probs = interpolator(x_interpolated)
+
+        if clamp:
+            # Clamp the interpolated values to [0, 1]
+            interpolated_probs = np.clip(interpolated_probs, 0, 1)
+
+        # Apply interpolation and store the results
+        interpolated_probabilities[:, i] = interpolated_probs
+
+    return interpolated_probabilities
+
+
+def intersection_over_union(
+        predicted_segment: tuple,
+        ground_truth_segment: tuple
+) -> float:
+    """Calculates the Intersection over Union (IoU) for a single pair
+    of predicted and ground truth segments.
+
+    The IoU is a measure of how much the predicted segment overlaps with the
+    ground truth segment. It is defined as the size of the intersection
+    divided by the size of the union of the two segments.
+
+    Args:
+        predicted_segment: A tuple (start, end) representing the start and end
+                           indices of the predicted segment.
+        ground_truth_segment: A tuple (start, end) representing the start and
+                              end indices of the ground truth segment.
+
+    Returns:
+        float: The IoU value, which is a float between 0 and 1.
+               A higher IoU indicates a greater degree of overlap.
+    """
+    start_pred, end_pred = predicted_segment
+    start_gt, end_gt = ground_truth_segment
+
+    # Calculate intersection
+    intersection_start = max(start_pred, start_gt)
+    intersection_end = min(end_pred, end_gt)
+    intersection = max(0, intersection_end - intersection_start)
+
+    # Calculate union
+    union = (end_pred - start_pred) + (end_gt - start_gt) - intersection
+
+    # Compute IoU
+    iou = intersection / union if union > 0 else 0
+    return iou
