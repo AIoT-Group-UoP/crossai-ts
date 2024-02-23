@@ -72,3 +72,53 @@ def apply_probability_threshold(
     )
 
     return modified_probs
+
+
+def apply_duration_threshold(
+        interpolated_probs: np.ndarray,
+        sampling_rate: int,
+        duration_threshold: float
+) -> np.ndarray:
+    """Applies a duration threshold to the interpolated probabilities.
+    Any continuous segments below the duration threshold are set to 0.
+
+    Args:
+        interpolated_probs: Interpolated probabilities, where rows correspond
+                            to time steps.
+        sampling_rate: The number of samples per second in the time series.
+        duration_threshold: The duration threshold in seconds. Continuous
+                            segments below this duration will be zeroed out.
+
+    Returns:
+        np.ndarray: The modified interpolated probabilities after applying
+                    the duration threshold.
+    """
+    # Convert duration from seconds to samples
+    duration_samples = int(sampling_rate * duration_threshold)
+    n_instances, n_classes = interpolated_probs.shape
+    modified_probs = np.zeros_like(interpolated_probs)
+
+    # Iterate over each class
+    for i in range(n_classes):
+        class_probs = interpolated_probs[:, i]
+        # Create a boolean array indicating where the
+        # class probability is above zero
+        is_above_zero = class_probs > 0
+        # Find the indices where the above-zero segments start and end
+        above_zero_diff = np.diff(is_above_zero.astype(int))
+        # +1 to correct the diff offset
+        segment_starts = np.where(above_zero_diff == 1)[0] + 1
+        segment_ends = np.where(above_zero_diff == -1)[0] + 1
+
+        if is_above_zero[0]:
+            segment_starts = np.insert(segment_starts, 0, 0)
+        if is_above_zero[-1]:
+            segment_ends = np.append(segment_ends, n_instances)
+
+        # Filter segments by duration and only keep those
+        # that meet the duration threshold
+        for start, end in zip(segment_starts, segment_ends):
+            if end - start >= duration_samples:
+                modified_probs[start:end, i] = class_probs[start:end]
+
+    return modified_probs
