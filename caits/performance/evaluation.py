@@ -96,3 +96,34 @@ def detection_ratio(C: int, D: int, S: int) -> float:
         system recognizes events.
     """
     return C / (D + C + S) if (D + C + S) > 0 else 0
+
+
+def reliability(C: int, IN: int) -> float:
+    """Calculates the Reliability for event recognition.
+
+    Args:
+        C: Number of correctly identified events.
+        I: Number of insertions (false positives).
+
+    Returns:
+        float: The Reliability, a measure of the system's ability
+        to detect events without false positives.
+    """
+    return C / (C + IN) if (C + IN) > 0 else 0
+
+
+def erer(D: int, IN: int, S: int, C: int) -> float:
+    """Calculates the Event Recognition Error Rate (ERER)
+    for event recognition.
+
+    Args:
+        D: Number of deletions (missed events).
+        I: Number of insertions (false positives).
+        S: Number of substitutions (misclassified events).
+        C: Number of correctly identified events.
+
+    Returns:
+        float: The ERER, indicating the overall error rate of the
+        system in recognizing events.
+    """
+    return (D + IN + S) / (D + C + S) if (D + C + S) > 0 else 0
