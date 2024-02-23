@@ -122,3 +122,23 @@ def apply_duration_threshold(
                 modified_probs[start:end, i] = class_probs[start:end]
 
     return modified_probs
+
+
+def get_continuous_events(interpolated_probs: np.ndarray):
+
+    significant_segments = []
+
+    # Iterate over each class to find significant segments
+    for class_idx in range(interpolated_probs.shape[1]):
+        class_probs = interpolated_probs[:, class_idx]
+        is_above_zero = (class_probs > 0).astype(int)
+        above_zero_diff = np.diff(is_above_zero, prepend=0, append=0)
+        segment_starts = np.where(above_zero_diff == 1)[0]
+        segment_ends = np.where(above_zero_diff == -1)[0]
+
+        # Identify segments that meet the duration threshold
+        for start, end in zip(segment_starts, segment_ends):
+            # -1 to make end index inclusive
+            significant_segments.append((start, end - 1, class_idx))
+
+    return significant_segments
