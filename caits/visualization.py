@@ -54,7 +54,33 @@ def plot_prediction_probas(
 
     plt.show()
 
-    
+
+def plot_interpolated_probas(interpolated_probs: np.ndarray) -> None:
+    """Plots the interpolated prediction probabilities for each class.
+
+    Args:
+        interpolated_probs: 2D array of interpolated probabilities,
+                            where each column represents a class.
+    """
+    n_points, n_classes = interpolated_probs.shape
+    x_interpolated = np.linspace(0, n_points - 1, num=n_points)
+
+    # Colors for each class
+    colors = plt.cm.jet(np.linspace(0, 1, interpolated_probs.shape[1]))
+
+    fig, ax = plt.subplots(figsize=(14, 6))
+
+    for i in range(n_classes):
+        plt.plot(x_interpolated, interpolated_probs[:, i],
+                 color=colors[i], label=f'Class {i+1}')
+
+    plt.title('Interpolated Prediction Probabilities')
+    plt.xlabel('Interpolated Instance')
+    plt.ylabel('Probability')
+    plt.legend()
+    plt.show()
+
+
 def export_fig(
     fig_object: plt.Figure,
     fig_id: str,
