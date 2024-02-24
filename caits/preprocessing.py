@@ -82,3 +82,34 @@ def resample_2d(
     resampled_audio_data = np.stack(resampled_channels, axis=1)
 
     return resampled_audio_data
+
+
+def trim_signal(
+        array: np.ndarray,
+        axis=0,
+        epsilon: float = 1e-5
+) -> np.ndarray:
+    """Trims the noise from beginning and end of a signal.
+
+    Args:
+      array: The input signal.
+      axis: The axis to trim.
+      epsilon: The max value to be considered as noise.
+    Returns:
+      np.ndarray: A signal of start and stop with shape `[..., 2, ...]`.
+    """
+    shape = array.shape
+    length = shape[axis]
+
+    nonzero = np.greater(array, epsilon)
+    check = np.any(nonzero, axis=axis)
+
+    forward = np.array(nonzero, np.int64)
+    reverse = forward[::-1]
+
+    start = np.where(check, np.argmax(forward, axis=axis), length)
+    stop = np.where(check, np.argmax(reverse, axis=axis),
+                    np.array(0, np.int64))
+    stop = length - stop
+
+    return array[start:stop]
