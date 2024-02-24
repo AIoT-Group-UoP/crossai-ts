@@ -76,10 +76,12 @@ def pcen(
         raise ValueError('eps={} must be strictly positive'.format(eps))
 
     if time_constant <= 0:
-        raise ValueError('time_constant={} must be strictly positive'.format(time_constant))
+        raise ValueError('time_constant={} must be strictly positive'.format(
+            time_constant))
 
     if max_size < 1 or not isinstance(max_size, int):
-        raise ValueError('max_size={} must be a positive integer'.format(max_size))
+        raise ValueError('max_size={} must be a positive integer'.format(
+            max_size))
 
     if b is None:
         t_frames = time_constant * sr / float(hop_length)
@@ -152,11 +154,12 @@ def pcen_base(
         eps: float = 1e-6,
         magnitude_increase: bool = False
 ) -> np.ndarray:
-    """Implements the PCEN transform to apply on a batch of np.ndarrays
-    (spectrograms).
+    """Implements the PCEN transform to apply on a batch of np.ndarray
+    instances (spectrograms).
 
-        Implementation of the PCEN transform to operate on pytorch tensors. Implementation follows the description in
-        Yuxian Wang et al. "Trainable Frontend For Robust and Far-Field Keyword Spotting" (2016)
+    Implementation of the PCEN transform to operate on pytorch tensors.
+    Implementation follows the description in Yuxian Wang et al. "Trainable
+    Frontend For Robust and Far-Field Keyword Spotting" (2017).
 
         PCEN(t,f) = ( E(t, f) / (eps + M(t,f)**alpha + delta )**r - delta**r
         M(t,f) = (1-s) * M(t-1,f) + s * E(t,f)
