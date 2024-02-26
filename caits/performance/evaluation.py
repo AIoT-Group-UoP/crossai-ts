@@ -5,9 +5,8 @@ from .utils import intersection_over_union
 def classify_events(
         predicted_events: list[tuple],
         ground_truth_events: list[tuple],
-        labels: list,
+        # labels: list,
         IoU_th: Optional[float],
-        sr: int
 ) -> dict:
     """Classifies predicted events into Insertions, Correct identifications,
     Substitutions, and Deletions based on IoU score, class labels.
@@ -28,11 +27,8 @@ def classify_events(
         ground_truth_events: A list where each tuple contains the start and
                              end times in seconds of a ground truth event and
                              the actual class label.
-        labels: A list of actual class labels for the ground truth events.
         IoU_th: The IoU threshold for determining if an event is considered
                 correctly identified.
-        sr: The sampling rate of the time series data, used for converting
-            ground truth times to indices.
 
     Returns:
         dict: Counts of each event classification type
@@ -40,14 +36,10 @@ def classify_events(
     """
     insertions = corrects = substitutions = deletions = 0
 
-    # Convert ground truth times to sample indices
-    # [(start, end, label), ...., (start, end, label)]
-    ground_truth_samples = [
-        (int(start * sr), int(end * sr), label)
-        for (start, end), label in zip(ground_truth_events, labels)
-    ]
+    for predicted_event in predicted_events:
 
-    for predicted_event, predicted_label in predicted_events:
+        predicted_label = predicted_event[2]
+
         # Calculate IoU for the predicted event with
         # all ground truth events and check labels
         # [(iou, label), ....., (iou, label)]
@@ -56,9 +48,10 @@ def classify_events(
                 intersection_over_union(
                     (predicted_event[0], predicted_event[1]),
                     (gt_event[0], gt_event[1])
-                ), gt_event[2]
-                )
-            for gt_event in ground_truth_samples
+                ),
+                gt_event[2]
+            )
+            for gt_event in ground_truth_events
         ]
 
         # Check if matches is non-empty and find the max IoU and best label
