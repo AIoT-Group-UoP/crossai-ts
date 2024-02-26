@@ -1,5 +1,5 @@
 from sklearn.base import BaseEstimator, TransformerMixin
-from ._data_object import CAI
+from ._data_object import Dataset
 
 
 class Transformer(BaseEstimator, TransformerMixin):
@@ -26,14 +26,14 @@ class Transformer(BaseEstimator, TransformerMixin):
         """
         return self
 
-    def transform(self, X: CAI) -> CAI:
+    def transform(self, X: Dataset) -> Dataset:
         """Applies the transformation function column-wise to the data.
 
         Args:
-            X: The CAI object containing the data to be transformed.
+            X: The Dataset object containing the data to be transformed.
 
         Returns:
-            CAI: A new CAI object with the transformed data.
+            Dataset: A new Dataset object with the transformed data.
         """
         transformed_X = []
         for df in X.X:
@@ -44,7 +44,7 @@ class Transformer(BaseEstimator, TransformerMixin):
             transformed_X.append(transformed_df)
 
         # Return a new CAI object with the transformed data
-        return CAI(transformed_X, X.y, X._id)
+        return Dataset(transformed_X, X.y, X._id)
 
     def get_params(self, deep=True):
         """Overrides get_params to include func_kwargs.
