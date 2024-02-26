@@ -1,6 +1,6 @@
 from sklearn.base import BaseEstimator, TransformerMixin
 from typing import List, Tuple, Callable, Dict
-from ._data_object import CAI
+from ._data_object import Dataset
 
 
 class Augmenter(BaseEstimator, TransformerMixin):
@@ -20,7 +20,7 @@ class Augmenter(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         return self
 
-    def transform(self, X: CAI) -> CAI:
+    def transform(self, X: Dataset) -> Dataset:
         transformed_X = []
         transformed_y = []
         transformed_id = []
@@ -38,4 +38,4 @@ class Augmenter(BaseEstimator, TransformerMixin):
                 transformed_y.append(label)  # Duplicate label
                 transformed_id.append(id_)  # Duplicate ID
 
-        return CAI(transformed_X, transformed_y, transformed_id)
+        return Dataset(transformed_X, transformed_y, transformed_id)
