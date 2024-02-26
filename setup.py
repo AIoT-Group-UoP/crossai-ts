@@ -8,6 +8,7 @@ setup(
         "caits.ai",
         "caits.ai.nn1d",
         "caits.ai.nn2d",
+        "caits.ai.augmentation",
         "caits.loading",
         "caits.fe",
         "caits.transformers",
@@ -30,6 +31,7 @@ setup(
         "seaborn>=0.12.2",
         "pydub==0.25.1",
         "soundfile==0.12.1",
+        "tsaug==0.2.1"
         "pyyaml==6.0.1",
         "boto3==1.29.2",
         "tqdm==4.66.2"
