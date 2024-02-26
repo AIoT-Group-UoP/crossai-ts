@@ -124,7 +124,7 @@ def apply_duration_threshold(
     return modified_probs
 
 
-def get_continuous_events(threshold_probas: np.ndarray):
+def get_continuous_events(threshold_probas: np.ndarray) -> list[tuple]:
 
     significant_segments = []
 
