@@ -29,7 +29,7 @@ class Dataset:
             return Dataset(self.X[idx], self.y[idx], self._id[idx])
         elif isinstance(idx, int):
             # Handle single item selection
-            return Dataset([self.X[idx]], [self.y[idx]], [self._id[idx]])
+            return self.X[idx], self.y[idx], self._id[idx]
         else:
             raise TypeError("Invalid argument type.")
 
