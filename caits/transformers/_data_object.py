@@ -24,8 +24,12 @@ class Dataset:
 
     def __getitem__(self, idx):
         """Allows for dataset indexing/slicing to get a specific data point."""
-        if isinstance(idx, (int, slice)):
+        if isinstance(idx, slice):
+            # Handle slicing
             return Dataset(self.X[idx], self.y[idx], self._id[idx])
+        elif isinstance(idx, int):
+            # Handle single item selection
+            return Dataset([self.X[idx]], [self.y[idx]], [self._id[idx]])
         else:
             raise TypeError("Invalid argument type.")
 
