@@ -1,11 +1,13 @@
 import numpy as np
 from scipy.interpolate import interp1d
-from typing import Optional
+from typing import Union, Optional
 from tensorflow.types.experimental import TensorLike
+from sklearn.base import BaseEstimator
+from tensorflow.keras import Model
 
 
-def gen_pred_probs(
-    model,
+def generate_pred_probas(
+    model: Union[BaseEstimator, Model],
     X: TensorLike,
     repeats: int = 1
 ) -> np.ndarray:
@@ -32,7 +34,6 @@ def gen_pred_probs(
         the results are stacked along a new dimension, allowing for further
         analysis of prediction consistency or uncertainty.
     """
-
     try:
         # Attempt to use predict_proba for probabilistic outcomes
         predictions = [model.predict_proba(X) for s in range(repeats)]
