@@ -1,5 +1,5 @@
 from sklearn.base import BaseEstimator, TransformerMixin
-from ._data_object import CAI
+from ._data_object import Dataset
 
 
 class SlidingWindow(BaseEstimator, TransformerMixin):
@@ -24,14 +24,14 @@ class SlidingWindow(BaseEstimator, TransformerMixin):
         """
         return self
 
-    def transform(self, X: CAI) -> CAI:
+    def transform(self, X: Dataset) -> Dataset:
         """Apply the sliding window transformation to the input data.
 
         Args:
-            X (CAI): The input data object containing a list of DataFrames.
+            X: The input data object containing a list of DataFrames.
 
         Returns:
-            CAI: A new CAI object with transformed data.
+            Dataset: A new Dataset object with transformed data.
         """
         transformed_X = []
         new_y = []
@@ -51,4 +51,4 @@ class SlidingWindow(BaseEstimator, TransformerMixin):
                 new_y.append(label)
                 new_id.append(id_)
 
-        return CAI(transformed_X, new_y, new_id)
+        return Dataset(transformed_X, new_y, new_id)
