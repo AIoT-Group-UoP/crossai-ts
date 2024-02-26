@@ -5,8 +5,7 @@ from .utils import intersection_over_union
 def classify_events(
         predicted_events: list[tuple],
         ground_truth_events: list[tuple],
-        # labels: list,
-        IoU_th: Optional[float],
+        IoU_th: float,
 ) -> dict:
     """Classifies predicted events into Insertions, Correct identifications,
     Substitutions, and Deletions based on IoU score, class labels.
