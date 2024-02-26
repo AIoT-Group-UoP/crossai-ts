@@ -2,7 +2,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from typing import List, Dict
 from pandas import DataFrame, Series
 import numpy as np
-from ._data_object import CAI
+from ._data_object import Dataset
 
 
 class FeatureExtractor(BaseEstimator, TransformerMixin):
@@ -12,7 +12,7 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         return self
 
-    def transform(self, X: CAI) -> CAI:
+    def transform(self, X: Dataset) -> Dataset:
         transformed_X = []
         transformed_y = X.y
         transformed_id = X._id
@@ -48,4 +48,4 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
             features_df = DataFrame(features_dict).T
             transformed_X.append(features_df)
 
-        return CAI(transformed_X, transformed_y, transformed_id)
+        return Dataset(transformed_X, transformed_y, transformed_id)

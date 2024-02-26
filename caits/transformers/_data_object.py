@@ -3,9 +3,9 @@ from pandas import DataFrame
 import numpy as np
 
 
-class CAI:
+class Dataset:
     def __init__(
-            self, 
+            self,
             X: List[DataFrame],
             y: List[str],
             id: List[str]
@@ -24,12 +24,8 @@ class CAI:
 
     def __getitem__(self, idx):
         """Allows for dataset indexing/slicing to get a specific data point."""
-        if isinstance(idx, slice):
-            # Handle slicing
-            return CAI(self.X[idx], self.y[idx], self._id[idx])
-        elif isinstance(idx, int):
-            # Handle single item selection
-            return self.X[idx], self.y[idx], self._id[idx]
+        if isinstance(idx, (int, slice)):
+            return Dataset(self.X[idx], self.y[idx], self._id[idx])
         else:
             raise TypeError("Invalid argument type.")
 
@@ -53,7 +49,7 @@ class CAI:
 
     def __repr__(self) -> str:
         """Provide a string representation of the CAI object."""
-        return f"CAI(Dataset with {len(self)} samples)"
+        return f"Dataset with {len(self)} instances"
 
     def batch(self, batch_size=1):
         """Yields data instances or batches from the dataset."""
@@ -89,4 +85,5 @@ class CAI:
         y_test = [self.y[i] for i in test_indices]
         id_test = [self._id[i] for i in test_indices]
 
-        return CAI(X_train, y_train, id_train), CAI(X_test, y_test, id_test)
+        return Dataset(X_train, y_train, id_train), \
+            Dataset(X_test, y_test, id_test)
