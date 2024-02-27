@@ -8,7 +8,7 @@ setup(
         "caits.ai",
         "caits.ai.nn1d",
         "caits.ai.nn2d",
-        "caits.ai.augmentation",
+        "caits.augmentation",
         "caits.loading",
         "caits.fe",
         "caits.transformers",
