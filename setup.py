@@ -23,7 +23,7 @@ setup(
                 "end-to-end AI pipelines for Time Series Analysis",
     install_requires=[
         "tensorflow==2.14.0",
-        'tensorflow-metal==1.1.0; platform_system=="Darwin"',
+        "tensorflow-metal==1.1.0; platform_system=='Darwin'",
         "tensorflow_addons>=0.21.0",
         "pandas==2.2.0",
         "scipy==1.12.0",
