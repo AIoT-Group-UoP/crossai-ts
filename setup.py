@@ -13,7 +13,8 @@ setup(
         "caits.fe",
         "caits.transformers",
         "caits.eda",
-        "caits.performance"
+        "caits.performance",
+        "caits.resources_handling"
     ],
     url="https://github.com/AIoT-Group-UoP/crossai-ts",
     license="Apache License 2.0",
