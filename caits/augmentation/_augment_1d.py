@@ -189,8 +189,8 @@ def crop_ts(
         seed: Optional[int] = None,
         export_as_list: bool = False
 ) -> Union[np.ndarray, list]:
-    """Crops a time series. The length of the time series is preserved and the
-    cropping is applied to each channel independently if `per_channel` is True.
+    """Crops a time series. The length of the time series is NOT preserved and
+    the cropping is applied to all channels simultaneously.
 
     Args:
         array: The input time series data in np.ndarray.
