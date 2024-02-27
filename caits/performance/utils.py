@@ -30,7 +30,7 @@ def generate_pred_probas(
                  in predictions.
 
     Returns:
-        An array of predictions made by the model. For repeated predictions, 
+        An array of predictions made by the model. For repeated predictions,
         the results are stacked along a new dimension, allowing for further
         analysis of prediction consistency or uncertainty.
     """
