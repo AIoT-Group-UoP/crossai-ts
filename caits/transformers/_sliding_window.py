@@ -1,14 +1,15 @@
 from sklearn.base import BaseEstimator, TransformerMixin
+from caits.windowing import sliding_window_df
 from ._data_object import Dataset
 
 
 class SlidingWindow(BaseEstimator, TransformerMixin):
-    def __init__(self, window_size=10, overlap=1):
+    def __init__(self, window_size: int = 10, overlap: int = 1):
         """Initializes the sliding window transformer.
 
         Args:
-            window_size (int): The number of time steps in each window.
-            overlap (int): The number of time steps to overlap adjacent
+            window_size: The number of time steps in each window.
+            overlap: The number of time steps to overlap adjacent
                            windows.
         """
         self.window_size = window_size
@@ -37,18 +38,11 @@ class SlidingWindow(BaseEstimator, TransformerMixin):
         new_y = []
         new_id = []
 
-        if self.overlap >= self.window_size:
-            raise ValueError("Overlap must be smaller than window size.")
-
-        step_size = self.window_size - self.overlap
-
-        for df, label, id_ in zip(X.X, X.y, X._id):
-            num_rows = df.shape[0]
-            for start in range(0, num_rows - self.window_size + 1, step_size):
-                end = start + self.window_size
-                windowed_df = df.iloc[start:end]
-                transformed_X.append(windowed_df)
-                new_y.append(label)
-                new_id.append(id_)
+        for df, label, id_ in X:
+            windowed_dfs = sliding_window_df(df, self.window_size,
+                                             self.overlap)
+            transformed_X.extend(windowed_dfs)
+            new_y.extend([label] * len(windowed_dfs))
+            new_id.extend([id_] * len(windowed_dfs))
 
         return Dataset(transformed_X, new_y, new_id)
