@@ -2,6 +2,7 @@ import os
 from typing import Optional, Union, Tuple
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure as Fig
 
 
 def plot_prediction_probas(
@@ -9,7 +10,7 @@ def plot_prediction_probas(
         sampling_rate: int,
         Ws: float,
         overlap_percentage: float
-) -> None:
+) -> Fig:
     """Plots prediction probabilities as small horizontal lines, adjusting
     for window overlap. Only non-overlapping parts of the window segments
     are plotting for visualization purposes and time-matching of the original
@@ -20,6 +21,9 @@ def plot_prediction_probas(
         sampling_rate: Sampling rate of the time series.
         Ws: Window size in seconds.
         overlap_percentage: Overlap percentage between windows (0 to 1).
+
+    Returns:
+        The matplotlib Figure object.
     """
     # Convert window size from seconds to samples
     Ws_samples = int(Ws * sampling_rate)
@@ -52,15 +56,18 @@ def plot_prediction_probas(
     by_label = dict(zip(labels, handles))  # Remove duplicate labels
     ax.legend(by_label.values(), by_label.keys())
 
-    plt.show()
+    return fig
 
 
-def plot_interpolated_probas(interpolated_probs: np.ndarray) -> None:
+def plot_interpolated_probas(interpolated_probs: np.ndarray) -> Fig:
     """Plots the interpolated prediction probabilities for each class.
 
     Args:
         interpolated_probs: 2D array of interpolated probabilities,
                             where each column represents a class.
+
+    Returns:
+        The matplotlib Figure object.
     """
     n_points, n_classes = interpolated_probs.shape
     x_interpolated = np.linspace(0, n_points - 1, num=n_points)
@@ -78,7 +85,8 @@ def plot_interpolated_probas(interpolated_probs: np.ndarray) -> None:
     plt.xlabel('Interpolated Instance')
     plt.ylabel('Probability')
     plt.legend()
-    plt.show()
+
+    return fig
 
 
 def export_fig(
