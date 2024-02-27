@@ -2,7 +2,7 @@ import pandas as pd
 from typing import Union
 
 
-def sliding_window_df(
+def rolling_window_df(
         df: pd.DataFrame,
         ws: int = 500,
         overlap: int = 250,
@@ -47,6 +47,38 @@ def sliding_window_df(
     return windows_list
 
 
+def sliding_window_df(
+        df: pd.DataFrame,
+        window_size: int,
+        overlap: int
+) -> list[pd.DataFrame]:
+    """Generate windowed DataFrames based on the specified
+    window size and overlap.
+
+    Args:
+        df: The DataFrame with all the values that will be inserted to the
+            sliding window algorithm.
+        window_size: The window size in number of samples.
+        overlap: The hop length in number of samples.
+
+    Returns:
+        List of segmented DataFrames.
+    """
+    if overlap >= window_size:
+        raise ValueError("Overlap must be smaller than window size.")
+
+    step_size = window_size - overlap
+    windowed_dfs = []
+
+    num_rows = df.shape[0]
+    for start in range(0, num_rows - window_size + 1, step_size):
+        end = start + window_size
+        windowed_df = df.iloc[start:end]
+        windowed_dfs.append(windowed_df)
+
+    return windowed_dfs
+
+
 def windowing_df(
         df: pd.DataFrame,
         ws: int = 500,
@@ -78,7 +110,7 @@ def windowing_df(
     windows_list = []
     y_list = []
     for index, row in df.iterrows():
-        windows = sliding_window_df(row["X"], ws=ws, overlap=overlap,
+        windows = rolling_window_df(row["X"], ws=ws, overlap=overlap,
                                     w_type=w_type, w_center=w_center,
                                     print_stats=False)
         windows_list.extend(windows)
