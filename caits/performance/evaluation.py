@@ -1,14 +1,24 @@
-from typing import Union
+from typing import Union, Optional
+from numpy import array
 from sklearn.pipeline import Pipeline
 from tensorflow.keras import Model
 from sklearn.base import BaseEstimator
 from .metrics import intersection_over_union
 from caits.transformers import Dataset
+from caits.performance.utils import generate_pred_probas, \
+    compute_predict_trust_metrics, interpolate_probas
+from caits.visualization import plot_prediction_probas, \
+    plot_interpolated_probas
+from caits.performance.detection import extract_non_overlap_probas
+from caits.performance.detection import apply_duration_threshold, \
+    apply_probability_threshold, get_continuous_events
+from caits.filtering import filter_butterworth
+
 
 _OPTIONS = [
-    'transformed_data', 'prediction_probas', 'trust_metrics',
-    'non_overlapping_probas', 'interpolated_probas', 'smoothed_probas',
-    'thresholded_probas', 'predicted_events', 'ICSD', 'figures'
+    "transformed_data", "prediction_probas", "trust_metrics",
+    "non_overlapping_probas", "interpolated_probas", "smoothed_probas",
+    "thresholded_probas", "predicted_events", "ICSD", "figures"
 ]
 
 
@@ -87,13 +97,14 @@ def evaluate_instance(
         sample_rate: int,
         ws: float,
         perc_overlap: float,
+        cutoff: float,
         ground_truths: list[tuple],
         repeats: int = 5,
         metrics: str = "all",
         prob_th: float = 0.7,
         duration_th: float = 1.,
         iou_th: float = 0.5,
-        display: bool = False
+        append_options: Optional[list[str]] = None,
 ) -> dict:
     """Performs the evaluation of the model on the pilot data, optionally
     returning figures and allowing selective inclusion of results.
@@ -106,6 +117,8 @@ def evaluate_instance(
         ws: Window size for processing.
         perc_overlap: The percentage overlap used when segmenting
                       the data for predictions.
+        cutoff: The cut-off frequency of the low pass filter for
+                interpolated signals smoothening.
         ground_truths: A list of tuples representing the ground truth events.
         repeats: The number of times to repeat the prediction
                  process for generating trust metrics.
@@ -121,62 +134,100 @@ def evaluate_instance(
                  valuation process.
         append_options: A list of strings indicating which parts of the
                         evaluation to include in the results dictionary.
-        Options include: 'transformed_data', 'prediction_probas', 'figures',
-                         'non_overlapping_probas', 'interpolated_probas',
-                        'smoothed_probas', 'thresholded_probas', 'ICSD',
-                        'ICSD', 'trust_metrics'.
+
+        Options include: "transformed_data", "prediction_probas", "figures",
+                         "non_overlapping_probas", "interpolated_probas",
+                        "smoothed_probas", "thresholded_probas", "ICSD",
+                        "ICSD", "trust_metrics".
 
     Returns:
         dict: A dictionary containing selected computed items based on
               `append_options`.
     """
+    # Dictionary to append any desired calculated
+    # information based on `append_options`
+    results = {}
+
+    if append_options is None:
+        append_options = _OPTIONS
+
     # Fit the pilot instance data to the processing pipeline
     transformed_cai_instance = pipeline.transform(instance)
+    if "transformed_data" in append_options: # maybe numpy arrays more suitable
+        results["transformed_data"] = transformed_cai_instance
 
     # Convert CAI data object to numpy array
-    X_pilot, y_pilot, file_pilot = transformed_cai_instance.to_numpy()  # probably needs to return single instance from y_pilot and file_pilot
+    # TODO: # Return single instance from y_pilot and file_pilot
+    X_pilot, y_pilot, file_pilot = transformed_cai_instance.to_numpy()
     pilot_instance_filename = file_pilot[0]
     print("Pilot instance: ", pilot_instance_filename)
     print("With label: ", y_pilot[0])
 
     # Generate prediction probabilities of the model
-    prediction_probas = gen_pred_probs(model=model, X=X_pilot, repeats=repeats)
+    prediction_probas = generate_pred_probas(model, X_pilot, repeats)
+    # Append prediction probabilities
+    if "prediction_probas" in append_options:
+        results["prediction_probas"] = prediction_probas
 
     # compute stats metrics for prediciton probabilty tensor
-    trust_metircs = compute_predict_trust_metrics(prediction_probas, compute=metrics)
+    trust_metircs = compute_predict_trust_metrics(prediction_probas, metrics)
+    # Append trust metrics
+    if "trust_metrics" in append_options:
+        results["trust_metrics"] = trust_metircs
 
-    # get mean predicitons
+    # Get mean predicitons
     mean_pred_probas = trust_metircs["mean_pred"]
     print(f"Shape of mean predictions: {mean_pred_probas.shape}")
+    # Create figure for probabilities plot
+    pred_probas_fig = plot_prediction_probas(mean_pred_probas, sample_rate,
+                                             ws, perc_overlap)
 
-    if display:
-        plot_prediction_probas(mean_predictions, sample_rate, ws, perc_overlap)
-
-    non_overlap_probas = extract_non_overlap_probas(mean_pred_probas, perc_overlap)
+    # Bring back to shape before sliding window
+    non_overlap_probas = extract_non_overlap_probas(mean_pred_probas,
+                                                    perc_overlap)
     print(f"Shape of non-overlapping predictions: {non_overlap_probas.shape}")
+    # Append non-overlapping probabilities
+    if "non_overlapping_probas" in append_options:
+        results["non_overlapping_probas"] = non_overlap_probas
 
-    interpolated_probas = interpolate_probas(non_overlap_probas, sampling_rate=sample_rate,
+    # Express it as a spline
+    interpolated_probas = interpolate_probas(non_overlap_probas,
+                                             sampling_rate=sample_rate,
                                              Ws=ws, kind="cubic", clamp=True)
-    print(f"Shape of interpolated predictions probabilities: {interpolated_probas.shape}")
-
-    if display:
-        plot_interpolated_probas(interpolated_probas)
+    print(f"Shape of interpolated probabilities: {interpolated_probas.shape}")
+    # Append interpolated probabilities
+    if "interpolated_probas" in append_options:
+        results["interpolated_probas"] = interpolated_probas
+    # Create figure plot for splines
+    interp_probas_fig = plot_interpolated_probas(interpolated_probas)
 
     # Apply Moving Average Filter
-    smoothed_probas = np.array([
-        moving_average_filter(pred_probas, window_size=50)
-        for pred_probas in interpolated_probas.T
+    smoothed_probas = array([
+        filter_butterworth(cls_probas, sample_rate, cutoff_freq=cutoff)
+        for cls_probas in interpolated_probas.T
     ]).T
+    # Append smoothed probabilities
+    if "smoothed_probas" in append_options:
+        results["smoothed_probas"] = smoothed_probas
 
     # Apply a probability threshold to the interpolated probabilities
     # and a `at least event time` duration
     threshold_probas = apply_probability_threshold(smoothed_probas, prob_th)
     threshold_probas = apply_duration_threshold(threshold_probas, sample_rate,
                                                 duration_th)
+    # Append thresholded probabilities
+    if "thresholded_probas" in append_options:
+        results["thresholded_probas"] = threshold_probas
 
     # Plot the modified interpolated probabilities after thresholding
-    if display:
-        plot_interpolated_probas(threshold_probas)
+    thresh_probas_fig = plot_interpolated_probas(threshold_probas)
+    # Append Figure Objects
+    if "figures" in append_options:
+        results["figures"] = {
+            "pred_probas_fig": pred_probas_fig,
+            "interp_probas_fig": interp_probas_fig,
+            "thresh_probas_fig": thresh_probas_fig
+        }
 
     # Extract event segments after applying the rules
     predicted_events = get_continuous_events(threshold_probas)
@@ -186,4 +237,11 @@ def evaluate_instance(
     insertions, corrects, substitutions, deletions = \
         classify_events(predicted_events, ground_truths, IoU_th=iou_th)
 
-    return
+    # Append classified Events
+    if "ICSD" in append_options:
+        results["Insertions"] = insertions
+        results["corrects"] = corrects
+        results["substitutions"] = substitutions
+        results["deletions"] = deletions
+
+    return results
