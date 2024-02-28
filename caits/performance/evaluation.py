@@ -1,19 +1,20 @@
 from typing import Union, Optional
+import os
 from numpy import array
 from sklearn.pipeline import Pipeline
 from tensorflow.keras import Model
 from sklearn.base import BaseEstimator
+from sklearn.preprocessing import LabelEncoder
 from .metrics import intersection_over_union
 from caits.transformers import Dataset
 from caits.performance.utils import generate_pred_probas, \
-    compute_predict_trust_metrics, interpolate_probas
+    compute_predict_trust_metrics, interpolate_probas, extract_intervals
 from caits.visualization import plot_prediction_probas, \
     plot_interpolated_probas
 from caits.performance.detection import extract_non_overlap_probas
 from caits.performance.detection import apply_duration_threshold, \
     apply_probability_threshold, get_continuous_events
 from caits.filtering import filter_butterworth
-
 
 _OPTIONS = [
     "transformed_data", "prediction_probas", "trust_metrics",
@@ -243,5 +244,63 @@ def evaluate_instance(
         results["corrects"] = corrects
         results["substitutions"] = substitutions
         results["deletions"] = deletions
+
+    return results
+
+
+def model_evaluation(
+        pipeline: Pipeline,
+        model: Union[BaseEstimator, Model],
+        batch: Dataset,
+        events: dict,
+        label_encoder: LabelEncoder,
+        sample_rate: int,
+        ws: float,
+        perc_overlap: float,
+        cutoff: float,
+        repeats: int = 5,
+        metrics: str = "all",
+        prob_th: float = 0.7,
+        duration_th: float = 1.,
+        iou_th: float = 0.5,
+        append_options: Optional[list[str]] = None,
+) -> dict:
+
+    results = {}
+
+    # Extracts ground truths for whole pilot dataset
+    ground_truths_dict = extract_intervals(events, label_encoder)
+
+    for i in range(len(batch)):
+        # Take advantage of slicing dunder to return the object
+        pilot_instance = batch[i:i+1]
+
+        # Extract filename to serve as key in global results dict
+        file_path = pilot_instance[0][-1]
+        # Remove extension
+        pilot_instance_filename = os.path.splitext(os.path.basename(file_path))[0]
+
+        # Extract ground truths for specific pilot file
+        ground_truths_instance = ground_truths_dict[pilot_instance_filename]
+
+        # Evaluate single instance
+        instance_results = evaluate_instance(
+            pipeline=pipeline,
+            model=model,
+            instance=pilot_instance,
+            cutoff=cutoff,
+            sample_rate=sample_rate,
+            ws=ws,
+            perc_overlap=perc_overlap,
+            ground_truths=ground_truths_instance,
+            repeats=repeats,
+            metrics=metrics,
+            prob_th=prob_th,
+            duration_th=duration_th,
+            iou_th=iou_th,
+            append_options=append_options,
+        )
+
+        results[pilot_instance_filename] = instance_results
 
     return results
