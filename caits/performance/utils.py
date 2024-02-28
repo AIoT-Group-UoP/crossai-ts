@@ -178,3 +178,51 @@ def interpolate_probas(
         interpolated_probabilities[:, i] = interpolated_probs
 
     return interpolated_probabilities
+
+
+def extract_intervals(
+        data: dict,
+        label_encoder: None,
+        sr: int = None
+) -> list[tuple]:
+    """Extracts and optionally converts start and end intervals from a given
+    JSON structure to samples, encoding labels using a provided label
+    encoder if available. The output is a dictionary keyed by the original
+    keys from `data`, with values being lists of tuples. Each tuple represents
+    an interval, including start and end points, and an encoded label.
+
+    Args:
+        data: The JSON data containing the intervals.
+        label_encoder: An encoder to convert labels into a numerical format.
+        sr: Sampling rate to convert start and end from time to samples.
+            If None, the values are used as is.
+
+    Returns:
+        dict: A dictionary where each key corresponds to the original keys
+              in `data`, and each value is a list of tuples. Each tuple
+              contains the start, end, and an optionally encoded label of
+              an interval.
+
+    Raises:
+        ValueError: If `label` is not a string and no `label_encoder`
+                    is provided.
+    """
+    def encode_label(label):
+        if label_encoder is not None:
+            return label_encoder.transform([label])[0]
+        elif isinstance(label, int):
+            return label
+        else:
+            raise ValueError("Invalid label format type.")
+
+    intervals = {
+        key: [
+            (
+                int(item['start'] * sr) if sr is not None and item.get("type") == "time" else item['start'],
+                int(item['end'] * sr) if sr is not None and item.get("type") == "time" else item['end'],
+                encode_label(item['label'])
+            ) for item in items
+        ] for key, items in data.items()
+    }
+
+    return intervals
