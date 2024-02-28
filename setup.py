@@ -9,6 +9,7 @@ setup(
         "caits.ai.nn1d",
         "caits.ai.nn2d",
         "caits.augmentation",
+        "caits.base",
         "caits.loading",
         "caits.fe",
         "caits.transformers",
@@ -33,6 +34,9 @@ setup(
         "pydub==0.25.1",
         "soundfile==0.12.1",
         "tsaug==0.2.1",
+        "resampy==0.4.2",
+        "samplerate==0.2.1",
+        "soxr==0.3.7",
         "pyyaml==6.0.1",
         "boto3==1.29.2",
         "tqdm==4.66.2"
