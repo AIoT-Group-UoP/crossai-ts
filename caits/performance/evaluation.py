@@ -251,7 +251,7 @@ def evaluate_instance(
 def model_evaluation(
         pipeline: Pipeline,
         model: Union[BaseEstimator, Model],
-        batch: Dataset,
+        dataset: Dataset,
         events: dict,
         label_encoder: LabelEncoder,
         sample_rate: int,
@@ -271,9 +271,9 @@ def model_evaluation(
     # Extracts ground truths for whole pilot dataset
     ground_truths_dict = extract_intervals(events, label_encoder)
 
-    for i in range(len(batch)):
+    for i in range(len(dataset)):
         # Take advantage of slicing dunder to return the object
-        pilot_instance = batch[i:i+1]
+        pilot_instance = dataset[i:i+1]
 
         # Extract filename to serve as key in global results dict
         file_path = pilot_instance[0][-1]
