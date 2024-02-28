@@ -76,7 +76,6 @@ def get_window(
         return window(Nx)
 
     elif isinstance(window, (str, tuple)) or np.isscalar(window):
-        # TODO: if we add custom window functions in librosa, call them here
 
         win: np.ndarray = scipy.signal.get_window(window, Nx, fftbins=fftbins)
         return win
