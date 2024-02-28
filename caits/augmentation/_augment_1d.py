@@ -1,5 +1,7 @@
-from typing import Optional, Union, Tuple, List
+from typing import Optional, Union, Tuple, List, Any
 import numpy as np
+from caits.base import fix_length, is_positive_int, resample
+from caits.base import stft, istft, phase_vocoder
 
 
 def add_white_noise(
@@ -626,4 +628,69 @@ def return_listed_augmentations(
     return augmented_data
 
 
+def time_stretch_ts(
+        y: np.ndarray,
+        *,
+        rate: float,
+        **kwargs: Any
+) -> np.ndarray:
+    # The functionalities in this implementation are basically derived from
+    # librosa v0.10.1:
+    # https://github.com/librosa/librosa/blob/main/librosa/effects.py
 
+    if rate <= 0:
+        raise ValueError("rate must be a positive number")
+
+    # Construct the short-term Fourier transform (STFT)
+    stft_item = stft(y, **kwargs)
+
+    # Stretch by phase vocoding
+    stft_stretch = phase_vocoder(
+        stft_item,
+        rate=rate,
+        hop_length=kwargs.get("hop_length", None),
+        n_fft=kwargs.get("n_fft", None),
+    )
+
+    # Predict the length of y_stretch
+    len_stretch = int(round(y.shape[-1] / rate))
+
+    # Invert the STFT
+    y_stretch = istft(stft_stretch, dtype=y.dtype, length=len_stretch,
+                      **kwargs)
+
+    return y_stretch
+
+
+def pitch_shift_ts(
+    y: np.ndarray,
+    *,
+    sr: float,
+    n_steps: float,
+    bins_per_octave: int = 12,
+    res_type: str = "soxr_hq",
+    scale: bool = False,
+    **kwargs: Any,
+) -> np.ndarray:
+    # The functionalities in this implementation are basically derived from
+    # librosa v0.10.1:
+    # https://github.com/librosa/librosa/blob/main/librosa/effects.py
+
+    if not is_positive_int(bins_per_octave):
+        raise ValueError(
+            f"bins_per_octave={bins_per_octave} must be a positive integer."
+        )
+
+    rate = 2.0 ** (-float(n_steps) / bins_per_octave)
+
+    # Stretch in time, then resample
+    y_shift = resample(
+        time_stretch_ts(y, rate=rate, **kwargs),
+        orig_sr=float(sr) / rate,
+        target_sr=sr,
+        res_type=res_type,
+        scale=scale,
+    )
+
+    # Crop to the same dimension as the input
+    return fix_length(y_shift, size=y.shape[-1])
