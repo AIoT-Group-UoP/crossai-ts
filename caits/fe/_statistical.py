@@ -1,55 +1,74 @@
 import numpy as np
-import scipy.signal
 from scipy.stats import kurtosis, moment, skew
 import math
 
 
-def std_value(array: np.ndarray) -> float:
+def std_value(
+        array: np.ndarray,
+        axis: int = 0
+) -> float:
     """Computes the standard deviation of an audio signal.
 
     Args:
         array: The input signal as a numpy.ndarray.
+        axis: The axis along which to compute the standard deviation.
+            Defaults to 0.
 
     Returns:
         float: The standard deviation of the audio signal.
     """
-    return np.std(array)
+    return np.std(array, axis=axis)
 
 
-def mean_value(array: np.ndarray) -> float:
+def mean_value(
+        array: np.ndarray,
+        axis: int = 0
+) -> float:
     """Computes the mean of an audio signal.
 
     Args:
         array: The input signal as a numpy.ndarray.
+        axis: The axis along which to compute the mean value.
+            Defaults to 0.
 
     Returns:
         float: The mean of the audio signal.
     """
-    return np.mean(array)
+    return np.mean(array, axis=axis)
 
 
-def max_value(array: np.ndarray) -> float:
+def max_value(
+        array: np.ndarray,
+        axis: int = 0
+) -> float:
     """Computes the maximum value of an audio signal.
 
     Args:
         array: The input signal as a numpy.ndarray.
+        axis: The axis along which to compute the maximum value.
+            Defaults to 0.
 
     Returns:
         float: The maximum value of the audio signal.
     """
-    return np.max(array)
+    return np.max(array, axis=axis)
 
 
-def min_value(array: np.ndarray) -> float:
+def min_value(
+        array: np.ndarray,
+        axis: int = 0
+) -> float:
     """Computes the minimum value of a signal.
 
     Args:
         array: The input signal as a numpy.ndarray.
+        axis: The axis along which to compute the minimum value.
+            Defaults to 0.
 
     Returns:
         float: The minimum value of the audio signal.
     """
-    return np.min(array)
+    return np.min(array, axis=axis)
 
 
 def kurtosis_value(array: np.ndarray) -> float:
@@ -142,13 +161,15 @@ def central_moments(array):
 
 def signal_stats(
         arr: np.ndarray,
-        name: str
+        name: str,
+        axis: int = 0
 ) -> dict:
     """Computes the basic statistical information of signal.
 
     Args:
         arr: A 2D NumPy array.
         name: A string with the name of the input array.
+        axis: The axis along which to compute the statistics. Defaults to 0.
 
     Returns:
         Dict: A dictionary containing the mean, max, min, and STD calculations
@@ -156,8 +177,8 @@ def signal_stats(
     """
 
     return {
-        f"{name}_mean": np.mean(arr),
-        f"{name}_max": np.max(arr),
-        f"{name}_min": np.min(arr),
-        f"{name}_std": np.std(arr)
+        f"{name}_mean": np.mean(arr, axis=axis),
+        f"{name}_max": np.max(arr, axis=axis),
+        f"{name}_min": np.min(arr, axis=axis),
+        f"{name}_std": np.std(arr, axis=axis)
     }
