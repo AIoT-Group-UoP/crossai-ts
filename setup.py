@@ -10,6 +10,7 @@ setup(
         "caits.ai.nn2d",
         "caits.augmentation",
         "caits.base",
+        "caits.dataset",
         "caits.loading",
         "caits.fe",
         "caits.transformers",
