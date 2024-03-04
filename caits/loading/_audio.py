@@ -2,7 +2,7 @@ import os
 import wave
 import pandas as pd
 import numpy as np
-from typing import Union, List
+from typing import Union, List, Optional
 from tqdm import tqdm
 import glob
 from caits.preprocessing import resample_2d
@@ -65,7 +65,8 @@ def audio_loader(
         format: str = "wav",
         channels: list = ["Channel_1"],
         export: str = "dict",
-        target_sr: int = None
+        target_sr: int = None,
+        classes: Optional[List[str]] = None
 ) -> Union[pd.DataFrame, dict]:
     """Loads audio files from a directory into a DataFrame
     or dictionary with optional resampling.
@@ -77,6 +78,8 @@ def audio_loader(
         channels: List of channel names for the DataFrame.
         export: Format to export the loaded data, "dict" or "df" for DataFrame.
         target_sr: Optional target sampling rate for resampling.
+        classes: Optional list of directory names to include;
+                 if None, all directories are included.
 
     Returns:
         pd.DataFrame or dict: Loaded and optionally resampled audio
@@ -91,14 +94,18 @@ def audio_loader(
 
     for file_path in tqdm(file_paths, desc="Loading audio files"):
         subdir = os.path.basename(os.path.dirname(file_path))
-        file = os.path.basename(file_path)
-        try:
-            df = _wav_loader(mode, file_path, channels, target_sr=target_sr)
-            all_features.append(df)
-            all_y.append(subdir)
-            all_id.append(file)
-        except Exception as e:
-            print(f"Error loading file {file_path}: {e}")
+
+        # check if desired
+        if classes is None or subdir in classes:
+            file = os.path.basename(file_path)
+            try:
+                df = _wav_loader(mode, file_path, channels,
+                                 target_sr=target_sr)
+                all_features.append(df)
+                all_y.append(subdir)
+                all_id.append(file)
+            except Exception as e:
+                print(f"Error loading file {file_path}: {e}")
 
     if export == "df":
         return pd.DataFrame({
