@@ -2,14 +2,15 @@ import os
 import pandas as pd
 import glob
 from tqdm import tqdm
-from typing import Union, List
+from typing import Union, List, Optional
 
 
 def csv_loader(
         dataset_path: str,
         header: Union[None, int, str] = "infer",
         channels: Union[List[str], None] = None,
-        export: str = "dict"
+        export: str = "dict",
+        classes: Optional[List[str]] = None
 ) -> Union[pd.DataFrame, dict]:
     """Loads CSV files from a directory into a DataFrame or dictionary.
 
@@ -19,6 +20,8 @@ def csv_loader(
                 Defaults to "infer".
         channels: List of column names to use. If None, all columns are used.
         export: Format to export the loaded data, "dict" or "df" for DataFrame.
+        classes: Optional list of directory names to include;
+                 if None, all directories are included.
 
     Returns:
         pd.DataFrame or dict: Loaded CSV data.
@@ -33,19 +36,24 @@ def csv_loader(
 
     for file_path in tqdm(file_paths, desc="Loading CSV files"):
         subdir = os.path.basename(os.path.dirname(file_path))
-        file = os.path.basename(file_path)
-        try:
-            # Load the CSV file, specifying header and column names if provided
-            if channels is not None:
-                df = pd.read_csv(file_path, header=header, usecols=channels)
-            else:
-                df = pd.read_csv(file_path, header=header)
 
-            all_features.append(df)
-            all_y.append(subdir)
-            all_id.append(file)
-        except Exception as e:
-            print(f"Error loading file {file_path}: {e}")
+        # check if desired
+        if classes is None or subdir in classes:
+            file = os.path.basename(file_path)
+            try:
+                # Load the CSV file, specifying header
+                # and column names if provided
+                read_csv_kwargs = {'header': header}
+                if channels is not None:
+                    read_csv_kwargs['usecols'] = channels
+
+                df = pd.read_csv(file_path, **read_csv_kwargs)
+
+                all_features.append(df)
+                all_y.append(subdir)
+                all_id.append(file)
+            except Exception as e:
+                print(f"Error loading file {file_path}: {e}")
 
     # Export the loaded data as a DataFrame or
     # dictionary based on the 'export' argument
