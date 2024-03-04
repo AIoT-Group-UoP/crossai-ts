@@ -3,15 +3,17 @@ from typing import List, Tuple, Callable, Dict
 from caits.dataset import Dataset
 
 
-class Augmenter(BaseEstimator, TransformerMixin):
+class Augmenter1D(BaseEstimator, TransformerMixin):
     """Augmenter Transformer that applies a list of augmentation functions,
     each with its parameters, to each DataFrame within the Dataset.X list,
-    while retaining original instances.
+    while retaining original instances and repeating the augmentation process
+    a specified number of times.
 
     Args:
-        augmentations (list): A list where each element is a tuple consisting 
-                              of an augmentation function and a dictionary of
-                              its parameters.
+        augmentations: A list where each element is a tuple consisting
+                       of an augmentation function and a dictionary of
+                       its parameters.
+        repeats: The number of times each augmentation should be applied.
     """
 
     def __init__(
@@ -36,11 +38,12 @@ class Augmenter(BaseEstimator, TransformerMixin):
             transformed_y.append(label)
             transformed_id.append(id_)
 
-            # Apply each augmentation and append augmented instances
-            for func, params in self.augmentations:
-                augmented_df = df.apply(lambda col: func(col.values, **params))
-                transformed_X.append(augmented_df)
-                transformed_y.append(label)  # Duplicate label
-                transformed_id.append(id_)  # Duplicate ID
+            for _ in range(self.repeats):  # Repeat augmentation process
+                # Apply each augmentation and append augmented instances
+                for func, params in self.augmentations:
+                    augmented_df = df.apply(lambda col: func(col.values, **params))
+                    transformed_X.append(augmented_df)
+                    transformed_y.append(label)  # Duplicate label
+                    transformed_id.append(id_)  # Duplicate ID
 
         return Dataset(transformed_X, transformed_y, transformed_id)
