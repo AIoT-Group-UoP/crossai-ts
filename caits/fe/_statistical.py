@@ -177,8 +177,11 @@ def signal_stats(
     """
 
     return {
-        f"{name}_mean": np.mean(arr, axis=axis),
+
         f"{name}_max": np.max(arr, axis=axis),
         f"{name}_min": np.min(arr, axis=axis),
-        f"{name}_std": np.std(arr, axis=axis)
+        f"{name}_mean": np.mean(arr, axis=axis),
+        f"{name}_median": np.median(arr, axis=axis),
+        f"{name}_std": np.std(arr, axis=axis),
+        f"{name}_var": np.var(arr, axis=axis),
     }
