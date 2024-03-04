@@ -1,3 +1,4 @@
+from typing import Optional
 import os
 from caits.loading import audio_loader, csv_loader
 from ._dataset import Dataset
@@ -6,7 +7,7 @@ from ._dataset import Dataset
 class DataLoader:
 
     @staticmethod
-    def _get_file_types(path):
+    def _get_file_types(path: str) -> set:
         formats = set()
         # Iterate over each item in the given directory
         for item in os.listdir(path):
@@ -23,7 +24,11 @@ class DataLoader:
         return formats
 
     @classmethod
-    def load_from(cls, path):
+    def load_from(
+            cls,
+            path: str,
+            classes: Optional[list[str]] = None
+    ) -> Dataset:
         # check dataset's dir types
         formats = cls._get_file_types(path)
 
@@ -31,9 +36,9 @@ class DataLoader:
         if len(formats) == 1:
             _format = list(formats)[0]
             if _format == "wav":
-                dict_data = audio_loader(path)
+                dict_data = audio_loader(path, classes=classes)
             elif _format == "csv":
-                dict_data = csv_loader(path)
+                dict_data = csv_loader(path, classes=classes)
             else:
                 # No loader implemented for this file format
                 raise NotImplementedError(f"Loading for the {_format} format \
