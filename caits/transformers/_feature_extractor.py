@@ -2,7 +2,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from typing import List, Dict
 from pandas import DataFrame, Series
 import numpy as np
-from ._data_object import Dataset
+from caits.dataset import Dataset
 
 
 class FeatureExtractor(BaseEstimator, TransformerMixin):

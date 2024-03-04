@@ -1,11 +1,11 @@
 from sklearn.base import BaseEstimator, TransformerMixin
 from typing import List, Tuple, Callable, Dict
-from ._data_object import Dataset
+from caits.dataset import Dataset
 
 
 class Augmenter(BaseEstimator, TransformerMixin):
     """Augmenter Transformer that applies a list of augmentation functions,
-    each with its parameters, to each DataFrame within the CAI.X list,
+    each with its parameters, to each DataFrame within the Dataset.X list,
     while retaining original instances.
 
     Args:
@@ -14,8 +14,13 @@ class Augmenter(BaseEstimator, TransformerMixin):
                               its parameters.
     """
 
-    def __init__(self, augmentations: List[Tuple[Callable, Dict]]):
+    def __init__(
+            self,
+            augmentations: List[Tuple[Callable, Dict]],
+            repeats: int = 1
+    ):
         self.augmentations = augmentations
+        self.repeats = repeats
 
     def fit(self, X, y=None):
         return self
