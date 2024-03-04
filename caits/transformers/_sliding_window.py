@@ -1,6 +1,6 @@
 from sklearn.base import BaseEstimator, TransformerMixin
 from caits.windowing import sliding_window_df
-from ._data_object import Dataset
+from caits.dataset import Dataset
 
 
 class SlidingWindow(BaseEstimator, TransformerMixin):

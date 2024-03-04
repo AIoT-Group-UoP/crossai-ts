@@ -1,5 +1,5 @@
 from sklearn.base import BaseEstimator, TransformerMixin
-from ._data_object import Dataset
+from caits.dataset import Dataset
 
 
 class Transformer(BaseEstimator, TransformerMixin):
