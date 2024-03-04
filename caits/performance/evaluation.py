@@ -5,8 +5,8 @@ from sklearn.pipeline import Pipeline
 from tensorflow.keras import Model
 from sklearn.base import BaseEstimator
 from sklearn.preprocessing import LabelEncoder
-from .metrics import intersection_over_union
-from caits.transformers import Dataset
+from caits.dataset import Dataset
+from caits.performance.metrics import intersection_over_union
 from caits.performance.utils import generate_pred_probas, \
     compute_predict_trust_metrics, interpolate_probas, extract_intervals
 from caits.visualization import plot_prediction_probas, \
@@ -248,7 +248,7 @@ def evaluate_instance(
     return results
 
 
-def model_evaluation(
+def evaluate_batch(
         pipeline: Pipeline,
         model: Union[BaseEstimator, Model],
         dataset: Dataset,
