@@ -156,7 +156,29 @@ def central_moments(array):
     moment3 = moment(array, moment=3)
     moment4 = moment(array, moment=4)
 
-    return moment0, moment1, moment2, moment3, moment4
+    return {
+        "moment0": moment0,
+        "moment1": moment1,
+        "moment2": moment2,
+        "moment3": moment3,
+        "moment4": moment4
+    }
+
+
+def signal_length(
+        array: np.ndarray,
+        fs: int
+) -> float:
+    """Computes the length of a signal in seconds.
+
+    Args:
+        array: The input signal as a numpy.ndarray.
+        fs: The sampling frequency of the signal.
+
+    Returns:
+        float: The length of the signal in seconds.
+    """
+    return len(array) / fs
 
 
 def signal_stats(
