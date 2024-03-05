@@ -2,12 +2,14 @@
 # librosa v0.10.1:
 # https://github.com/librosa/librosa/blob/main/librosa/core/spectrum.py
 import warnings
-from typing import Optional, Union, Callable, Tuple, Any
+from typing import Any, Tuple, Optional, Sequence, Union, TypeVar, Callable
 import numpy as np
+import scipy
 from numpy import fft
 from numpy.typing import ArrayLike, DTypeLike
+from typing_extensions import Literal
 from ._checks import is_positive_int, valid_audio, dtype_r2c, dtype_c2r
-from ._utility import frame, pad_center, expand_to, get_window, tiny
+from ._utility import frame, pad_center, expand_to, get_window, tiny, normalize
 from ._utility import __overlap_add, window_sumsquare
 from ._fix import fix_length
 
@@ -15,8 +17,26 @@ from ._fix import fix_length
 # Constrain STFT block sizes to 256 KB
 MAX_MEM_BLOCK = 2**8 * 2**10
 
+_T = TypeVar("_T")
+
+_STFTPad = Literal[
+    "constant",
+    "edge",
+    "linear_ramp",
+    "reflect",
+    "symmetric",
+    "empty",
+]
 _Real = Union[float, "np.integer[Any]", "np.floating[Any]"]
 _Number = Union[complex, "np.number[Any]"]
+_PadModeSTFT = Union[_STFTPad, Callable[..., Any]]
+_WindowSpec = Union[str, Tuple[Any, ...], float, Callable[[int], np.ndarray], ArrayLike]
+_SequenceLike = Union[Sequence[_T], np.ndarray]
+_ScalarOrSequence = Union[_T, _SequenceLike[_T]]
+_BoolLike_co = Union[bool, np.bool_]
+_IntLike_co = Union[_BoolLike_co, int, "np.integer[Any]"]
+_FloatLike_co = Union[_IntLike_co, float, "np.floating[Any]"]
+_ComplexLike_co = Union[_FloatLike_co, complex, "np.complexfloating[Any, Any]"]
 
 
 def stft(
@@ -351,3 +371,89 @@ def istft(
     y[..., approx_nonzero_indices] /= ifft_window_sum[approx_nonzero_indices]
 
     return y
+
+
+def _spectrogram(
+        *,
+        y: Optional[np.ndarray] = None,
+        S: Optional[np.ndarray] = None,
+        n_fft: Optional[int] = 2048,
+        hop_length: Optional[int] = 512,
+        power: float = 1,
+        win_length: Optional[int] = None,
+        window: _WindowSpec = "hann",
+        center: bool = True,
+        pad_mode: _PadModeSTFT = "constant",
+) -> Tuple[np.ndarray, int]:
+    if S is not None:
+        # Infer n_fft from spectrogram shape, but only if it mismatches
+        if n_fft is None or n_fft // 2 + 1 != S.shape[-2]:
+            n_fft = 2 * (S.shape[-2] - 1)
+    else:
+        # Otherwise, compute a magnitude spectrogram from input
+        if n_fft is None:
+            raise ValueError(
+                f"Unable to compute spectrogram with n_fft={n_fft}")
+        if y is None:
+            raise ValueError(
+                "Input signal must be provided to compute a spectrogram"
+            )
+        S = (
+                np.abs(
+                    stft(
+                        y,
+                        n_fft=n_fft,
+                        hop_length=hop_length,
+                        win_length=win_length,
+                        center=center,
+                        window=window,
+                        pad_mode=pad_mode,
+                    )
+                )
+                ** power
+        )
+
+    return S, n_fft
+
+
+
+
+
+def power_to_db(
+        S: _ScalarOrSequence[_ComplexLike_co],
+        *,
+        ref: Union[float, Callable] = 1.0,
+        amin: float = 1e-10,
+        top_db: Optional[float] = 80.0,
+) -> Union[np.floating[Any], np.ndarray]:
+    S = np.asarray(S)
+
+    if amin <= 0:
+        raise ValueError("amin must be strictly positive")
+
+    if np.issubdtype(S.dtype, np.complexfloating):
+        warnings.warn(
+            "power_to_db was called on complex input so phase "
+            "information will be discarded. To suppress this warning, "
+            "call power_to_db(np.abs(D)**2) instead.",
+            stacklevel=2,
+        )
+        magnitude = np.abs(S)
+    else:
+        magnitude = S
+
+    if callable(ref):
+        # User supplied a function to calculate reference power
+        ref_value = ref(magnitude)
+    else:
+        ref_value = np.abs(ref)
+
+    log_spec: np.ndarray = 10.0 * np.log10(np.maximum(amin, magnitude))
+    log_spec -= 10.0 * np.log10(np.maximum(amin, ref_value))
+
+    if top_db is not None:
+        if top_db < 0:
+            raise ValueError("top_db must be non-negative")
+        log_spec = np.maximum(log_spec, log_spec.max() - top_db)
+
+    return log_spec

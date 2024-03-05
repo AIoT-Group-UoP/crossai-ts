@@ -1,4 +1,5 @@
 import numpy as np
+import scipy
 from scipy.stats import kurtosis, moment, skew
 import math
 
@@ -107,26 +108,68 @@ def sample_skewness(array):
     return skew(array, bias=False)
 
 
+# def rms_value(array: np.ndarray) -> float:
+#     """Computes the Root Mean Square value of a signal.
+#
+#     Args:
+#         array: Input signal as a numpy.ndarray.
+#
+#     Returns:
+#         float: The Root Mean Square value of the signal.
+#     """
+#     square = 0
+#     n = len(array)
+#     # Calculate square
+#     for i in range(0, n):
+#         square += (array[i] ** 2)
+#     # Calculate Mean
+#     mean = (square / float(n))
+#     # Calculate Root
+#     root = math.sqrt(mean)
+#
+#     return root
+
+
 def rms_value(array: np.ndarray) -> float:
-    """Computes the Root Mean Square value of a signal.
+    """Computes the RMS Power value of a signal.
 
     Args:
-        array: Input signal as a numpy.ndarray.
+        array: The input signal as a numpy.ndarray.
 
     Returns:
-        float: The Root Mean Square value of the signal.
+        float: The RMS Power of the signal.
     """
-    square = 0
-    n = len(array)
-    # Calculate square
-    for i in range(0, n):
-        square += (array[i] ** 2)
-    # Calculate Mean
-    mean = (square / float(n))
-    # Calculate Root
-    root = math.sqrt(mean)
+    return np.sqrt(np.mean(np.square(array)))
 
-    return root
+
+def zcr_value(array: np.ndarray) -> float:
+    """Computes the zero crossing rate of a signal.
+
+    Args:
+        array: The input signal as a numpy.ndarray.
+
+    Returns:
+        float: The zero crossing rate of the signal.
+    """
+    return np.sum(np.multiply(array[0:-1], array[1:]) < 0) / (len(array) - 1)
+
+
+def dominant_frequency(
+    array: np.ndarray
+) -> float:
+    """Computes the dominant frequency of a signal.
+
+    Args:
+        array: The input signal as a numpy.ndarray.
+
+    Returns:
+        float: The dominant frequency of the signal.
+    """
+
+    array_fortan = np.asfortranarray(array)
+    freqs, psd = scipy.signal.welch(array_fortan)
+
+    return freqs[np.argmax(psd)]
 
 
 def central_moments(array):
