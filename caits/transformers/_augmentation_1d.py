@@ -1,5 +1,5 @@
 from sklearn.base import BaseEstimator, TransformerMixin
-from typing import List, Tuple, Callable, Dict
+from typing import List, Dict
 from caits.dataset import Dataset
 
 
@@ -10,15 +10,15 @@ class Augmenter1D(BaseEstimator, TransformerMixin):
     a specified number of times.
 
     Args:
-        augmentations: A list where each element is a tuple consisting
-                       of an augmentation function and a dictionary of
-                       its parameters.
+        augmentations: A list where each element is a dictionary consisting
+                       of an augmentation function under the key 'func' and
+                       a dictionary of its parameters under the key 'params'.
         repeats: The number of times each augmentation should be applied.
     """
 
     def __init__(
             self,
-            augmentations: List[Tuple[Callable, Dict]],
+            augmentations: List[Dict[str, Dict]],
             repeats: int = 1
     ):
         self.augmentations = augmentations
@@ -40,8 +40,9 @@ class Augmenter1D(BaseEstimator, TransformerMixin):
 
             for _ in range(self.repeats):  # Repeat augmentation process
                 # Apply each augmentation and append augmented instances
-                for func, params in self.augmentations:
-                    augmented_df = df.apply(lambda col: func(col.values, **params))
+                for augmentation in self.augmentations:
+                    _callable = augmentation["func"]
+                    augmented_df = df.apply(lambda col: _callable(col.values, **augmentation["params"]))
                     transformed_X.append(augmented_df)
                     transformed_y.append(label)  # Duplicate label
                     transformed_id.append(id_)  # Duplicate ID
