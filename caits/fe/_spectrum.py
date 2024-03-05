@@ -19,9 +19,6 @@ def fft(
     return np.fft.rfft(array)
 
 
-
-
-
 def compute_spectrogram(
         signal: np.ndarray,
         fs: int,
