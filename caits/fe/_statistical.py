@@ -1,6 +1,7 @@
 import numpy as np
 import scipy
 from scipy.stats import kurtosis, moment, skew
+from typing import Union
 
 
 def std_value(
@@ -83,7 +84,7 @@ def kurtosis_value(array: np.ndarray) -> float:
     return kurtosis(array)
 
 
-def sample_skewness(array):
+def sample_skewness(array) -> float:
     """
     Calculate the sample skewness of an array using scipy.
 
@@ -105,28 +106,6 @@ def sample_skewness(array):
         raise ValueError("Input array must have at least 3 elements")
 
     return skew(array, bias=False)
-
-
-# def rms_value(array: np.ndarray) -> float:
-#     """Computes the Root Mean Square value of a signal.
-#
-#     Args:
-#         array: Input signal as a numpy.ndarray.
-#
-#     Returns:
-#         float: The Root Mean Square value of the signal.
-#     """
-#     square = 0
-#     n = len(array)
-#     # Calculate square
-#     for i in range(0, n):
-#         square += (array[i] ** 2)
-#     # Calculate Mean
-#     mean = (square / float(n))
-#     # Calculate Root
-#     root = math.sqrt(mean)
-#
-#     return root
 
 
 def rms_value(array: np.ndarray) -> float:
@@ -171,15 +150,21 @@ def dominant_frequency(
     return freqs[np.argmax(psd)]
 
 
-def central_moments(array):
+def central_moments(
+    array: np.ndarray,
+    export: str = "array"
+) -> Union[np.ndarray, dict]:
     """
-    Calculate the 0th, 1st, 2nd, 3rd, and 4th central moments of an array using scipy.
+    Calculate the 0th, 1st, 2nd, 3rd, and 4th central moments of an array using
+    scipy.
 
     Args:
-        array (numpy.ndarray): Input array.
+        array: The input signal as a numpy.ndarray.
+        export: The export format. Can be "array" or "dict". Defaults to
+            "array".
 
     Returns:
-        tuple: A tuple containing the 0th, 1st, 2nd, 3rd, and 4th central moments.
+        Union[np.ndarray, dict]: The central moments of the input array.
 
     Raises:
         ValueError: If the input array is empty.
@@ -197,14 +182,18 @@ def central_moments(array):
     moment2 = moment(array, moment=2)
     moment3 = moment(array, moment=3)
     moment4 = moment(array, moment=4)
-
-    return {
-        "moment0": moment0,
-        "moment1": moment1,
-        "moment2": moment2,
-        "moment3": moment3,
-        "moment4": moment4
-    }
+    if export == "array":
+        return np.array([moment0, moment1, moment2, moment3, moment4])
+    elif export == "dict":
+        return {
+            "moment0": moment0,
+            "moment1": moment1,
+            "moment2": moment2,
+            "moment3": moment3,
+            "moment4": moment4
+        }
+    else:
+        raise ValueError(f"Unsupported export={export}")
 
 
 def signal_length(
