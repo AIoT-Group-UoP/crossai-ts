@@ -130,11 +130,13 @@ def underlying_spectral(
 
 def spectral_flatness(
     array: np.ndarray,
-    fs: int
+    fs: int,
+    nperseg_th: int = 900,
+    noverlap_th: int = 600
 ) -> float:
 
-    nperseg = min(900, len(array))
-    noverlap = min(600, int(nperseg/2))
+    nperseg = min(nperseg_th, len(array))
+    noverlap = min(noverlap_th, int(nperseg/2))
     freqs, psd = scipy.signal.welch(array, fs, nperseg=nperseg,
                                     noverlap=noverlap)
     psd_len = len(psd)
@@ -146,10 +148,12 @@ def spectral_flatness(
 
 def spectral_std(
     array: np.ndarray,
-    fs: int
+    fs: int,
+    nperseg_th: int = 900,
+    noverlap_th: int = 600
 ) -> float:
-    nperseg = min(900, len(array))
-    noverlap = min(600, int(nperseg / 2))
+    nperseg = min(nperseg_th, len(array))
+    noverlap = min(noverlap_th, int(nperseg / 2))
     _, psd = scipy.signal.welch(array, fs, nperseg=nperseg, noverlap=noverlap)
 
     return np.std(psd)
