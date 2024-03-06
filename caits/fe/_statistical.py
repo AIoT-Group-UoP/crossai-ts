@@ -1,7 +1,6 @@
 import numpy as np
 import scipy
 from scipy.stats import kurtosis, moment, skew
-import math
 
 
 def std_value(
