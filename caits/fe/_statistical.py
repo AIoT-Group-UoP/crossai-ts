@@ -226,8 +226,13 @@ def signal_length(
 def crest_factor(
     array: np.ndarray
 ) -> float:
-    """
-    Compute the crest factor of the signal
+    """Computes the crest factor of the signal
+
+    Args:
+        array: The input signal as a numpy.ndarray.
+
+    Returns:
+        float: The crest factor of the signal.
     """
 
     peak = np.amax(np.absolute(array))
