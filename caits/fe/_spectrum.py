@@ -22,15 +22,15 @@ def fft(
 def pre(
     array: np.ndarray,
     fs: int
-):
+) -> float:
     """Computes the Phase Power Ratio Estimation
 
     Args:
-        array:
-        fs:
+        array: np.ndarray of shape (n_samples,) with the input signal.
+        fs: The sampling frequency of the signal.
 
     Returns:
-
+        float: The Phase Power Ratio Estimation of the input signal.
     """
     phaseLen = int(array.shape[0]//3)
     P1 = array[:phaseLen]
