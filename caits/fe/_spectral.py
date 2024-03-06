@@ -1,4 +1,5 @@
 import numpy as np
+import scipy
 
 
 def spectral_centroid(array: np.ndarray, fs: int) -> float:
@@ -127,6 +128,33 @@ def underlying_spectral(
     return magnitudes, freqs, sum_mag
 
 
+def spectral_flatness(
+    array: np.ndarray,
+    fs: int
+) -> float:
+
+    nperseg = min(900, len(array))
+    noverlap = min(600, int(nperseg/2))
+    freqs, psd = scipy.signal.welch(array, fs, nperseg=nperseg,
+                                    noverlap=noverlap)
+    psd_len = len(psd)
+    gmean = np.exp((1/psd_len)*np.sum(np.log(psd + 1e-17)))
+    amean = (1/psd_len)*np.sum(psd)
+
+    return gmean/amean
+
+
+def spectral_std(
+    array: np.ndarray,
+    fs: int
+) -> float:
+    nperseg = min(900, len(array))
+    noverlap = min(600, int(nperseg / 2))
+    _, psd = scipy.signal.welch(array, fs, nperseg=nperseg, noverlap=noverlap)
+
+    return np.std(psd)
+
+
 def spectral_values(
         array: np.ndarray,
         fs: int,
@@ -154,3 +182,5 @@ def spectral_values(
         "spectral_kurtosis": spectral_kurtosis(array, fs),
         "spectral_bandwidth": spectral_bandwidth(array, fs, p)
     }
+
+
