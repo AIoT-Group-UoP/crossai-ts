@@ -182,11 +182,13 @@ def spectral_slope(
 
 def spectral_decrease(
     array: np.ndarray,
-    fs: int
+    fs: int,
+    b1_th: int = 0,
+    b2_th: int = 8000
 ) -> float:
 
-    b1 = 0
-    b2 = 8000
+    b1 = b1_th
+    b2 = b2_th
 
     s = np.absolute(np.fft.fft(array))
     s = s[:s.shape[0] // 2]
