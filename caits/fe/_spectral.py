@@ -117,6 +117,7 @@ def underlying_spectral(
     array: np.ndarray,
     fs: int
 ) -> tuple[np.ndarray, np.ndarray, float]:
+
     magnitudes = np.abs(
         np.fft.rfft(array))  # magnitudes of positive frequencies
     length = len(array)
@@ -152,6 +153,7 @@ def spectral_std(
     nperseg_th: int = 900,
     noverlap_th: int = 600
 ) -> float:
+
     nperseg = min(nperseg_th, len(array))
     noverlap = min(noverlap_th, int(nperseg / 2))
     _, psd = scipy.signal.welch(array, fs, nperseg=nperseg, noverlap=noverlap)
@@ -161,11 +163,13 @@ def spectral_std(
 
 def spectral_slope(
     array: np.ndarray,
-    fs: int
+    fs: int,
+    b1_th: int = 0,
+    b2_th: int = 8000
 ) -> float:
 
-    b1 = 0
-    b2 = 8000
+    b1 = b1_th
+    b2 = b2_th
 
     s = np.absolute(np.fft.fft(array))
     s = s[:s.shape[0] // 2]
