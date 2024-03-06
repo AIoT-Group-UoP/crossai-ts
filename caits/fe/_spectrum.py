@@ -1,7 +1,36 @@
 import numpy as np
-import scipy.signal
+import scipy
 from scipy.signal import stft
-from scipy.signal import get_window
+from caits.base import get_window
+
+
+def pre(
+    array: np.ndarray,
+    fs: int
+) -> float:
+    """Computes the Phase Power Ratio Estimation
+
+    Args:
+        array: np.ndarray of shape (n_samples,) with the input signal.
+        fs: The sampling frequency of the signal.
+
+    Returns:
+        float: The Phase Power Ratio Estimation of the input signal.
+    """
+    phaseLen = int(array.shape[0]//3)
+    P1 = array[:phaseLen]
+    P2 = array[phaseLen:2*phaseLen]
+    # P3 = array[2*phaseLen:]
+    # f = np.fft.fftfreq(phaseLen, 1/fs)
+    P1 = np.abs(np.fft.fft(P1)[:phaseLen])
+    P2 = np.abs(np.fft.fft(P2)[:phaseLen])
+    # P3 = np.abs(np.fft.fft(P3)[:phaseLen])
+    P2norm = P2/(np.sum(P1)+1e-17)
+    fBin = fs/(2*phaseLen +1e-17)
+    f750, f1k, f2k5 = (int(-(-750//fBin)), int(-(-1000//fBin)),
+                       int(-(-2500//fBin)))
+
+    return np.sum(P2norm[f1k:f2k5]) / np.sum(P2norm[:f750])
 
 
 def compute_spectrogram(
