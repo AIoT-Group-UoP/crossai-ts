@@ -1,6 +1,7 @@
 import numpy as np
 import scipy
 from scipy.stats import kurtosis, moment, skew
+from scipy.signal import butter, filtfilt, find_peaks
 from typing import Union
 
 
@@ -228,6 +229,51 @@ def crest_factor(
     rms = rms_value(array)
 
     return peak / rms
+
+
+def envelope_energy_peak_detection(
+    array: np.ndarray,
+    fs: int,
+    start: int = 50,
+    stop: int = 1000,
+    freq_step: int = 50,
+    fcl_add: int = 50,
+    export: str = "array"
+) -> Union[np.ndarray, dict]:
+    """Computes the Envelope Energy Peak Detection of a signal.
+
+    Args:
+        array:
+        fs:
+        start:
+        stop:
+        freq_step:
+        fcl_add:
+        export:
+
+    Returns:
+
+    """
+    names = []
+
+    f_nyq = fs/2
+    n_peaks = []
+    for fcl in range(start, stop, freq_step):
+        names = names + ['EEPD'+str(fcl)+'_'+str(fcl+freq_step)]
+        fc = [fcl/f_nyq, (fcl + fcl_add)/f_nyq]
+        b, a = butter(1, fc, btype='bandpass')
+        bp_filter = filtfilt(b, a, array)
+        b, a = butter(2, 10/f_nyq, btype='lowpass')
+        eed = filtfilt(b, a, bp_filter**2)
+        eed = eed/np.max(eed+1e-17)
+        peaks,_ = find_peaks(eed)
+        n_peaks.append(peaks.shape[0])
+    if export == "array":
+        return np.array(n_peaks)
+    elif export == "dict":
+        return dict(zip(names, n_peaks))
+    else:
+        raise ValueError(f"Unsupported export={export}")
 
 
 def signal_stats(
