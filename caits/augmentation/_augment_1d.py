@@ -1,7 +1,8 @@
 from typing import Optional, Union, Tuple, List, Any
 import numpy as np
 from caits.base import fix_length, is_positive_int, resample
-from caits.base import stft, istft, phase_vocoder
+from caits.fe._spectrum_lib import stft_lib, istft_lib
+from caits.base import phase_vocoder
 
 
 def add_white_noise(
@@ -634,7 +635,7 @@ def time_stretch_ts(
         rate: float,
         **kwargs: Any
 ) -> np.ndarray:
-    # The functionalities in this implementation are basically derived from
+    # The functionality in this implementation are basically derived from
     # librosa v0.10.1:
     # https://github.com/librosa/librosa/blob/main/librosa/effects.py
 
@@ -642,7 +643,7 @@ def time_stretch_ts(
         raise ValueError("rate must be a positive number")
 
     # Construct the short-term Fourier transform (STFT)
-    stft_item = stft(y, **kwargs)
+    stft_item = stft_lib(y, **kwargs)
 
     # Stretch by phase vocoding
     stft_stretch = phase_vocoder(
@@ -656,8 +657,8 @@ def time_stretch_ts(
     len_stretch = int(round(y.shape[-1] / rate))
 
     # Invert the STFT
-    y_stretch = istft(stft_stretch, dtype=y.dtype, length=len_stretch,
-                      **kwargs)
+    y_stretch = istft_lib(stft_stretch, dtype=y.dtype, length=len_stretch,
+                          **kwargs)
 
     return y_stretch
 
@@ -672,7 +673,7 @@ def pitch_shift_ts(
     scale: bool = False,
     **kwargs: Any,
 ) -> np.ndarray:
-    # The functionalities in this implementation are basically derived from
+    # The functionality in this implementation are basically derived from
     # librosa v0.10.1:
     # https://github.com/librosa/librosa/blob/main/librosa/effects.py
 

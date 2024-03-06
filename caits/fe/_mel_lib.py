@@ -2,65 +2,81 @@
 # librosa v0.10.1:
 # https://github.com/librosa/librosa/blob/main/librosa/core/spectrum.py
 import warnings
-from typing import Any, Tuple, Optional, Sequence, Union, TypeVar, Callable
+from typing import Any, Optional, Union
 import numpy as np
 import scipy
-from numpy.typing import ArrayLike, DTypeLike
+from numpy.typing import DTypeLike
 from typing_extensions import Literal
-from ..base._utility import expand_to, normalize
-from ..base._frequency import _spectrogram, power_to_db
-
-_T = TypeVar("_T")
-
-_STFTPad = Literal[
-    "constant",
-    "edge",
-    "linear_ramp",
-    "reflect",
-    "symmetric",
-    "empty",
-]
-_Real = Union[float, "np.integer[Any]", "np.floating[Any]"]
-_Number = Union[complex, "np.number[Any]"]
-_PadModeSTFT = Union[_STFTPad, Callable[..., Any]]
-_WindowSpec = Union[str, Tuple[Any, ...], float, Callable[[int], np.ndarray], ArrayLike]
-_SequenceLike = Union[Sequence[_T], np.ndarray]
-_ScalarOrSequence = Union[_T, _SequenceLike[_T]]
-_BoolLike_co = Union[bool, np.bool_]
-_IntLike_co = Union[_BoolLike_co, int, "np.integer[Any]"]
-_FloatLike_co = Union[_IntLike_co, float, "np.floating[Any]"]
-_ComplexLike_co = Union[_FloatLike_co, complex, "np.complexfloating[Any, Any]"]
+from caits.base import expand_to, normalize
+from caits.fe._spectrum_lib import spectrogram_lib, power_to_db_lib
+from caits.base._typing_base import _WindowSpec, _PadModeSTFT, _ScalarOrSequence, _FloatLike_co
 
 
-def mfcc_stat(
+def mfcc_stats(
     y: Optional[np.ndarray] = None,
     sr: int = 22050,
     S: Optional[np.ndarray] = None,
-    n_mfcc: int = 20,
+    n_mfcc: int = 13,
     dct_type: int = 2,
     norm: Optional[str] = "ortho",
     lifter: float = 0,
-    export: str = "dict",
+    export: str = "array",
     **kwargs: Any,
-) -> Union[Tuple[float, float], dict]:
-    mfcc_arr = mfcc(y=y, sr=sr, S=S, n_mfcc=n_mfcc, dct_type=dct_type,
-                    norm=norm, lifter=lifter, **kwargs)
+) -> Union[np.ndarray, dict]:
+
+    mfcc_arr = mfcc_lib(y=y, sr=sr, S=S, n_mfcc=n_mfcc, dct_type=dct_type,
+                        norm=norm, lifter=lifter, **kwargs)
+    delta_arr = delta_lib(mfcc_arr)
 
     mfcc_mean = np.mean(mfcc_arr, axis=1)
     mfcc_std = np.std(mfcc_arr, axis=1)
+    delta_mean = np.mean(delta_arr, axis=1 )
 
-    if export == "values":
-        return mfcc_mean, mfcc_std
+    if export == "array":
+        return np.concatenate([mfcc_mean, mfcc_std, delta_mean], axis=1)
     elif export == "dict":
         return {
             "mfcc_mean": mfcc_mean,
-            "mfcc_std": mfcc_std
+            "mfcc_std": mfcc_std,
+            "delta_mean": delta_mean
         }
     else:
         raise ValueError(f"Unsupported export={export}")
 
 
-def mfcc(
+def delta_lib(
+    data: np.ndarray,
+    *,
+    width: int = 9,
+    order: int = 1,
+    axis: int = -1,
+    mode: str = "interp",
+    **kwargs: Any,
+) -> np.ndarray:
+
+    data = np.atleast_1d(data)
+
+    if mode == "interp" and width > data.shape[axis]:
+        raise ValueError(
+            f"when mode='interp', width={width} "
+            f"cannot exceed data.shape[axis]={data.shape[axis]}"
+        )
+
+    if width < 3 or np.mod(width, 2) != 1:
+        raise ValueError("width must be an odd integer >= 3")
+
+    if order <= 0 or not isinstance(order, (int, np.integer)):
+        raise ValueError("order must be a positive integer")
+
+    kwargs.pop("deriv", None)
+    kwargs.setdefault("polyorder", order)
+    result: np.ndarray = scipy.signal.savgol_filter(
+        data, width, deriv=order, axis=axis, mode=mode, **kwargs
+    )
+    return result
+
+
+def mfcc_lib(
     y: Optional[np.ndarray] = None,
     sr: int = 22050,
     S: Optional[np.ndarray] = None,
@@ -73,7 +89,7 @@ def mfcc(
     if S is None:
     # multichannel behavior may be different due to relative noise floor
     # differences between channels
-        S = power_to_db(melspectrogram(y=y, sr=sr, **kwargs))
+        S = power_to_db_lib(melspectrogram_lib(y=y, sr=sr, **kwargs))
 
     M: np.ndarray = scipy.fftpack.dct(S, axis=-2, type=dct_type, norm=norm)[
         ..., :n_mfcc, :
@@ -151,7 +167,7 @@ def filter_mel(
     return weights
 
 
-def melspectrogram(
+def melspectrogram_lib(
         *,
         y: Optional[np.ndarray] = None,
         sr: float = 22050,
@@ -165,7 +181,7 @@ def melspectrogram(
         power: float = 2.0,
         **kwargs: Any,
 ) -> np.ndarray:
-    S, n_fft = _spectrogram(
+    S, n_fft = spectrogram_lib(
         y=y,
         S=S,
         n_fft=n_fft,

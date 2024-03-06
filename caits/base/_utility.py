@@ -8,13 +8,7 @@ import numpy as np
 import scipy
 from numpy.typing import ArrayLike, DTypeLike
 from numpy.lib.stride_tricks import as_strided
-
-_BoolLike_co = Union[bool, np.bool_]
-_UIntLike_co = Union[_BoolLike_co, "np.unsignedinteger[Any]"]
-_IntLike_co = Union[_BoolLike_co, int, "np.integer[Any]"]
-_FloatLike_co = Union[_IntLike_co, float, "np.floating[Any]"]
-
-_WindowSpec = Union[str, Tuple[Any, ...], float, Callable[[int], np.ndarray], ArrayLike]
+from ._typing_base import _FloatLike_co, _WindowSpec
 
 
 def frame(
