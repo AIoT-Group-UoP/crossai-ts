@@ -180,7 +180,9 @@ def spectral_values(
         "spectral_spread": spectral_spread(array, fs),
         "spectral_skewness": spectral_skewness(array, fs),
         "spectral_kurtosis": spectral_kurtosis(array, fs),
-        "spectral_bandwidth": spectral_bandwidth(array, fs, p)
+        "spectral_bandwidth": spectral_bandwidth(array, fs, p),
+        "spectral_flatness": spectral_flatness(array, fs),
+        "spectral_std": spectral_std(array, fs)
     }
 
 
