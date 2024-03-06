@@ -202,6 +202,34 @@ def spectral_decrease(
     return decrease
 
 
+def power_spectral_density(
+    array: np.ndarray,
+    fs: int,
+    nperseg_th: int = 900,
+    noverlap_th: int = 600,
+    freq_cuts: list[tuple[int, int]] = [(0,200),(300,425),(500,650),(950,1150),
+                                        (1400,1800),(2300,2400),(2850,2950),
+                                        (3800,3900)]
+) -> dict[str, float]:
+    from scipy.integrate import simps
+
+    feat = []
+    nperseg = min(nperseg_th, len(array))
+    noverlap=min(noverlap_th, int(nperseg/2))
+    freqs, psd = scipy.signal.welch(array, fs, nperseg=nperseg,
+                                    noverlap=noverlap)
+    dx_freq = freqs[1]-freqs[0]
+    total_power = simps(psd, dx=dx_freq)
+    for lf, hf in freq_cuts:
+        idx_band = np.logical_and(freqs >= lf, freqs <= hf)
+        band_power = simps(psd[idx_band], dx=dx_freq)
+        feat.append(band_power/total_power)
+    feat = np.array(feat)
+    feat_names = [f'PSD_{lf}-{hf}' for lf, hf in freq_cuts]
+
+    return dict(zip(feat_names, feat))
+
+
 def spectral_values(
         array: np.ndarray,
         fs: int,
