@@ -279,7 +279,8 @@ def envelope_energy_peak_detection(
 def signal_stats(
         arr: np.ndarray,
         name: str,
-        axis: int = 0
+        axis: int = 0,
+        fs: int = 44100
 ) -> dict:
     """Computes the basic statistical information of signal.
 
@@ -287,6 +288,7 @@ def signal_stats(
         arr: A 2D NumPy array.
         name: A string with the name of the input array.
         axis: The axis along which to compute the statistics. Defaults to 0.
+        fs: The sampling frequency of the signal. Defaults to 44100.
 
     Returns:
         Dict: A dictionary containing the mean, max, min, and STD calculations
@@ -301,4 +303,11 @@ def signal_stats(
         f"{name}_median": np.median(arr, axis=axis),
         f"{name}_std": np.std(arr, axis=axis),
         f"{name}_var": np.var(arr, axis=axis),
+        f"{name}_kurtosis": kurtosis_value(arr),
+        f"{name}_skewness": sample_skewness(arr),
+        f"{name}_rms": rms_value(arr),
+        f"{name}_zcr": zcr_value(arr),
+        f"{name}_dominant_frequency": dominant_frequency(arr),
+        f"{name}_crest_factor": crest_factor(arr),
+        f"{name}_signal_length": signal_length(arr, fs=fs)
     }
