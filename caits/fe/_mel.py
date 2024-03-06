@@ -32,6 +32,34 @@ _FloatLike_co = Union[_IntLike_co, float, "np.floating[Any]"]
 _ComplexLike_co = Union[_FloatLike_co, complex, "np.complexfloating[Any, Any]"]
 
 
+def mfcc_stat(
+    y: Optional[np.ndarray] = None,
+    sr: int = 22050,
+    S: Optional[np.ndarray] = None,
+    n_mfcc: int = 20,
+    dct_type: int = 2,
+    norm: Optional[str] = "ortho",
+    lifter: float = 0,
+    export: str = "dict",
+    **kwargs: Any,
+) -> Union[Tuple[float, float], dict]:
+    mfcc_arr = mfcc(y=y, sr=sr, S=S, n_mfcc=n_mfcc, dct_type=dct_type,
+                    norm=norm, lifter=lifter, **kwargs)
+
+    mfcc_mean = np.mean(mfcc_arr, axis=1)
+    mfcc_std = np.std(mfcc_arr, axis=1)
+
+    if export == "values":
+        return mfcc_mean, mfcc_std
+    elif export == "dict":
+        return {
+            "mfcc_mean": mfcc_mean,
+            "mfcc_std": mfcc_std
+        }
+    else:
+        raise ValueError(f"Unsupported export={export}")
+
+
 def mfcc(
     y: Optional[np.ndarray] = None,
     sr: int = 22050,
