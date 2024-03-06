@@ -1,22 +1,7 @@
 import numpy as np
-import scipy.signal
+import scipy
 from scipy.signal import stft
-from scipy.signal import get_window
-
-
-def fft(
-    array: np.ndarray,
-) -> np.ndarray:
-    """Computes the spectrum using FFT
-
-    Args:
-        array: np.ndarray of shape (n_samples,) with the input signal.
-
-    Returns:
-        spectrum: np.ndarray with the spectrum of the input signal.
-    """
-
-    return np.fft.rfft(array)
+from caits.base import get_window
 
 
 def pre(
