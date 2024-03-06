@@ -1,45 +1,25 @@
 # The functionalities in this implementation are basically derived from
 # librosa v0.10.1:
 # https://github.com/librosa/librosa/blob/main/librosa/core/spectrum.py
-import warnings
-from typing import Any, Tuple, Optional, Sequence, Union, TypeVar, Callable
 import numpy as np
-import scipy
+from scipy.signal import stft
+from scipy.signal import get_window
+import warnings
+from typing import Any, Tuple, Optional, Union, Callable
 from numpy import fft
 from numpy.typing import ArrayLike, DTypeLike
-from typing_extensions import Literal
-from ._checks import is_positive_int, valid_audio, dtype_r2c, dtype_c2r
-from ._utility import frame, pad_center, expand_to, get_window, tiny, normalize
-from ._utility import __overlap_add, window_sumsquare
-from ._fix import fix_length
+from caits.base import is_positive_int, valid_audio, dtype_r2c, dtype_c2r
+from caits.base import frame, pad_center, expand_to, get_window, tiny
+from caits.base import __overlap_add, window_sumsquare
+from caits.base import fix_length
+from caits.base._typing_base import _WindowSpec, _PadModeSTFT, _ScalarOrSequence, _ComplexLike_co
 
 
 # Constrain STFT block sizes to 256 KB
 MAX_MEM_BLOCK = 2**8 * 2**10
 
-_T = TypeVar("_T")
 
-_STFTPad = Literal[
-    "constant",
-    "edge",
-    "linear_ramp",
-    "reflect",
-    "symmetric",
-    "empty",
-]
-_Real = Union[float, "np.integer[Any]", "np.floating[Any]"]
-_Number = Union[complex, "np.number[Any]"]
-_PadModeSTFT = Union[_STFTPad, Callable[..., Any]]
-_WindowSpec = Union[str, Tuple[Any, ...], float, Callable[[int], np.ndarray], ArrayLike]
-_SequenceLike = Union[Sequence[_T], np.ndarray]
-_ScalarOrSequence = Union[_T, _SequenceLike[_T]]
-_BoolLike_co = Union[bool, np.bool_]
-_IntLike_co = Union[_BoolLike_co, int, "np.integer[Any]"]
-_FloatLike_co = Union[_IntLike_co, float, "np.floating[Any]"]
-_ComplexLike_co = Union[_FloatLike_co, complex, "np.complexfloating[Any, Any]"]
-
-
-def stft(
+def stft_lib(
     y: np.ndarray,
     *,
     n_fft: int = 2048,
@@ -69,6 +49,10 @@ def stft(
     Returns:
 
     """
+    # The functionality in this implementation are basically derived from
+    # librosa v0.10.1:
+    # https://github.com/librosa/librosa/blob/main/librosa/core/spectrum.py
+
     # By default, use the entire frame
     if win_length is None:
         win_length = n_fft
@@ -237,7 +221,7 @@ def stft(
     return stft_matrix
 
 
-def istft(
+def istft_lib(
     stft_matrix: np.ndarray,
     *,
     hop_length: Optional[int] = None,
@@ -249,6 +233,10 @@ def istft(
     length: Optional[int] = None,
     out: Optional[np.ndarray] = None,
 ) -> np.ndarray:
+    # The functionality in this implementation are basically derived from
+    # librosa v0.10.1:
+    # https://github.com/librosa/librosa/blob/main/librosa/core/spectrum.py
+
     if n_fft is None:
         n_fft = 2 * (stft_matrix.shape[-2] - 1)
 
@@ -373,7 +361,7 @@ def istft(
     return y
 
 
-def _spectrogram(
+def spectrogram_lib(
         *,
         y: Optional[np.ndarray] = None,
         S: Optional[np.ndarray] = None,
@@ -385,6 +373,7 @@ def _spectrogram(
         center: bool = True,
         pad_mode: _PadModeSTFT = "constant",
 ) -> Tuple[np.ndarray, int]:
+
     if S is not None:
         # Infer n_fft from spectrogram shape, but only if it mismatches
         if n_fft is None or n_fft // 2 + 1 != S.shape[-2]:
@@ -400,7 +389,7 @@ def _spectrogram(
             )
         S = (
                 np.abs(
-                    stft(
+                    stft_lib(
                         y,
                         n_fft=n_fft,
                         hop_length=hop_length,
@@ -416,16 +405,18 @@ def _spectrogram(
     return S, n_fft
 
 
-
-
-
-def power_to_db(
+def power_to_db_lib(
         S: _ScalarOrSequence[_ComplexLike_co],
         *,
         ref: Union[float, Callable] = 1.0,
         amin: float = 1e-10,
         top_db: Optional[float] = 80.0,
 ) -> Union[np.floating[Any], np.ndarray]:
+
+    # The functionality in this implementation are basically derived from
+    # librosa v0.10.1:
+    # https://github.com/librosa/librosa/blob/main/librosa/core/spectrum.py
+
     S = np.asarray(S)
 
     if amin <= 0:
