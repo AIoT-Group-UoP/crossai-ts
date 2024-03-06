@@ -155,6 +155,49 @@ def spectral_std(
     return np.std(psd)
 
 
+def spectral_slope(
+    array: np.ndarray,
+    fs: int
+) -> float:
+
+    b1 = 0
+    b2 = 8000
+
+    s = np.absolute(np.fft.fft(array))
+    s = s[:s.shape[0] // 2]
+    muS = np.mean(s)
+    f = np.linspace(0, fs / 2, s.shape[0])
+    muF = np.mean(f)
+
+    bidx = np.where(np.logical_and(b1 <= f, f <= b2))
+    slope = np.sum(((f - muF) * (s - muS))[bidx]) / np.sum(
+        (f[bidx] - muF) ** 2)
+
+    return slope
+
+
+def spectral_decrease(
+    array: np.ndarray,
+    fs: int
+) -> float:
+
+    b1 = 0
+    b2 = 8000
+
+    s = np.absolute(np.fft.fft(array))
+    s = s[:s.shape[0] // 2]
+    f = np.linspace(0, fs / 2, s.shape[0])
+
+    bidx = np.where(np.logical_and(b1 <= f, f <= b2))
+
+    k = bidx[0][1:]
+    sb1 = s[bidx[0][0]]
+    decrease = np.sum((s[k] - sb1) / (f[k] - 1 + 1e-17)) / (
+                np.sum(s[k]) + 1e-17)
+
+    return decrease
+
+
 def spectral_values(
         array: np.ndarray,
         fs: int,
@@ -182,7 +225,9 @@ def spectral_values(
         "spectral_kurtosis": spectral_kurtosis(array, fs),
         "spectral_bandwidth": spectral_bandwidth(array, fs, p),
         "spectral_flatness": spectral_flatness(array, fs),
-        "spectral_std": spectral_std(array, fs)
+        "spectral_std": spectral_std(array, fs),
+        "spectral_slope": spectral_slope(array, fs),
+        "spectral_decrease": spectral_decrease(array, fs)
     }
 
 
