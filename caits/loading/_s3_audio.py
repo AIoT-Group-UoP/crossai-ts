@@ -6,15 +6,14 @@ import boto3
 import io
 
 
-def _s3_wav_loader(
+def s3_wav_loader(
         file_content: bytes,
         channels: List[str] = ["channel_1"]
 ) -> pd.DataFrame:
     """Loads an audio file into a DataFrame.
 
     Args:
-        mode: "scipy" | "pydub" | "soundfile"
-        file_path: Path to the audio file.
+        file_content: The audio file as bytes.
         channels: List of channel names.
 
     Returns:
@@ -67,7 +66,7 @@ def s3_audio_loader(
                 if file_path.endswith(f".{format}"):
                     try:
                         obj = s3.get_object(Bucket=bucket, Key=file_path)
-                        audio_data = _s3_wav_loader(obj["Body"].read(), channels)
+                        audio_data = s3_wav_loader(obj["Body"].read(), channels)
                         all_features.append(audio_data)
                         all_y.append(file_path.split("/")[-2])
                         all_id.append(file_path.split("/")[-1])

@@ -8,7 +8,7 @@ import glob
 from caits.preprocessing import resample_2d
 
 
-def _wav_loader(
+def wav_loader(
         mode: str = "soundfile",
         file_path: str = None,
         channels: List[str] = None,
@@ -99,8 +99,8 @@ def audio_loader(
         if classes is None or subdir in classes:
             file = os.path.basename(file_path)
             try:
-                df = _wav_loader(mode, file_path, channels,
-                                 target_sr=target_sr)
+                df = wav_loader(mode, file_path, channels,
+                                target_sr=target_sr)
                 all_features.append(df)
                 all_y.append(subdir)
                 all_id.append(file)
