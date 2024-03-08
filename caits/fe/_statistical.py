@@ -22,6 +22,23 @@ def std_value(
     return np.std(array, axis=axis)
 
 
+def variance_value(
+        array: np.ndarray,
+        axis: int = 0
+) -> float:
+    """Computes the variance of an audio signal.
+
+    Args:
+        array: The input signal as a numpy.ndarray.
+        axis: The axis along which to compute the variance.
+            Defaults to 0.
+
+    Returns:
+        float: The variance of the audio signal.
+    """
+    return np.var(array, axis=axis)
+
+
 def mean_value(
         array: np.ndarray,
         axis: int = 0
@@ -37,6 +54,23 @@ def mean_value(
         float: The mean of the audio signal.
     """
     return np.mean(array, axis=axis)
+
+
+def median_value(
+        array: np.ndarray,
+        axis: int = 0
+) -> float:
+    """Computes the median of an audio signal.
+
+    Args:
+        array: The input signal as a numpy.ndarray.
+        axis: The axis along which to compute the median value.
+            Defaults to 0.
+
+    Returns:
+        float: The median of the audio signal.
+    """
+    return np.median(array, axis=axis)
 
 
 def max_value(
@@ -199,18 +233,26 @@ def central_moments(
 
 def signal_length(
         array: np.ndarray,
-        fs: int
+        fs: int,
+        time_mode: str = "time"
 ) -> float:
     """Computes the length of a signal in seconds.
 
     Args:
         array: The input signal as a numpy.ndarray.
         fs: The sampling frequency of the signal.
+        time_mode: The export format. Can be "time" or "samples". Defaults to
+            "time".
 
     Returns:
         float: The length of the signal in seconds.
     """
-    return len(array) / fs
+    if time_mode == "time":
+        return len(array) / fs
+    elif time_mode == "samples":
+        return len(array)
+    else:
+        raise ValueError(f"Unsupported export={time_mode}")
 
 
 def crest_factor(
@@ -280,7 +322,8 @@ def signal_stats(
         arr: np.ndarray,
         name: str,
         axis: int = 0,
-        fs: int = 44100
+        fs: int = 44100,
+        time_mode: str = "time"
 ) -> dict:
     """Computes the basic statistical information of signal.
 
@@ -289,6 +332,8 @@ def signal_stats(
         name: A string with the name of the input array.
         axis: The axis along which to compute the statistics. Defaults to 0.
         fs: The sampling frequency of the signal. Defaults to 44100.
+        time_mode: The export format. Can be "time" or "samples". Defaults to
+            "time".
 
     Returns:
         Dict: A dictionary containing the mean, max, min, and STD calculations
@@ -297,17 +342,17 @@ def signal_stats(
 
     return {
 
-        f"{name}_max": np.max(arr, axis=axis),
-        f"{name}_min": np.min(arr, axis=axis),
-        f"{name}_mean": np.mean(arr, axis=axis),
-        f"{name}_median": np.median(arr, axis=axis),
-        f"{name}_std": np.std(arr, axis=axis),
-        f"{name}_var": np.var(arr, axis=axis),
+        f"{name}_max": max_value(arr, axis=axis),
+        f"{name}_min": min_value(arr, axis=axis),
+        f"{name}_mean": mean_value(arr, axis=axis),
+        f"{name}_median": median_value(arr, axis=axis),
+        f"{name}_std": std_value(arr, axis=axis),
+        f"{name}_var": variance_value(arr, axis=axis),
         f"{name}_kurtosis": kurtosis_value(arr),
         f"{name}_skewness": sample_skewness(arr),
         f"{name}_rms": rms_value(arr),
         f"{name}_zcr": zcr_value(arr),
         f"{name}_dominant_frequency": dominant_frequency(arr),
         f"{name}_crest_factor": crest_factor(arr),
-        f"{name}_signal_length": signal_length(arr, fs=fs)
+        f"{name}_signal_length": signal_length(arr, fs=fs, time_mode=time_mode)
     }
