@@ -2,6 +2,23 @@ import numpy as np
 import scipy
 
 
+def underlying_spectral(
+        array: np.ndarray,
+        fs: int
+) -> tuple[np.ndarray, np.ndarray, float]:
+    """Computes the underlying spectral values of a signal."""
+    # Magnitudes of positive frequencies
+    magnitudes = np.abs(np.fft.rfft(array))
+    # Length of the array
+    length = len(array)
+    # Frequencies of positive frequencies
+    freqs = np.fft.rfftfreq(length, 1.0 / fs)
+    # Sum of magnitudes
+    sum_mag = np.sum(magnitudes)
+
+    return magnitudes, freqs, sum_mag
+
+
 def spectral_centroid(array: np.ndarray, fs: int) -> float:
     """Computes the spectral centroid of a signal.
 
@@ -49,8 +66,7 @@ def spectral_spread(array: np.ndarray, fs: int) -> float:
     magnitudes, freqs, sum_mag = underlying_spectral(array, fs)
     spec_centroid = spectral_centroid(array, fs)
 
-    return np.sqrt(np.sum(((freqs - spec_centroid) ** 2) * magnitudes) /
-                   sum_mag)
+    return np.sqrt(np.sum(((freqs - spec_centroid) ** 2) * magnitudes) / sum_mag)
 
 
 def spectral_skewness(array: np.ndarray, fs: int) -> float:
@@ -111,22 +127,6 @@ def spectral_bandwidth(
     spec_centroid = spectral_centroid(array, fs)
 
     return (np.sum(magnitudes*(freqs - spec_centroid)**p))**(1/p)
-
-
-def underlying_spectral(
-    array: np.ndarray,
-    fs: int
-) -> tuple[np.ndarray, np.ndarray, float]:
-
-    magnitudes = np.abs(
-        np.fft.rfft(array))  # magnitudes of positive frequencies
-    length = len(array)
-    freqs = np.abs(np.fft.fftfreq(length, 1.0 / fs)[
-                   :length // 2 + 1])  # positive frequencies
-
-    sum_mag = np.sum(magnitudes)
-
-    return magnitudes, freqs, sum_mag
 
 
 def spectral_flatness(
