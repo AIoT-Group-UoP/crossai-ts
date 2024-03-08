@@ -30,15 +30,19 @@ def mfcc_stats(
 
     mfcc_mean = np.mean(mfcc_arr, axis=1)
     mfcc_std = np.std(mfcc_arr, axis=1)
-    delta_mean = np.mean(delta_arr, axis=1 )
+    delta_mean = np.mean(delta_arr, axis=1)
+    delta2_mean = np.mean(delta_lib(mfcc_arr, order=2), axis=1)
 
     if export == "array":
-        return np.concatenate([mfcc_mean, mfcc_std, delta_mean], axis=1)
+        return np.concatenate([mfcc_mean, mfcc_std, delta_mean,
+                               delta2_mean],
+                              axis=1)
     elif export == "dict":
         return {
             "mfcc_mean": mfcc_mean,
             "mfcc_std": mfcc_std,
-            "delta_mean": delta_mean
+            "delta_mean": delta_mean,
+            "delta2_mean": delta2_mean,
         }
     else:
         raise ValueError(f"Unsupported export={export}")
