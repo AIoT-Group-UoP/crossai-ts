@@ -134,7 +134,8 @@ def zcr_value(array: np.ndarray) -> float:
 
 
 def dominant_frequency(
-    array: np.ndarray
+    array: np.ndarray,
+    fs: int
 ) -> float:
     """Computes the dominant frequency of a signal.
 
@@ -145,8 +146,8 @@ def dominant_frequency(
         float: The dominant frequency of the signal.
     """
 
-    array_fortan = np.asfortranarray(array)
-    freqs, psd = scipy.signal.welch(array_fortan)
+    nperseg = array.shape[0]
+    freqs, psd = scipy.signal.welch(x=array, fs=fs, nperseg=nperseg)
 
     return freqs[np.argmax(psd)]
 
