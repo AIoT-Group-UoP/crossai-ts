@@ -1,2 +1,2 @@
-from ._dataset import Dataset
+from ._dataset import Dataset, ArrayToDataset
 from ._loader import DataLoader

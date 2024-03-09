@@ -1,4 +1,6 @@
 from typing import List
+
+import pandas as pd
 from pandas import DataFrame
 import numpy as np
 
@@ -71,6 +73,38 @@ class Dataset:
         id_np = np.array(self._id)
         return X_np, y_np, id_np
 
+    def to_dict(self):
+        """Converts data to Dictionary."""
+        X_list = []
+        y_list = []
+        id_list = []
+        for i in range(0, len(self)):
+            X_list.append(self.X[i])
+            y_list.append(self.y[i])
+            id_list.append(self._id[i])
+
+        return {
+            "X": X_list,
+            "y": y_list,
+            "id": id_list
+        }
+
+    def to_df(self):
+        """Converts data to Pandas DataFrames."""
+        X_list = []
+        y_list = []
+        id_list = []
+        for i in range(0, len(self)):
+            X_list.append(self.X[i])
+            y_list.append(self.y[i])
+            id_list.append(self._id[i])
+
+        return pd.DataFrame({
+            "X": X_list,
+            "y": y_list,
+            "id": id_list
+        })
+
     def train_test_split(self, test_size=0.2):
         """Splits the dataset into training and testing subsets."""
         total_samples = len(self)
@@ -91,3 +125,34 @@ class Dataset:
 
         return Dataset(X_train, y_train, id_train), \
             Dataset(X_test, y_test, id_test)
+
+
+def ArrayToDataset(
+        X,
+        y,
+        _id=None
+) -> Dataset:
+    """Converts a 1D NumPy array, in which each row is a DataFrame, to a
+    CrossAI Dataset object
+
+    Args:
+        X: np.ndarray of DataFrames.
+        y: np.ndarray of labels.
+        _id: np.ndarray of instance IDs.
+
+    Returns:
+        Dataset: The CrossAI Dataset object.
+    """
+
+    if _id is None:
+        _id = []
+        for i in range(len(X)):
+            _id.append("No info available")
+    else:
+        _id = np.ndarray.tolist(_id)
+
+    return Dataset(
+        X=np.ndarray.tolist(X),
+        y=np.ndarray.tolist(y),
+        id=_id
+    )
