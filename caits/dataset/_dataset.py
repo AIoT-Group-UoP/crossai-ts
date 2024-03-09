@@ -128,12 +128,13 @@ class Dataset:
 
 
 def ArrayToDataset(
-        X,
-        y,
-        _id=None
+        X: np.ndarray,
+        y: np.ndarray,
+        _id: np.ndarray = None
 ) -> Dataset:
     """Converts a 1D NumPy array, in which each row is a DataFrame, to a
-    CrossAI Dataset object
+    CrossAI Dataset object. The features, labels, and instance IDs are in
+    the form (features,), (labels,) and (instance IDs,).
 
     Args:
         X: np.ndarray of DataFrames.
@@ -154,5 +155,33 @@ def ArrayToDataset(
     return Dataset(
         X=np.ndarray.tolist(X),
         y=np.ndarray.tolist(y),
+        id=_id
+    )
+
+
+def ListToDataset(
+        X,
+        y,
+        _id=None
+) -> Dataset:
+    """Converts a list of DataFrames to a CrossAI Dataset object.
+
+    Args:
+        X: list of DataFrames.
+        y: list of labels.
+        _id: list of instance IDs.
+
+    Returns:
+        Dataset: The CrossAI Dataset object.
+    """
+
+    if _id is None:
+        _id = []
+        for i in range(len(X)):
+            _id.append("No info available")
+
+    return Dataset(
+        X=X,
+        y=y,
         id=_id
     )
