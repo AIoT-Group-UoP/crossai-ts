@@ -14,7 +14,7 @@ def wav_loader(
         channels: List[str] = None,
         target_sr: int = None
 ) -> pd.DataFrame:
-    """Loads and optionally resamples a mono or multi-channel audio
+    """Loads and optionally resamples a mono or multichannel audio
     file into a DataFrame, ensuring the output is always 2D.
 
     Args:
