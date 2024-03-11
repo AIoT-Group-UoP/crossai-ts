@@ -127,7 +127,8 @@ def rolling_zcr(
         center: bool = True
 ) -> np.ndarray:
     """Calculates the rolling Zero Crossing Rate (ZCR) of a signal in
-    time-domain.
+    time-domain. Implementation based on:
+    - https://www.sciencedirect.com/topics/engineering/zero-crossing-rate
 
     Args:
         array: The input signal as a numpy.ndarray.
