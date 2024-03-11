@@ -124,7 +124,8 @@ def rolling_zcr(
         array: np.ndarray,
         frame_length: int = 2048,
         hop_length: int = 512,
-        center: bool = True
+        center: bool = True,
+        padding_mode: str = "edge"
 ) -> np.ndarray:
     """Calculates the rolling Zero Crossing Rate (ZCR) of a signal in
     time-domain. Implementation based on:
@@ -136,6 +137,10 @@ def rolling_zcr(
         hop_length: The number of samples to advance between frames (overlap).
         center: If True, the signal is padded on both sides to center the
             frames.
+        padding_mode: A string with the padding mode to use when padding the
+            signal. Defaults to "edge". Check numpy.pad for more
+            information about the relevant padding modes.
+            https://numpy.org/doc/stable/reference/generated/numpy.pad.html
 
     Returns:
         numpy.ndarray: The rolling ZCR of the input signal.
@@ -144,7 +149,7 @@ def rolling_zcr(
     if center:
         # Reflect padding on both sides for centering frames
         pad_length = frame_length // 2
-        sig = np.pad(array, pad_length, mode="edge")
+        sig = np.pad(array, pad_length, mode=padding_mode)
 
     frames = frame_signal(sig, frame_length, hop_length)
 
