@@ -236,6 +236,36 @@ def power_spectral_density(
     return dict(zip(feat_names, feat))
 
 
+def zcr_mean(
+    array: np.ndarray,
+    frame_length: int = 2048,
+    hop_length: int = 512,
+    center: bool = True,
+    padding_mode: str = "edge"
+) -> float:
+    """Calculates the mean zero-crossing rate of a signal based on the rolling
+    zero-crossing rate.
+
+    Args:
+        array: The input signal as a numpy.ndarray.
+        frame_length: The length of the frame.
+        hop_length: The number of samples to advance between frames (overlap).
+        center: If True, the signal is padded on both sides to center the
+            frames.
+        padding_mode: A string with the padding mode to use when padding the
+            signal. Defaults to "edge". Check numpy.pad for more
+            information about the relevant padding modes.
+            https://numpy.org/doc/stable/reference/generated/numpy.pad.html
+
+    Returns:
+        float: The mean zero-crossing rate of the input signal.
+    """
+    from caits.properties import rolling_zcr
+
+    return rolling_zcr(array, frame_length, hop_length, center,
+                       padding_mode).mean()
+
+
 def spectral_values(
         array: np.ndarray,
         fs: int,

@@ -118,3 +118,74 @@ def magnitude_signal(signal: np.ndarray) -> np.ndarray:
         numpy.ndarray: The magnitude of the input signal.
     """
     return np.sqrt(np.sum(signal**2, axis=1))
+
+
+def rolling_zcr(
+        array: np.ndarray,
+        frame_length: int = 2048,
+        hop_length: int = 512,
+        center: bool = True,
+        padding_mode: str = "edge"
+) -> np.ndarray:
+    """Calculates the rolling Zero Crossing Rate (ZCR) of a signal in
+    time-domain. Implementation based on:
+    - https://www.sciencedirect.com/topics/engineering/zero-crossing-rate
+
+    Args:
+        array: The input signal as a numpy.ndarray.
+        frame_length: The length of the frame in samples.
+        hop_length: The number of samples to advance between frames (overlap).
+        center: If True, the signal is padded on both sides to center the
+            frames.
+        padding_mode: A string with the padding mode to use when padding the
+            signal. Defaults to "edge". Check numpy.pad for more
+            information about the relevant padding modes.
+            https://numpy.org/doc/stable/reference/generated/numpy.pad.html
+
+    Returns:
+        numpy.ndarray: The rolling ZCR of the input signal.
+    """
+    sig = None
+    if center:
+        # Reflect padding on both sides for centering frames
+        pad_length = frame_length // 2
+        sig = np.pad(array, pad_length, mode=padding_mode)
+
+    frames = frame_signal(sig, frame_length, hop_length)
+
+    # Calculate zero crossings
+    # Check where adjacent samples in the frame have different signs and
+    # count these occurrences.
+    zero_crossings = np.abs(np.diff(np.signbit(frames), axis=0))
+    zcr = np.sum(zero_crossings, axis=0) / float(frame_length)
+
+    return zcr
+
+
+def frame_signal(
+        array: np.ndarray,
+        frame_length: int,
+        hop_length: int
+) -> np.ndarray:
+    """Distinguishes a signal into overlapping frames.
+
+    Args:
+        array: The input signal as a numpy.ndarray.
+        frame_length: The length of the frame in samples.
+        hop_length: The number of samples to advance between frames (overlap).
+
+    Returns:
+        numpy.ndarray: The framed signal in the form of a 2D numpy.ndarray
+            (frame_length x num_frames).
+    """
+    # Number of frames
+    num_frames = 1 + int(np.floor((len(array) - frame_length) / hop_length))
+    # Row indices
+    rows = np.arange(frame_length)[:, None]
+    # Column indices
+    cols = np.arange(num_frames) * hop_length
+    # Index matrix for each frame
+    indices = rows + cols
+    # Frame the signal according to calculated indices
+    frames = array[indices]
+    return frames
