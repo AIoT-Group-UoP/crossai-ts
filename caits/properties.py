@@ -118,3 +118,49 @@ def magnitude_signal(signal: np.ndarray) -> np.ndarray:
         numpy.ndarray: The magnitude of the input signal.
     """
     return np.sqrt(np.sum(signal**2, axis=1))
+
+
+def rolling_zcr(array, frame_length=2048, hop_length=512, center=True):
+    """Calculates the rolling Zero Crossing Rate (ZCR) of a signal in
+    time-domain.
+
+    Args:
+        array: The input signal as a numpy.ndarray.
+        frame_length: The length of the frame in samples.
+        hop_length: The number of samples to advance between frames (overlap).
+        center: If True, the signal is padded on both sides to center the
+            frames.
+
+    Returns:
+
+    """
+    sig = None
+    if center:
+        # Reflect padding on both sides for centering frames
+        pad_length = frame_length // 2
+        sig = np.pad(array, pad_length, mode="edge")
+
+    frames = frame_signal(sig, frame_length, hop_length)
+    print(frames.shape)
+
+    # Calculate zero crossings
+    # Check where adjacent samples in the frame have different signs and
+    # count these occurrences.
+    zero_crossings = np.abs(np.diff(np.signbit(frames), axis=0))
+    zcr = np.sum(zero_crossings, axis=0) / float(frame_length)
+
+    return zcr
+
+
+def frame_signal(signal, frame_length, hop_length):
+    # Number of frames
+    num_frames = 1 + int(np.floor((len(signal) - frame_length) / hop_length))
+    # Row indices
+    rows = np.arange(frame_length)[:, None]
+    # Column indices
+    cols = np.arange(num_frames) * hop_length
+    # Index matrix for each frame
+    indices = rows + cols
+    # Frame the signal according to calculated indices
+    frames = signal[indices]
+    return frames
