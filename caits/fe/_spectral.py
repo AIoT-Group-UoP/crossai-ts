@@ -262,9 +262,8 @@ def zcr_mean(
     """
     from caits.properties import rolling_zcr
 
-    return rolling_zcr(array, frame_length,
-                       hop_length, center, padding_mode
-                       ).mean()
+    return rolling_zcr(array, frame_length, hop_length, center,
+                       padding_mode).mean()
 
 
 def spectral_values(
