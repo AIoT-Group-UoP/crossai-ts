@@ -120,7 +120,12 @@ def magnitude_signal(signal: np.ndarray) -> np.ndarray:
     return np.sqrt(np.sum(signal**2, axis=1))
 
 
-def rolling_zcr(array, frame_length=2048, hop_length=512, center=True):
+def rolling_zcr(
+        array: np.ndarray,
+        frame_length: int = 2048,
+        hop_length: int = 512,
+        center: bool = True
+) -> np.ndarray:
     """Calculates the rolling Zero Crossing Rate (ZCR) of a signal in
     time-domain.
 
@@ -132,7 +137,7 @@ def rolling_zcr(array, frame_length=2048, hop_length=512, center=True):
             frames.
 
     Returns:
-
+        numpy.ndarray: The rolling ZCR of the input signal.
     """
     sig = None
     if center:
@@ -141,7 +146,6 @@ def rolling_zcr(array, frame_length=2048, hop_length=512, center=True):
         sig = np.pad(array, pad_length, mode="edge")
 
     frames = frame_signal(sig, frame_length, hop_length)
-    print(frames.shape)
 
     # Calculate zero crossings
     # Check where adjacent samples in the frame have different signs and
@@ -152,9 +156,24 @@ def rolling_zcr(array, frame_length=2048, hop_length=512, center=True):
     return zcr
 
 
-def frame_signal(signal, frame_length, hop_length):
+def frame_signal(
+        array: np.ndarray,
+        frame_length: int,
+        hop_length: int
+) -> np.ndarray:
+    """Distinguishes a signal into overlapping frames.
+
+    Args:
+        array: The input signal as a numpy.ndarray.
+        frame_length: The length of the frame in samples.
+        hop_length: The number of samples to advance between frames (overlap).
+
+    Returns:
+        numpy.ndarray: The framed signal in the form of a 2D numpy.ndarray
+            (frame_length x num_frames).
+    """
     # Number of frames
-    num_frames = 1 + int(np.floor((len(signal) - frame_length) / hop_length))
+    num_frames = 1 + int(np.floor((len(array) - frame_length) / hop_length))
     # Row indices
     rows = np.arange(frame_length)[:, None]
     # Column indices
@@ -162,5 +181,5 @@ def frame_signal(signal, frame_length, hop_length):
     # Index matrix for each frame
     indices = rows + cols
     # Frame the signal according to calculated indices
-    frames = signal[indices]
+    frames = array[indices]
     return frames
