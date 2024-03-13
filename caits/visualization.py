@@ -223,18 +223,20 @@ def plot_spectrogram(
     plt.show()
 
 
-def plot_mel_spectrogram(mel_spectrogram: np.ndarray) -> None:
-    """Plots a Mel spectrogram.
+def plot_simple_spectrogram(
+        spectrogram: np.ndarray, 
+        title: str = "Spectrogram") -> None:
+    """Simple function that plots a Spectrogram.
 
     Args:
-        mel_spectrogram: The array of mel spectrogram in np.ndarray.
+        spectrogram: The array of the spectrogram in 2D np.ndarray.
 
     Returns:
 
     """
-    plt.imshow(mel_spectrogram, aspect='auto', origin='lower')
+    plt.imshow(spectrogram, aspect='auto', origin='lower')
     plt.colorbar()
-    plt.xlabel('Time')
-    plt.ylabel('Mel Frequency')
-    plt.title('Mel Spectrogram')
+    plt.xlabel("Time")
+    plt.ylabel("Frequency")
+    plt.title(title)
     plt.show()        
