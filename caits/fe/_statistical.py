@@ -255,6 +255,32 @@ def signal_length(
         raise ValueError(f"Unsupported export={time_mode}")
 
 
+def energy(array: np.ndarray) -> float:
+    """Computes the energy of a signal:
+    https://dsp.stackexchange.com/questions/3377/calculating-the-total-energy-of-a-signal
+
+    Args:
+        array: The input signal in 1D numpy.ndarray.
+
+    Returns:
+        float: The energy of the signal.
+    """
+    return np.sum(np.square(array))
+
+
+def average_power(array: np.ndarray) -> float:
+    """Computes the average power of a signal:
+    https://dsp.stackexchange.com/questions/3377/calculating-the-total-energy-of-a-signal
+
+    Args:
+        array: The input signal in 1D numpy.ndarray.
+
+    Returns:
+        float: The average power of the signal.
+    """
+    return np.sum(np.square(array)) / len(array)
+
+
 def crest_factor(
     array: np.ndarray
 ) -> float:
