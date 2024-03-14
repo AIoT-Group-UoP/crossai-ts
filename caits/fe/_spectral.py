@@ -107,7 +107,6 @@ def underlying_spectral(
     return magnitudes, freqs, sum_mag
 
 
-
 def spectral_bandwidth(
         array: np.ndarray,
         fs: int
@@ -116,15 +115,18 @@ def spectral_bandwidth(
     ower spectrum.
 
     Args:
-        signal: 1-D numpy.ndarray containing the time-domain samples of the signal.
-        fs: An integter that defines the sampling frequency of the signal in Hz.
+        array: 1-D numpy.ndarray containing the time-domain samples of the
+            signal.
+        fs: An integter that defines the sampling frequency of the signal in
+            Hz.
 
     Returns:
         float: Spectral bandwidth of the signal.
 
     Note:
-        The spectral bandwidth is calculated based on the standard deviation of the
-        power spectrum, providing a measure of its spread in the frequency domain.
+        The spectral bandwidth is calculated based on the standard deviation
+        of the power spectrum, providing a measure of its spread in the
+        frequency domain.
 
     Example:
         >>> fs = 1000  # Sampling frequency in Hz
@@ -134,22 +136,22 @@ def spectral_bandwidth(
         >>> print(f"Spectral Bandwidth: {bw} Hz")
     """
     # Compute the FFT
-    fft_result = np.fft.fft(signal)
+    fft_result = np.fft.fft(array)
     
     # Calculate the two-sided power spectrum
     power_spectrum = np.abs(fft_result) ** 2
     
     # Consider only the positive frequencies (single-sided spectrum)
-    if signal.size % 2 == 0:
-        power_spectrum = power_spectrum[:signal.size // 2] * 2
+    if array.size % 2 == 0:
+        power_spectrum = power_spectrum[:array.size // 2] * 2
     else:
-        power_spectrum = power_spectrum[:(signal.size - 1) // 2] * 2
+        power_spectrum = power_spectrum[:(array.size - 1) // 2] * 2
     
     # Normalize power spectrum
     power_spectrum /= np.sum(power_spectrum)
     
     # Frequency vector
-    freqs = np.fft.fftfreq(signal.size, d=1/fs)[:signal.size // 2]
+    freqs = np.fft.fftfreq(array.size, d=1/fs)[:array.size // 2]
     
     # Mean frequency (center of gravity)
     mean_freq = np.sum(freqs * power_spectrum)
