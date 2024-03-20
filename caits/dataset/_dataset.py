@@ -93,7 +93,8 @@ class Dataset:
             test_size=0.2,
             stratify=None,
             random_state=None,
-            return_as_dataset=True
+            shuffle=True,
+            as_numpy=False
     ):
         """Splits the dataset into training and testing subsets,
         with an option to stratify the split.
@@ -101,23 +102,28 @@ class Dataset:
 
         # Apply stratification if requested
         stratify_labels = self.y if stratify else None
-        print(stratify_labels)
+
         # Use sklearn's train_test_split
         X_train, X_test, y_train, y_test, id_train, id_test = sklearn_tts(
             self.X, self.y, self._id,
             test_size=test_size,
             stratify=stratify_labels,
-            random_state=random_state
+            random_state=random_state,
+            shuffle=shuffle
         )
 
-        if return_as_dataset:
-            # Convert back to Dataset objects if requested
-            train_dataset = Dataset(X_train, y_train, id_train)
-            test_dataset = Dataset(X_test. y_test, id_test)
-        else:
-            # Return as numpy arrays
-            train_dataset = (X_train, y_train, id_train)
-            test_dataset = (X_test, y_test, id_test)
+        # Convert back to Dataset objects if requested
+        train_dataset = Dataset(X_train, y_train, id_train)
+        test_dataset = Dataset(X_test, y_test, id_test)
+
+        if as_numpy:
+            try:
+                # Return as numpy arrays
+                train_dataset = train_dataset.to_numpy()
+                test_dataset = test_dataset.to_numpy()
+            except ValueError:
+                print("Cannot convert to numpy arrays due to length inconsistency.")
+                print("Returning `Dataset` objects instead.")
 
         return train_dataset, test_dataset
 
