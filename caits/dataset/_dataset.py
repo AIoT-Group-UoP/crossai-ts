@@ -1,6 +1,5 @@
 from typing import List
-
-import pandas as pd
+from sklearn.model_selection import train_test_split as sklearn_tts
 from pandas import DataFrame
 import numpy as np
 
@@ -75,56 +74,58 @@ class Dataset:
 
     def to_dict(self):
         """Converts data to Dictionary."""
-        X_list = []
-        y_list = []
-        id_list = []
-        for i in range(0, len(self)):
-            X_list.append(self.X[i])
-            y_list.append(self.y[i])
-            id_list.append(self._id[i])
-
         return {
-            "X": X_list,
-            "y": y_list,
-            "id": id_list
+            "X": self.X,
+            "y": self.y,
+            "id": self._id
         }
 
     def to_df(self):
         """Converts data to Pandas DataFrames."""
-        X_list = []
-        y_list = []
-        id_list = []
-        for i in range(0, len(self)):
-            X_list.append(self.X[i])
-            y_list.append(self.y[i])
-            id_list.append(self._id[i])
-
-        return pd.DataFrame({
-            "X": X_list,
-            "y": y_list,
-            "id": id_list
+        return DataFrame({
+            "X": self.X,
+            "y": self.y,
+            "id": self._id
         })
 
-    def train_test_split(self, test_size=0.2):
-        """Splits the dataset into training and testing subsets."""
-        total_samples = len(self)
-        test_samples = int(total_samples * test_size)
-        indices = np.arange(total_samples)
-        np.random.shuffle(indices)
+    def train_test_split(
+            self,
+            test_size=0.2,
+            stratify=None,
+            random_state=None,
+            shuffle=True,
+            as_numpy=False
+    ):
+        """Splits the dataset into training and testing subsets,
+        with an option to stratify the split.
+        """
 
-        test_indices = indices[:test_samples]
-        train_indices = indices[test_samples:]
+        # Apply stratification if requested
+        stratify_labels = self.y if stratify else None
 
-        X_train = [self.X[i] for i in train_indices]
-        y_train = [self.y[i] for i in train_indices]
-        id_train = [self._id[i] for i in train_indices]
+        # Use sklearn's train_test_split
+        X_train, X_test, y_train, y_test, id_train, id_test = sklearn_tts(
+            self.X, self.y, self._id,
+            test_size=test_size,
+            stratify=stratify_labels,
+            random_state=random_state,
+            shuffle=shuffle
+        )
 
-        X_test = [self.X[i] for i in test_indices]
-        y_test = [self.y[i] for i in test_indices]
-        id_test = [self._id[i] for i in test_indices]
+        # Convert back to Dataset objects if requested
+        train_dataset = Dataset(X_train, y_train, id_train)
+        test_dataset = Dataset(X_test, y_test, id_test)
 
-        return Dataset(X_train, y_train, id_train), \
-            Dataset(X_test, y_test, id_test)
+        if as_numpy:
+            try:
+                # Return as numpy arrays
+                train_dataset = train_dataset.to_numpy()
+                test_dataset = test_dataset.to_numpy()
+            except ValueError:
+                print("Cannot convert to numpy arrays due to length inconsistency.")
+                print("Returning `Dataset` objects instead.")
+
+        return train_dataset, test_dataset
 
 
 def ArrayToDataset(
