@@ -42,7 +42,8 @@ class Augmenter1D(BaseEstimator, TransformerMixin):
                 # Apply each augmentation and append augmented instances
                 for augmentation in self.augmentations:
                     _callable = augmentation["func"]
-                    augmented_df = df.apply(lambda col: _callable(col.values, **augmentation["params"]))
+                    _params = augmentation["params"]
+                    augmented_df = df.apply(lambda col: _callable(col.values, **_params))
                     transformed_X.append(augmented_df)
                     transformed_y.append(label)  # Duplicate label
                     transformed_id.append(id_)  # Duplicate ID
