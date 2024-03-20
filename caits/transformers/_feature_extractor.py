@@ -25,7 +25,7 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
                 for extractor in self.feature_extractors:
                     func = extractor["func"]
                     params = extractor.get("params", {})
-                    feature = func(col_data.values, **params)
+                    feature = func(col_data.values.flatten(), **params)
 
                     # Determine how to handle the extracted
                     # feature based on its type
