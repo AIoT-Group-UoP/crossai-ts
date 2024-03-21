@@ -1,7 +1,7 @@
 from sklearn.base import BaseEstimator, TransformerMixin
-from typing import List, Dict
-from pandas import DataFrame, Series
 import numpy as np
+from pandas import DataFrame
+from typing import List, Dict
 from caits.dataset import Dataset
 
 
@@ -21,31 +21,31 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
             features_dict = {}
 
             for col_name, col_data in df.items():
-                col_features = {}
                 for extractor in self.feature_extractors:
                     func = extractor["func"]
                     params = extractor.get("params", {})
                     feature = func(col_data.values.flatten(), **params)
 
-                    # Determine how to handle the extracted
-                    # feature based on its type
+                    # Populate features_dict with feature names as
+                    # keys and column names with values as lists
                     if np.isscalar(feature) or feature.ndim == 0:
-                        col_features[func.__name__] = feature
+                        features_dict.setdefault(func.__name__, []).append(feature)
                     elif feature.ndim == 1:
                         for i, val in enumerate(feature):
-                            col_features[f"{func.__name__}_{i}"] = val
+                            features_dict.setdefault(f"{func.__name__}_{i}", []).append(val)
                     elif feature.ndim == 2 and feature.shape[1] == 1:
                         feature = feature.ravel()  # Flatten (n, 1) arrays
                         for i, val in enumerate(feature):
-                            col_features[f"{func.__name__}_{i}"] = val
+                            features_dict.setdefault(f"{func.__name__}_{i}", []).append(val)
                     else:
                         raise ValueError("Unexpected feature shape.")
 
-                features_dict[col_name] = Series(col_features)
-
-            # Convert dictionary of Series to DataFrame
-            # Transpose to get correct layout
-            features_df = DataFrame(features_dict).T
+            # Convert the features_dict to a DataFrame,
+            # with channels as columns and features as rows
+            features_df = DataFrame(
+                features_dict,
+                index=[col_name for col_name in df.keys()]
+            ).T
             transformed_X.append(features_df)
 
         return Dataset(transformed_X, transformed_y, transformed_id)
