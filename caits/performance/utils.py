@@ -34,10 +34,10 @@ def generate_pred_probas(
         the results are stacked along a new dimension, allowing for further
         analysis of prediction consistency or uncertainty.
     """
-    try:
+    if hasattr(model, "predict_proba"):
         # Attempt to use predict_proba for probabilistic outcomes
         predictions = [model.predict_proba(X) for s in range(repeats)]
-    except AttributeError:
+    else:
         # Fallback to using predict for direct predictions
         predictions = [model.predict(X, verbose=0) for s in range(repeats)]
 
