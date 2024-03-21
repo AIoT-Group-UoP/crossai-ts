@@ -63,7 +63,7 @@ def audio_loader(
         dataset_path: str,
         mode: str = "soundfile",
         format: str = "wav",
-        channels: list = ["Channel_1"],
+        channels: list = ["Ch_1"],
         export: str = "dict",
         target_sr: int = None,
         classes: Optional[List[str]] = None
