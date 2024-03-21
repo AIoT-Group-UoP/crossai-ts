@@ -1,5 +1,6 @@
 from typing import Union, Optional
 import os
+from numpy import ndarray
 from numpy import array
 from sklearn.pipeline import Pipeline
 from tensorflow.keras import Model
@@ -157,12 +158,15 @@ def evaluate_instance(
     if "transformed_data" in append_options: # maybe numpy arrays more suitable
         results["transformed_data"] = transformed_cai_instance
 
-    # Convert CAI data object to numpy array
-    # TODO: # Return single instance from y_pilot and file_pilot
-    X_pilot, y_pilot, file_pilot = transformed_cai_instance.to_numpy()
-    pilot_instance_filename = file_pilot[0]
-    print("Pilot instance: ", pilot_instance_filename)
-    print("With label: ", y_pilot[0])
+    if isinstance(transformed_cai_instance, ndarray):
+        X_pilot = transformed_cai_instance
+    else:
+        # Convert CAI data object to numpy array
+        # TODO: # Return single instance from y_pilot and file_pilot
+        X_pilot, y_pilot, file_pilot = transformed_cai_instance.to_numpy()
+        pilot_instance_filename = file_pilot[0]
+        print("Pilot instance: ", pilot_instance_filename)
+        print("With label: ", y_pilot[0])
 
     # Generate prediction probabilities of the model
     prediction_probas = generate_pred_probas(model, X_pilot, repeats)
@@ -202,7 +206,7 @@ def evaluate_instance(
     # Create figure plot for splines
     interp_probas_fig = plot_interpolated_probas(interpolated_probas)
 
-    # Apply Moving Average Filter
+    # Apply a low pass butterworth filter
     smoothed_probas = array([
         filter_butterworth(cls_probas, sample_rate, cutoff_freq=cutoff)
         for cls_probas in interpolated_probas.T
