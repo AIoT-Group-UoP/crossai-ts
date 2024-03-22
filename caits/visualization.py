@@ -1,5 +1,5 @@
 import os
-from typing import Optional, Union, Tuple
+from typing import Optional, Union, Tuple, List
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure as Fig
@@ -9,7 +9,9 @@ def plot_prediction_probas(
         probabilities: np.ndarray,
         sampling_rate: int,
         Ws: float,
-        overlap_percentage: float
+        overlap_percentage: float,
+        class_names: Optional[List[str]] = None,
+        figsize: Tuple[int, int] = (14, 6)
 ) -> Fig:
     """Plots prediction probabilities as small horizontal lines, adjusting
     for window overlap. Only non-overlapping parts of the window segments
@@ -21,6 +23,9 @@ def plot_prediction_probas(
         sampling_rate: Sampling rate of the time series.
         Ws: Window size in seconds.
         overlap_percentage: Overlap percentage between windows (0 to 1).
+        class_names: A list of class names for labeling purposes.
+                     If not provided, classes will be labeled numerically.
+        figzise: Figure size in inches.
 
     Returns:
         The matplotlib Figure object.
@@ -34,22 +39,23 @@ def plot_prediction_probas(
     # Colors for each class
     colors = plt.cm.jet(np.linspace(0, 1, probabilities.shape[1]))
 
-    fig, ax = plt.subplots(figsize=(14, 6))
+    fig, ax = plt.subplots(figsize=figsize)
 
     # Iterate through each class
     # and plot
     for i, class_probs in enumerate(probabilities.T):
+        label = class_names[i] if class_names is not None else f"Class {i+1}"
         for j, prob in enumerate(class_probs):
             start_idx = j * OP_step
             end_idx = start_idx + OP_step
 
-            ax.hlines(prob, start_idx, end_idx, colors=colors[i],
-                      lw=2, label=f'Class {i+1}' if j == 0 else "")
+            ax.hlines(prob, start_idx, end_idx, colors=colors[i], lw=2,
+                      label=label if j == 0 else "")
 
     # Setting labels and title
-    ax.set_xlabel('Samples')
-    ax.set_ylabel('Probability')
-    ax.set_title('Prediction Probabilities Across Time Series Windows')
+    ax.set_xlabel("Instances")
+    ax.set_ylabel("Probability")
+    ax.set_title("Prediction Probabilities Across Time Series Windows")
 
     # Handling legend for multiple classes
     handles, labels = ax.get_legend_handles_labels()
@@ -59,12 +65,19 @@ def plot_prediction_probas(
     return fig
 
 
-def plot_interpolated_probas(interpolated_probs: np.ndarray) -> Fig:
+def plot_interpolated_probas(
+        interpolated_probs: np.ndarray,
+        class_names: Optional[List[str]] = None,
+        figsize: Tuple[int, int] = (14, 6)
+) -> plt.Figure:
     """Plots the interpolated prediction probabilities for each class.
 
     Args:
         interpolated_probs: 2D array of interpolated probabilities,
                             where each column represents a class.
+        class_names: A list of class names for labeling purposes.
+                     If not provided, classes will be labeled numerically.
+        figzise: Figure size in inches.
 
     Returns:
         The matplotlib Figure object.
@@ -75,15 +88,15 @@ def plot_interpolated_probas(interpolated_probs: np.ndarray) -> Fig:
     # Colors for each class
     colors = plt.cm.jet(np.linspace(0, 1, interpolated_probs.shape[1]))
 
-    fig, ax = plt.subplots(figsize=(14, 6))
+    fig, ax = plt.subplots(figsize=figsize)
 
     for i in range(n_classes):
-        plt.plot(x_interpolated, interpolated_probs[:, i],
-                 color=colors[i], label=f'Class {i+1}')
+        label = class_names[i] if class_names is not None else f"Class {i+1}"
+        ax.plot(x_interpolated, interpolated_probs[:, i], color=colors[i], label=label)
 
-    plt.title('Interpolated Prediction Probabilities')
-    plt.xlabel('Interpolated Instance')
-    plt.ylabel('Probability')
+    plt.title("Interpolated Prediction Probabilities")
+    plt.xlabel("Interpolated Instances")
+    plt.ylabel("Probability")
     plt.legend()
 
     return fig
@@ -105,27 +118,27 @@ def export_fig(
         fig_object: The matplotlib figure object to export.
         fig_id: Unique identifier for the figure. Used in naming the saved
                 file.
-        save_path: The path of the local saving directory. Required if 'export'
-                   includes 'save'.
-        export: Determines the action to perform - 'save', 'show', or 'both'.
-                Defaults to 'save'.
+        save_path: The path of the local saving directory. Required if "export"
+                   includes "save".
+        export: Determines the action to perform - "save", "show", or "both".
+                Defaults to "save".
         tight_layout: Whether to apply tight layout adjustment before
                       exporting. Defaults to True.
-        fig_extension: Format of the figure file if saving. Defaults to 'png'.
+        fig_extension: Format of the figure file if saving. Defaults to "png".
         resolution: Resolution of the exported figure if saving. Can be a float
-                    or 'figure'. Defaults to 'figure'.
+                    or "figure". Defaults to "figure".
 
     Returns:
-        None. The figure is either saved, shown, or both, based on the 'export'
+        None. The figure is either saved, shown, or both, based on the "export"
               argument.
     """
-    if 'save' in export and not save_path:
+    if "save" in export and not save_path:
         raise ValueError("Save path must be provided to save the figure.")
 
     if tight_layout:
         fig_object.tight_layout()
 
-    if 'save' in export:
+    if "save" in export:
         if not os.path.isdir(save_path):
             raise FileNotFoundError(f"Provided path '{save_path}' does not \
                                       exist or is not a directory.")
@@ -136,52 +149,68 @@ def export_fig(
                            bbox_inches="tight", dpi=dpi)
         print(f"Figure saved to {file_path}")
 
-    if 'show' in export:
+    if "show" in export:
         plt.show()
 
-    if 'save' not in export and 'show' not in export:
+    if "save" not in export and "show" not in export:
         raise ValueError("Invalid export option. Use 'save', 'show', \
                           or 'both'.")
 
 
 def plot_signal(
-        sig: np.ndarray,
-        sr: int = None,
-        mode: str = "samples",
-        name: str = "Signal",
-        channels: Tuple = None
-) -> None:
-    """Plots a signal.
+    sig: np.ndarray,
+    sr: int = 44100,
+    mode: str = "samples",
+    name: str = "Signal",
+    channels: Optional[Union[List[str], str]] = None,
+    figsize: Tuple[int, int] = (10, 4)
+) -> plt.Figure:
+    """Plots a signal and returns the matplotlib figure object.
 
     Args:
-        sig: The input signal as a numpy.ndarray.
-        sr: The sampling rate of the input signal as integer.
-        mode: The mode of the plot. Either "samples" or "time".
-        name: The name of the plot as a string.
-        channels: The channel names as a tuple of strings.
+        sig: The input signal as a numpy array.
+        sr: The sampling rate of the signal. Defaults to 44100.
+        mode: Plot mode - "samples" or "time". Defaults to "samples".
+        name: Name of the signal. Defaults to "Signal".
+        channels: Channel names, applicable for multi-channel signals
+                  or a single label.
+        figsize: Figure size in inches. Defaults to (10, 4).
 
     Returns:
-
+        plt.Figure: The figure object containing the plot.
     """
-    import matplotlib.pyplot as plt
-    plt.figure()
-
-    if mode == "time":
-        t = np.linspace(0, len(sig) / sr, num=len(sig))
-        plt.plot(t, sig)
-        plt.xlabel("Time")
-    elif mode == "samples":
-        plt.plot(sig)
-        plt.xlabel("Samples")
-    if channels:
-        plt.gca().legend(channels)
-    plt.ylabel("Amplitude")
-    if channels:
-        plt.legend(channels)
+    fig = plt.figure(figsize=figsize)
     plt.title(name)
-    plt.show()
 
-        
+    if isinstance(channels, str):
+        channels = [channels]  # Convert single string to list for consistency
+
+    # Handling multi-channel signals
+    if sig.ndim > 1 and channels and len(channels) == sig.shape[0]:
+        for i, channel in enumerate(sig):
+            if mode == "time":
+                t = np.linspace(0, len(channel) / sr, num=len(channel))
+                plt.plot(t, channel, label=channels[i])
+            elif mode == "samples":
+                plt.plot(channel, label=channels[i])
+    else:
+        if mode == "time":
+            t = np.linspace(0, len(sig) / sr, num=len(sig))
+            plt.plot(t, sig, label=channels[0] if channels else None)
+        elif mode == "samples":
+            plt.plot(sig, label=channels[0] if channels else None)
+
+    plt.xlabel("Time (s)" if mode == "time" else "Samples")
+    plt.ylabel("Amplitude")
+
+    # Adding legend if channel labels are provided or if a
+    # single label is provided for single-channel signal
+    if channels:
+        plt.legend()
+
+    return fig
+
+
 def plot_spectrogram(
         f: np.ndarray,
         t: np.ndarray,
@@ -215,11 +244,11 @@ def plot_spectrogram(
     else:
         raise ValueError("log must be 'log10', 'log2', 'log', or None")
 
-    plt.pcolormesh(t, f, spec_plot, shading='gouraud')
-    plt.ylabel('Frequency [Hz]')
-    plt.xlabel('Time [sec]')
+    plt.pcolormesh(t, f, spec_plot, shading="gouraud")
+    plt.ylabel("Frequency [Hz]")
+    plt.xlabel("Time [sec]")
     plt.title(plot_title)
-    plt.colorbar(label='Intensity [dB]')
+    plt.colorbar(label="Intensity [dB]")
     plt.show()
 
 
@@ -234,7 +263,7 @@ def plot_simple_spectrogram(
     Returns:
 
     """
-    plt.imshow(spectrogram, aspect='auto', origin='lower')
+    plt.imshow(spectrogram, aspect="auto", origin="lower")
     plt.colorbar()
     plt.xlabel("Time")
     plt.ylabel("Frequency")
