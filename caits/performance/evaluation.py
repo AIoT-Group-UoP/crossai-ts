@@ -5,17 +5,17 @@ from numpy import array
 from sklearn.pipeline import Pipeline
 from tensorflow.keras import Model
 from sklearn.base import BaseEstimator
-from sklearn.preprocessing import LabelEncoder
 from caits.dataset import Dataset
 from caits.performance.metrics import intersection_over_union
 from caits.performance.utils import generate_pred_probas, \
-    compute_predict_trust_metrics, interpolate_probas, extract_intervals
+    compute_predict_trust_metrics, interpolate_probas, get_intervals_from_events
 from caits.visualization import plot_prediction_probas, \
-    plot_interpolated_probas
-from caits.performance.detection import extract_non_overlap_probas
+    plot_interpolated_probas, plot_signal
+from caits.performance.detection import get_non_overlap_probas
 from caits.performance.detection import apply_duration_threshold, \
     apply_probability_threshold, get_continuous_events
 from caits.filtering import filter_butterworth
+
 
 _OPTIONS = [
     "transformed_data", "prediction_probas", "trust_metrics",
@@ -96,6 +96,7 @@ def evaluate_instance(
         pipeline: Pipeline,
         model: Union[BaseEstimator, Model],
         instance: Dataset,
+        class_names: list[str],
         sample_rate: int,
         ws: float,
         perc_overlap: float,
@@ -106,6 +107,7 @@ def evaluate_instance(
         prob_th: float = 0.7,
         duration_th: float = 1.,
         iou_th: float = 0.5,
+        figsize=(14, 6),
         append_options: Optional[list[str]] = None,
 ) -> dict:
     """Performs the evaluation of the model on the pilot data, optionally
@@ -115,6 +117,9 @@ def evaluate_instance(
         pipeline: Fitted Sklearn-pipeline.
         model: Sklearn or Tensorflow Model to be evaluated.
         instance: Dataset object with a single instance.
+        class_names: A list of the unique class names, used to
+                      interpret the model's predictions. The order of
+                      the labels should match the order of the model's output.
         sample_rate: The sampling rate of the data.
         ws: Window size for processing.
         perc_overlap: The percentage overlap used when segmenting
@@ -153,16 +158,27 @@ def evaluate_instance(
     if append_options is None:
         append_options = _OPTIONS
 
+    # Define Instance Label encoding
+    instance_label = instance.y[0]
+    if isinstance(instance_label, int):
+        instance_label = class_names[instance.y[0]]
+
+    # Plot the pilot instance waveform
+    pilot_signal = plot_signal(
+        instance.X[0].values.flatten(), sr=sample_rate, name="Pilot Signal",
+        mode="samples", channels=instance_label, figsize=figsize
+    )  # TODO: Modify function to control the x axis mode (samples vs time)
+
     # Fit the pilot instance data to the processing pipeline
     transformed_cai_instance = pipeline.transform(instance)
-    if "transformed_data" in append_options: # maybe numpy arrays more suitable
+    if "transformed_data" in append_options:
         results["transformed_data"] = transformed_cai_instance
 
+    # If ToSklearn Transformer applied as a last step,
+    # return X is a 2d numpy array
     if isinstance(transformed_cai_instance, ndarray):
         X_pilot = transformed_cai_instance
     else:
-        # Convert CAI data object to numpy array
-        # TODO: # Return single instance from y_pilot and file_pilot
         X_pilot, y_pilot, file_pilot = transformed_cai_instance.to_numpy()
         pilot_instance_filename = file_pilot[0]
         print("Pilot instance: ", pilot_instance_filename)
@@ -184,12 +200,12 @@ def evaluate_instance(
     mean_pred_probas = trust_metircs["mean_pred"]
     print(f"Shape of mean predictions: {mean_pred_probas.shape}")
     # Create figure for probabilities plot
-    pred_probas_fig = plot_prediction_probas(mean_pred_probas, sample_rate,
-                                             ws, perc_overlap)
+    pred_probas_fig = plot_prediction_probas(
+        mean_pred_probas, sample_rate, ws, perc_overlap, class_names, figsize
+    )
 
     # Bring back to shape before sliding window
-    non_overlap_probas = extract_non_overlap_probas(mean_pred_probas,
-                                                    perc_overlap)
+    non_overlap_probas = get_non_overlap_probas(mean_pred_probas, perc_overlap)
     print(f"Shape of non-overlapping predictions: {non_overlap_probas.shape}")
     # Append non-overlapping probabilities
     if "non_overlapping_probas" in append_options:
@@ -204,7 +220,9 @@ def evaluate_instance(
     if "interpolated_probas" in append_options:
         results["interpolated_probas"] = interpolated_probas
     # Create figure plot for splines
-    interp_probas_fig = plot_interpolated_probas(interpolated_probas)
+    interp_probas_fig = plot_interpolated_probas(
+        interpolated_probas, class_names, figsize
+    )
 
     # Apply a low pass butterworth filter
     smoothed_probas = array([
@@ -225,10 +243,13 @@ def evaluate_instance(
         results["thresholded_probas"] = threshold_probas
 
     # Plot the modified interpolated probabilities after thresholding
-    thresh_probas_fig = plot_interpolated_probas(threshold_probas)
+    thresh_probas_fig = plot_interpolated_probas(
+        threshold_probas, class_names, figsize
+    )
     # Append Figure Objects
     if "figures" in append_options:
         results["figures"] = {
+            "pilot_signal": pilot_signal,
             "pred_probas_fig": pred_probas_fig,
             "interp_probas_fig": interp_probas_fig,
             "thresh_probas_fig": thresh_probas_fig
@@ -257,7 +278,7 @@ def evaluate_batch(
         model: Union[BaseEstimator, Model],
         dataset: Dataset,
         events: dict,
-        label_encoder: LabelEncoder,
+        class_names: list[str],
         sample_rate: int,
         ws: float,
         perc_overlap: float,
@@ -268,12 +289,15 @@ def evaluate_batch(
         duration_th: float = 1.,
         iou_th: float = 0.5,
         append_options: Optional[list[str]] = None,
+        figsize: tuple = (14, 6),
 ) -> dict:
 
     results = {}
 
     # Extracts ground truths for whole pilot dataset
-    ground_truths_dict = extract_intervals(events, label_encoder)
+    ground_truths_dict = get_intervals_from_events(
+        events, class_names, sample_rate
+    )
 
     for i in range(len(dataset)):
         # Take advantage of slicing dunder to return the object
@@ -292,6 +316,7 @@ def evaluate_batch(
             pipeline=pipeline,
             model=model,
             instance=pilot_instance,
+            class_names=class_names,
             cutoff=cutoff,
             sample_rate=sample_rate,
             ws=ws,
@@ -303,6 +328,7 @@ def evaluate_batch(
             duration_th=duration_th,
             iou_th=iou_th,
             append_options=append_options,
+            figsize=figsize
         )
 
         results[pilot_instance_filename] = instance_results
