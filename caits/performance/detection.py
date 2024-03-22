@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def extract_non_overlap_probas(
+def get_non_overlap_probas(
         probabilities: np.ndarray,
         overlap_percentage: float
 ) -> np.ndarray:
