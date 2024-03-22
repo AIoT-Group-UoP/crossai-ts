@@ -5,14 +5,13 @@ from numpy import array
 from sklearn.pipeline import Pipeline
 from tensorflow.keras import Model
 from sklearn.base import BaseEstimator
-from sklearn.preprocessing import LabelEncoder
 from caits.dataset import Dataset
 from caits.performance.metrics import intersection_over_union
 from caits.performance.utils import generate_pred_probas, \
-    compute_predict_trust_metrics, interpolate_probas, extract_intervals
+    compute_predict_trust_metrics, interpolate_probas, get_intervals_from_events
 from caits.visualization import plot_prediction_probas, \
     plot_interpolated_probas, plot_signal
-from caits.performance.detection import extract_non_overlap_probas
+from caits.performance.detection import get_non_overlap_probas
 from caits.performance.detection import apply_duration_threshold, \
     apply_probability_threshold, get_continuous_events
 from caits.filtering import filter_butterworth
@@ -206,8 +205,7 @@ def evaluate_instance(
     )
 
     # Bring back to shape before sliding window
-    non_overlap_probas = extract_non_overlap_probas(mean_pred_probas,
-                                                    perc_overlap)
+    non_overlap_probas = get_non_overlap_probas(mean_pred_probas, perc_overlap)
     print(f"Shape of non-overlapping predictions: {non_overlap_probas.shape}")
     # Append non-overlapping probabilities
     if "non_overlapping_probas" in append_options:
@@ -280,7 +278,7 @@ def evaluate_batch(
         model: Union[BaseEstimator, Model],
         dataset: Dataset,
         events: dict,
-        label_encoder: LabelEncoder,
+        class_names: list[str],
         sample_rate: int,
         ws: float,
         perc_overlap: float,
@@ -291,12 +289,15 @@ def evaluate_batch(
         duration_th: float = 1.,
         iou_th: float = 0.5,
         append_options: Optional[list[str]] = None,
+        figsize: tuple = (14, 6),
 ) -> dict:
 
     results = {}
 
     # Extracts ground truths for whole pilot dataset
-    ground_truths_dict = extract_intervals(events, label_encoder)
+    ground_truths_dict = get_intervals_from_events(
+        events, class_names, sample_rate
+    )
 
     for i in range(len(dataset)):
         # Take advantage of slicing dunder to return the object
@@ -315,6 +316,7 @@ def evaluate_batch(
             pipeline=pipeline,
             model=model,
             instance=pilot_instance,
+            class_names=class_names,
             cutoff=cutoff,
             sample_rate=sample_rate,
             ws=ws,
@@ -326,6 +328,7 @@ def evaluate_batch(
             duration_th=duration_th,
             iou_th=iou_th,
             append_options=append_options,
+            figsize=figsize
         )
 
         results[pilot_instance_filename] = instance_results
