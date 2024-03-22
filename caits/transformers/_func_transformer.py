@@ -2,7 +2,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from caits.dataset import Dataset
 
 
-class Transformer(BaseEstimator, TransformerMixin):
+class FunctionTransformer(BaseEstimator, TransformerMixin):
     def __init__(self, func, **func_kwargs):
         """Initializes the Transformer class.
 
