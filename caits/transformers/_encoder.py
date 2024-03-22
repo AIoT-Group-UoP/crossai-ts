@@ -2,7 +2,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from caits.dataset import Dataset
 
 
-class CustomLabelEncoder(BaseEstimator, TransformerMixin):
+class LE(BaseEstimator, TransformerMixin):
     def __init__(self):
         self.class_to_index = {}
         self.index_to_class = {}
