@@ -1,20 +1,21 @@
 from typing import Union, Optional
 import os
-from numpy import ndarray
+import numpy as np
 from numpy import array
 from sklearn.pipeline import Pipeline
 from tensorflow.keras import Model
 from sklearn.base import BaseEstimator
 from caits.dataset import Dataset
-from caits.performance.metrics import intersection_over_union
-from caits.performance.utils import generate_pred_probas, \
-    compute_predict_trust_metrics, interpolate_probas, get_intervals_from_events
+from caits.performance.utils import generate_pred_probas, interpolate_probas, \
+        get_intervals_from_events
+from caits.performance.metrics import prediction_statistics
 from caits.visualization import plot_prediction_probas, \
-    plot_interpolated_probas, plot_signal
-from caits.performance.detection import get_non_overlap_probas
-from caits.performance.detection import apply_duration_threshold, \
-    apply_probability_threshold, get_continuous_events
+    plot_interpolated_probas
+from caits.performance.detection import get_non_overlap_probas, \
+    apply_duration_threshold, apply_probability_threshold, \
+        get_continuous_events, classify_events
 from caits.filtering import filter_butterworth
+from caits.performance.metrics import detection_ratio, reliability, erer
 
 
 _OPTIONS = [
@@ -24,78 +25,9 @@ _OPTIONS = [
 ]
 
 
-def classify_events(
-        predicted_events: list[tuple],
-        ground_truth_events: list[tuple],
-        IoU_th: float,
-) -> tuple:
-    """Classifies predicted events into Insertions, Correct identifications,
-    Substitutions, and Deletions based on IoU score, class labels.
-
-    - Insertions are predicted events with no overlap with ground
-      truth (IoU_th == 0).
-    - Correct identifications are predicted events with sufficient
-      overlap (IoU >= IoU_th) and correctly predicted class labels.
-    - Substitutions are predicted events with sufficient overlap but
-      incorrectly predicted class labels.
-    - Deletions are predicted events that are either too short
-      (below dur_thresh) or have insufficient overlap (IoU < IoU_th).
-
-    Args:
-        predicted_events: A list where each tuple contains the start and end
-                          indices of a predicted event and the predicted
-                          class label.
-        ground_truth_events: A list where each tuple contains the start and
-                             end times in seconds of a ground truth event and
-                             the actual class label.
-        IoU_th: The IoU threshold for determining if an event is considered
-                correctly identified.
-
-    Returns:
-        tuple: Counts of each event classification type
-              (insertions, corrects, substitutions, deletions).
-    """
-    insertions = corrects = substitutions = deletions = 0
-
-    for predicted_event in predicted_events:
-
-        predicted_label = predicted_event[2]
-
-        # Calculate IoU for the predicted event with
-        # all ground truth events and check labels
-        # [(iou, label), ....., (iou, label)]
-        matches = [
-            (
-                intersection_over_union(
-                    (predicted_event[0], predicted_event[1]),
-                    (gt_event[0], gt_event[1])
-                ),
-                gt_event[2]
-            )
-            for gt_event in ground_truth_events
-        ]
-
-        # Check if matches is non-empty and find the max IoU and best label
-        best_match = max(matches, key=lambda x: x[0]) if matches else (0, None)
-        max_iou, best_label = best_match
-
-        # Classify the event based on IoU, duration, and class label
-        if max_iou == 0:
-            insertions += 1
-        elif max_iou < IoU_th:  # Duration threhold satisfaction is implied
-            deletions += 1
-        elif predicted_label == best_label:  # IoU > IoU_th
-            corrects += 1
-        else:  # IoU > IoU_th && misclassified event
-            substitutions += 1
-
-    return insertions, corrects, substitutions, deletions
-
-
-def evaluate_instance(
-        pipeline: Pipeline,
+def model_robustness_instance(
         model: Union[BaseEstimator, Model],
-        instance: Dataset,
+        instance: np.ndarray,
         class_names: list[str],
         sample_rate: int,
         ws: float,
@@ -114,9 +46,8 @@ def evaluate_instance(
     returning figures and allowing selective inclusion of results.
 
     Args:
-        pipeline: Fitted Sklearn-pipeline.
         model: Sklearn or Tensorflow Model to be evaluated.
-        instance: Dataset object with a single instance.
+        instance: Pilot instance as numpy array.
         class_names: A list of the unique class names, used to
                       interpret the model's predictions. The order of
                       the labels should match the order of the model's output.
@@ -145,7 +76,7 @@ def evaluate_instance(
         Options include: "transformed_data", "prediction_probas", "figures",
                          "non_overlapping_probas", "interpolated_probas",
                         "smoothed_probas", "thresholded_probas", "ICSD",
-                        "ICSD", "trust_metrics".
+                        "ICSD", "pred_stats", "trust_metrics".
 
     Returns:
         dict: A dictionary containing selected computed items based on
@@ -158,46 +89,23 @@ def evaluate_instance(
     if append_options is None:
         append_options = _OPTIONS
 
-    # Define Instance Label encoding
-    instance_label = instance.y[0]
-    if isinstance(instance_label, int):
-        instance_label = class_names[instance.y[0]]
-
-    # Plot the pilot instance waveform
-    pilot_signal = plot_signal(
-        instance.X[0].values.flatten(), sr=sample_rate, name="Pilot Signal",
-        mode="samples", channels=instance_label, figsize=figsize
-    )  # TODO: Modify function to control the x axis mode (samples vs time)
-
-    # Fit the pilot instance data to the processing pipeline
-    transformed_cai_instance = pipeline.transform(instance)
-    if "transformed_data" in append_options:
-        results["transformed_data"] = transformed_cai_instance
-
-    # If ToSklearn Transformer applied as a last step,
-    # return X is a 2d numpy array
-    if isinstance(transformed_cai_instance, ndarray):
-        X_pilot = transformed_cai_instance
-    else:
-        X_pilot, y_pilot, file_pilot = transformed_cai_instance.to_numpy()
-        pilot_instance_filename = file_pilot[0]
-        print("Pilot instance: ", pilot_instance_filename)
-        print("With label: ", y_pilot[0])
+    # if "transformed_data" in append_options:
+    #     results["transformed_data"] = instance
 
     # Generate prediction probabilities of the model
-    prediction_probas = generate_pred_probas(model, X_pilot, repeats)
+    prediction_probas = generate_pred_probas(model, instance, repeats)
     # Append prediction probabilities
     if "prediction_probas" in append_options:
         results["prediction_probas"] = prediction_probas
 
     # compute stats metrics for prediciton probabilty tensor
-    trust_metircs = compute_predict_trust_metrics(prediction_probas, metrics)
+    pred_stats = prediction_statistics(prediction_probas, metrics)
     # Append trust metrics
-    if "trust_metrics" in append_options:
-        results["trust_metrics"] = trust_metircs
+    if "pred_stats" in append_options:
+        results["pred_stats"] = pred_stats
 
     # Get mean predicitons
-    mean_pred_probas = trust_metircs["mean_pred"]
+    mean_pred_probas = pred_stats["mean_pred"]
     print(f"Shape of mean predictions: {mean_pred_probas.shape}")
     # Create figure for probabilities plot
     pred_probas_fig = plot_prediction_probas(
@@ -249,7 +157,7 @@ def evaluate_instance(
     # Append Figure Objects
     if "figures" in append_options:
         results["figures"] = {
-            "pilot_signal": pilot_signal,
+            # "pilot_signal": pilot_signal,
             "pred_probas_fig": pred_probas_fig,
             "interp_probas_fig": interp_probas_fig,
             "thresh_probas_fig": thresh_probas_fig
@@ -270,10 +178,15 @@ def evaluate_instance(
         results["substitutions"] = substitutions
         results["deletions"] = deletions
 
+    if "trust_metrics" in append_options:
+        results["DR"] = detection_ratio(corrects, deletions, substitutions)
+        results["Reliability"] = reliability(corrects, insertions)
+        results["ERER"] = erer(deletions, insertions, substitutions, corrects)
+
     return results
 
 
-def evaluate_batch(
+def model_robustness(
         pipeline: Pipeline,
         model: Union[BaseEstimator, Model],
         dataset: Dataset,
@@ -301,10 +214,15 @@ def evaluate_batch(
 
     for i in range(len(dataset)):
         # Take advantage of slicing dunder to return the object
-        pilot_instance = dataset[i:i+1]
+        pilot_dataset_instance = dataset[i:i+1]
+        pilot_instance_transformed = pipeline.transform(pilot_dataset_instance)
+        if isinstance(pilot_instance_transformed, Dataset):
+            X_pilot, _, _ = pilot_instance_transformed.to_numpy()
+        else:
+            X_pilot = pilot_instance_transformed
 
         # Extract filename to serve as key in global results dict
-        file_path = pilot_instance[0][-1]
+        file_path = pilot_dataset_instance[0][-1]
         # Remove extension
         pilot_instance_filename = os.path.splitext(os.path.basename(file_path))[0]
 
@@ -312,10 +230,9 @@ def evaluate_batch(
         ground_truths_instance = ground_truths_dict[pilot_instance_filename]
 
         # Evaluate single instance
-        instance_results = evaluate_instance(
-            pipeline=pipeline,
+        instance_results = model_robustness_instance(
             model=model,
-            instance=pilot_instance,
+            instance=X_pilot,
             class_names=class_names,
             cutoff=cutoff,
             sample_rate=sample_rate,
