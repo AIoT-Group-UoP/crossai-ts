@@ -7,7 +7,7 @@ from tensorflow.keras import Model
 from sklearn.base import BaseEstimator
 from caits.dataset import Dataset
 from caits.performance.utils import generate_pred_probas, interpolate_probas, \
-        get_intervals_from_events
+        get_gt_events_from_dict
 from caits.performance.metrics import prediction_statistics
 from caits.visualization import plot_prediction_probas, \
     plot_interpolated_probas
@@ -25,9 +25,9 @@ _OPTIONS = [
 ]
 
 
-def model_robustness_instance(
+def model_robustness_analysis(
         model: Union[BaseEstimator, Model],
-        instance: np.ndarray,
+        input_data: np.ndarray,
         class_names: list[str],
         sample_rate: int,
         ws: float,
@@ -40,68 +40,63 @@ def model_robustness_instance(
         duration_th: float = 1.,
         iou_th: float = 0.5,
         figsize=(14, 6),
-        append_options: Optional[list[str]] = None,
+        options_to_include: Optional[list[str]] = None,
 ) -> dict:
-    """Performs the evaluation of the model on the pilot data, optionally
-    returning figures and allowing selective inclusion of results.
+    """
+    Evaluates the model's robustness in event detection tasks using
+    time-series data, providing detailed metrics and optional visualizations.
 
     Args:
-        model: Sklearn or Tensorflow Model to be evaluated.
-        instance: Pilot instance as numpy array.
-        class_names: A list of the unique class names, used to
-                      interpret the model's predictions. The order of
-                      the labels should match the order of the model's output.
-        sample_rate: The sampling rate of the data.
-        ws: Window size for processing.
-        perc_overlap: The percentage overlap used when segmenting
-                      the data for predictions.
-        cutoff: The cut-off frequency of the low pass filter for
-                interpolated signals smoothening.
-        ground_truths: A list of tuples representing the ground truth events.
-        repeats: The number of times to repeat the prediction
-                 process for generating trust metrics.
-        metrics: Specifies which trust metrics to compute for the
-                 prediction probabilities.
-        prob_th: The probability threshold above which a prediction is
-                 considered positive.
-        duration_th: The minimum duration threshold for an event to be
-                     considered valid.
-        iou_th: The Intersection over Union (IoU) threshold used to classify
-                the accuracy of the predicted events against ground truth.
-        display: If True, various plots will be displayed during the
-                 valuation process.
-        append_options: A list of strings indicating which parts of the
-                        evaluation to include in the results dictionary.
+        model: The model to be evaluated, compatible with Scikit-learn
+               or TensorFlow.
+        input_data: The data to be passed to the model for inference.
+                    Must be at least 2-dimensional.
+        class_names: List of unique class names corresponding to the model's
+                     outputs.
+        sample_rate: Sampling rate of the input data.
+        ws: Window size for segmenting the data.
+        perc_overlap: Percentage of overlap between consecutive data segments.
+        cutoff: Cut-off frequency for the low-pass filter applied to the data.
+        ground_truths: Ground truth events for comparison with model
+                       predictions.
+        repeats: Number of times the prediction process is repeated.
+        metrics: Specifies which metrics to compute; 'all' computes all
+                 available metrics.
+        prob_th: Probability threshold for considering a prediction positive.
+        duration_th: Minimum duration for an event to be considered valid.
+        iou_th: Intersection over Union threshold for event accuracy
+                classification.
+        figsize: Figure size for any generated plots.
+        append_options: Additional result components to include in the output.
 
         Options include: "transformed_data", "prediction_probas", "figures",
-                         "non_overlapping_probas", "interpolated_probas",
-                        "smoothed_probas", "thresholded_probas", "ICSD",
-                        "ICSD", "pred_stats", "trust_metrics".
+                    "non_overlapping_probas", "interpolated_probas",
+                "smoothed_probas", "thresholded_probas", "ICSD",
+                "ICSD", "pred_stats", "trust_metrics".
 
     Returns:
-        dict: A dictionary containing selected computed items based on
-              `append_options`.
+        A dictionary containing selected computed items based on
+        `append_options`.
     """
+    # Ensure input_data is at least 2D
+    if input_data.ndim < 2:
+        raise ValueError("`input_data` must be at least 2D.")
+
     # Dictionary to append any desired calculated
     # information based on `append_options`
     results = {}
-
-    if append_options is None:
-        append_options = _OPTIONS
-
-    # if "transformed_data" in append_options:
-    #     results["transformed_data"] = instance
+    options_to_include = options_to_include or _OPTIONS
 
     # Generate prediction probabilities of the model
-    prediction_probas = generate_pred_probas(model, instance, repeats)
+    prediction_probas = generate_pred_probas(model, input_data, repeats)
     # Append prediction probabilities
-    if "prediction_probas" in append_options:
+    if "prediction_probas" in options_to_include:
         results["prediction_probas"] = prediction_probas
 
     # compute stats metrics for prediciton probabilty tensor
     pred_stats = prediction_statistics(prediction_probas, metrics)
     # Append trust metrics
-    if "pred_stats" in append_options:
+    if "pred_stats" in options_to_include:
         results["pred_stats"] = pred_stats
 
     # Get mean predicitons
@@ -116,7 +111,7 @@ def model_robustness_instance(
     non_overlap_probas = get_non_overlap_probas(mean_pred_probas, perc_overlap)
     print(f"Shape of non-overlapping predictions: {non_overlap_probas.shape}")
     # Append non-overlapping probabilities
-    if "non_overlapping_probas" in append_options:
+    if "non_overlapping_probas" in options_to_include:
         results["non_overlapping_probas"] = non_overlap_probas
 
     # Express it as a spline
@@ -125,7 +120,7 @@ def model_robustness_instance(
                                              Ws=ws, kind="cubic", clamp=True)
     print(f"Shape of interpolated probabilities: {interpolated_probas.shape}")
     # Append interpolated probabilities
-    if "interpolated_probas" in append_options:
+    if "interpolated_probas" in options_to_include:
         results["interpolated_probas"] = interpolated_probas
     # Create figure plot for splines
     interp_probas_fig = plot_interpolated_probas(
@@ -138,7 +133,7 @@ def model_robustness_instance(
         for cls_probas in interpolated_probas.T
     ]).T
     # Append smoothed probabilities
-    if "smoothed_probas" in append_options:
+    if "smoothed_probas" in options_to_include:
         results["smoothed_probas"] = smoothed_probas
 
     # Apply a probability threshold to the interpolated probabilities
@@ -147,7 +142,7 @@ def model_robustness_instance(
     threshold_probas = apply_duration_threshold(threshold_probas, sample_rate,
                                                 duration_th)
     # Append thresholded probabilities
-    if "thresholded_probas" in append_options:
+    if "thresholded_probas" in options_to_include:
         results["thresholded_probas"] = threshold_probas
 
     # Plot the modified interpolated probabilities after thresholding
@@ -155,7 +150,7 @@ def model_robustness_instance(
         threshold_probas, class_names, figsize
     )
     # Append Figure Objects
-    if "figures" in append_options:
+    if "figures" in options_to_include:
         results["figures"] = {
             # "pilot_signal": pilot_signal,
             "pred_probas_fig": pred_probas_fig,
@@ -172,13 +167,13 @@ def model_robustness_instance(
         classify_events(predicted_events, ground_truths, IoU_th=iou_th)
 
     # Append classified Events
-    if "ICSD" in append_options:
+    if "ICSD" in options_to_include:
         results["Insertions"] = insertions
         results["corrects"] = corrects
         results["substitutions"] = substitutions
         results["deletions"] = deletions
 
-    if "trust_metrics" in append_options:
+    if "trust_metrics" in options_to_include:
         results["DR"] = detection_ratio(corrects, deletions, substitutions)
         results["Reliability"] = reliability(corrects, insertions)
         results["ERER"] = erer(deletions, insertions, substitutions, corrects)
@@ -186,10 +181,9 @@ def model_robustness_instance(
     return results
 
 
-def model_robustness(
-        pipeline: Pipeline,
+def model_robustness_analysis_many(
         model: Union[BaseEstimator, Model],
-        dataset: Dataset,
+        X: list[np.ndarray],
         events: dict,
         class_names: list[str],
         sample_rate: int,
@@ -201,53 +195,39 @@ def model_robustness(
         prob_th: float = 0.7,
         duration_th: float = 1.,
         iou_th: float = 0.5,
-        append_options: Optional[list[str]] = None,
+        options_to_include: Optional[list[str]] = None,
         figsize: tuple = (14, 6),
 ) -> dict:
 
     results = {}
 
     # Extracts ground truths for whole pilot dataset
-    ground_truths_dict = get_intervals_from_events(
+    ground_truths_dict = get_gt_events_from_dict(
         events, class_names, sample_rate
     )
 
-    for i in range(len(dataset)):
-        # Take advantage of slicing dunder to return the object
-        pilot_dataset_instance = dataset[i:i+1]
-        pilot_instance_transformed = pipeline.transform(pilot_dataset_instance)
-        if isinstance(pilot_instance_transformed, Dataset):
-            X_pilot, _, _ = pilot_instance_transformed.to_numpy()
-        else:
-            X_pilot = pilot_instance_transformed
-
-        # Extract filename to serve as key in global results dict
-        file_path = pilot_dataset_instance[0][-1]
-        # Remove extension
-        pilot_instance_filename = os.path.splitext(os.path.basename(file_path))[0]
-
-        # Extract ground truths for specific pilot file
-        ground_truths_instance = ground_truths_dict[pilot_instance_filename]
-
+    for i, (filename, gt_events) in enumerate(ground_truths_dict.items()):
+        # Get instance
+        ts_input_data = X[i]
         # Evaluate single instance
-        instance_results = model_robustness_instance(
+        ts_instance_results = model_robustness_analysis(
             model=model,
-            instance=X_pilot,
+            input_data=ts_input_data,
             class_names=class_names,
             cutoff=cutoff,
             sample_rate=sample_rate,
             ws=ws,
             perc_overlap=perc_overlap,
-            ground_truths=ground_truths_instance,
+            ground_truths=gt_events,
             repeats=repeats,
             metrics=metrics,
             prob_th=prob_th,
             duration_th=duration_th,
             iou_th=iou_th,
-            append_options=append_options,
+            options_to_include=options_to_include,
             figsize=figsize
         )
 
-        results[pilot_instance_filename] = instance_results
+        results[filename] = ts_instance_results
 
     return results
