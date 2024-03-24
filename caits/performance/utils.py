@@ -117,7 +117,7 @@ def interpolate_probas(
     return interpolated_probabilities
 
 
-def get_intervals_from_events(
+def get_gt_events_from_dict(
         events: dict,
         class_names: list[str],
         sr: int = None
