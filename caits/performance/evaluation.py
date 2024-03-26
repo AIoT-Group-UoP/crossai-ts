@@ -2,7 +2,6 @@ from typing import Union, Optional
 import os
 import numpy as np
 from numpy import array
-from sklearn.pipeline import Pipeline
 from tensorflow.keras import Model
 from sklearn.base import BaseEstimator
 from caits.dataset import Dataset
@@ -25,7 +24,7 @@ _OPTIONS = [
 ]
 
 
-def model_robustness_analysis(
+def robustness_analysis(
         model: Union[BaseEstimator, Model],
         input_data: np.ndarray,
         class_names: list[str],
@@ -42,15 +41,16 @@ def model_robustness_analysis(
         figsize=(14, 6),
         options_to_include: Optional[list[str]] = None,
 ) -> dict:
-    """
-    Evaluates the model's robustness in event detection tasks using
+    """Evaluates the model's robustness in event detection tasks using
     time-series data, providing detailed metrics and optional visualizations.
 
     Args:
         model: The model to be evaluated, compatible with Scikit-learn
                or TensorFlow.
         input_data: The data to be passed to the model for inference.
-                    Must be at least 2-dimensional.
+                    Must be at least 2-dimensional. Each instance should
+                    represent the window while the second dimension should
+                    represent the features.
         class_names: List of unique class names corresponding to the model's
                      outputs.
         sample_rate: Sampling rate of the input data.
@@ -70,9 +70,9 @@ def model_robustness_analysis(
         append_options: Additional result components to include in the output.
 
         Options include: "transformed_data", "prediction_probas", "figures",
-                    "non_overlapping_probas", "interpolated_probas",
-                "smoothed_probas", "thresholded_probas", "ICSD",
-                "ICSD", "pred_stats", "trust_metrics".
+                         "non_overlapping_probas", "interpolated_probas",
+                         "smoothed_probas", "thresholded_probas", "ICSD",
+                         "pred_stats", "trust_metrics".
 
     Returns:
         A dictionary containing selected computed items based on
@@ -83,9 +83,12 @@ def model_robustness_analysis(
         raise ValueError("`input_data` must be at least 2D.")
 
     # Dictionary to append any desired calculated
-    # information based on `append_options`
+    # information based on `options_to_append`
     results = {}
     options_to_include = options_to_include or _OPTIONS
+
+    if "transformed_data" in options_to_include:
+        results["transformed_data"] = input_data
 
     # Generate prediction probabilities of the model
     prediction_probas = generate_pred_probas(model, input_data, repeats)
@@ -181,7 +184,7 @@ def model_robustness_analysis(
     return results
 
 
-def model_robustness_analysis_many(
+def robustness_analysis_many(
         model: Union[BaseEstimator, Model],
         X: list[np.ndarray],
         events: dict,
@@ -210,7 +213,7 @@ def model_robustness_analysis_many(
         # Get instance
         ts_input_data = X[i]
         # Evaluate single instance
-        ts_instance_results = model_robustness_analysis(
+        ts_instance_results = robustness_analysis(
             model=model,
             input_data=ts_input_data,
             class_names=class_names,
