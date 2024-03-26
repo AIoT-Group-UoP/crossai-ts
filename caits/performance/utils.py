@@ -1,9 +1,9 @@
-import numpy as np
 from scipy.interpolate import interp1d
-from typing import Union, Optional
-from tensorflow.types.experimental import TensorLike
 from sklearn.base import BaseEstimator
 from tensorflow.keras import Model
+import numpy as np
+from typing import Union, Optional, Any
+TensorLike = Union[np.ndarray, Any]
 
 
 def generate_pred_probas(

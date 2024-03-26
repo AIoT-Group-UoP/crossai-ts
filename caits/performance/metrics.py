@@ -1,6 +1,6 @@
 import numpy as np
-from tensorflow.types.experimental import TensorLike
-from typing import Optional, Union
+from typing import Union, Optional, Any
+TensorLike = Union[np.ndarray, Any]
 
 
 def compute_class(predictions: TensorLike) -> np.ndarray:
