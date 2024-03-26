@@ -1,9 +1,9 @@
 from typing import Union, Optional
-import os
 import numpy as np
 from numpy import array
 from tensorflow.keras import Model
 from sklearn.base import BaseEstimator
+from sklearn.pipeline import Pipeline
 from caits.dataset import Dataset
 from caits.performance.utils import generate_pred_probas, interpolate_probas, \
         get_gt_events_from_dict
@@ -15,6 +15,7 @@ from caits.performance.detection import get_non_overlap_probas, \
         get_continuous_events, classify_events
 from caits.filtering import filter_butterworth
 from caits.performance.metrics import detection_ratio, reliability, erer
+from caits.visualization import plot_signal
 
 
 _OPTIONS = [
@@ -232,5 +233,83 @@ def robustness_analysis_many(
         )
 
         results[filename] = ts_instance_results
+
+    return results
+
+
+def robustness_analysis_batch(
+        pipeline: Pipeline,
+        model: Union[BaseEstimator, Model],
+        dataset: Dataset,
+        events: dict,
+        class_names: list[str],
+        sample_rate: int,
+        ws: float,
+        perc_overlap: float,
+        cutoff: float,
+        repeats: int = 5,
+        metrics: str = "all",
+        prob_th: float = 0.7,
+        duration_th: float = 1.,
+        iou_th: float = 0.5,
+        options_to_include: Optional[list[str]] = None,
+        figsize: tuple = (14, 6),
+) -> dict:
+
+    results = {}
+    options_to_include = options_to_include or _OPTIONS
+
+    # Extracts ground truths for whole pilot dataset
+    ground_truths_dict = get_gt_events_from_dict(
+        events, class_names, sample_rate
+    )
+
+    for i, (filename, gt_events) in enumerate(ground_truths_dict.items()):
+        # Take advantage of slicing dunder to return the object
+        # if single index used, it will return a tuple
+        dataset_instance = dataset[i:i+1]
+
+        # define the label name for the instance
+        label = dataset_instance.y[0]
+        if isinstance(label, int):
+            label = class_names[label]
+
+        # Append Figure Objects
+        if "figures" in options_to_include:
+            # Since `dataset_instance` is the raw time series instance
+            # we can plot it and store it for logging purposes
+            pilot_signal = plot_signal(
+                dataset_instance.X[0].values.flatten(), sr=sample_rate,
+                name="Pilot Signal", mode="samples", channels=label,
+                figsize=figsize
+            )  # TODO: Modify function to control the x axis mode (samples vs time)
+
+            results["figures"] = {
+                "pilot_signal": pilot_signal,
+            }
+
+        # transform the data using the pipeline
+        input_data = pipeline.transform(dataset_instance)
+
+        # Evaluate single instance
+        instance_results = robustness_analysis(
+            model=model,
+            input_data=input_data,
+            class_names=class_names,
+            cutoff=cutoff,
+            sample_rate=sample_rate,
+            ws=ws,
+            perc_overlap=perc_overlap,
+            ground_truths=gt_events,
+            repeats=repeats,
+            metrics=metrics,
+            prob_th=prob_th,
+            duration_th=duration_th,
+            iou_th=iou_th,
+            options_to_include=options_to_include,
+            figsize=figsize
+        )
+
+        results[filename] = instance_results
 
     return results
