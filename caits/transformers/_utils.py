@@ -2,9 +2,69 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline
 from joblib import dump
 from typing import Union
+from pandas import DataFrame
+from datetime import datetime
+from typing import Optional, List, Any
+from caits.dataset import Dataset
+from numpy import ndarray
 
 
-class ToSklearn(BaseEstimator, TransformerMixin):
+class ArrayToDataset(BaseEstimator, TransformerMixin):
+    """A transformer that converts numpy arrays (X, y) into a custom Dataset
+    format. Optionally uses timestamps as IDs if none are provided.
+    """
+
+    def __init__(self, ids: Optional[List[Any]] = None):
+        """Initialize the transformer.
+
+        Args:
+            ids: An optional list of identifiers corresponding to each sample.
+                 If None, timestamps will be generated for each sample.
+        """
+        self.ids = ids
+
+    def fit(self, X, y=None):
+        """This transformer does not need to fit anything, so the fit method
+        just returns itself.
+
+        Args:
+            X: Feature data.
+            y: Target data.
+        """
+        self.y = y
+        return self
+
+    def transform(self, X, y=None):
+        """Transform the input numpy arrays into a Dataset object.
+
+        Args:
+            X: Feature data.
+            y: Target data.
+
+        Returns:
+            Dataset Object.
+        """
+        # Validate X
+        if not isinstance(X, (ndarray, list)):
+            raise ValueError("X must be an 2D or 3D numpy array or list.")
+
+        # Check if `y` is provided and create a placeholder if not
+        if self.y is None:
+            y = [None] * len(X)
+        else:
+            y = self.y
+        # Generate timestamps as ids if ids are not provided
+        if self.ids is None:
+            self.ids = [datetime.now().isoformat() for _ in range(len(X))]
+
+        # Convert X to a list of DataFrames
+        X_dfs = [DataFrame(x) for x in X]
+
+        # Create and return the Dataset object
+        return Dataset(X=X_dfs, y=list(y), id=self.ids)
+
+
+class DatasetToArray(BaseEstimator, TransformerMixin):
     def __init__(self):
         """Initializes the ToSklearnTransformer."""
         super().__init__()
@@ -35,9 +95,9 @@ class ToSklearn(BaseEstimator, TransformerMixin):
             numpy.ndarray: A 2D array where each row is a concatenated
                            representation of the DataFrames in the Dataset.
         """
-        X, _, _ = X.to_numpy()
-        return X.squeeze(axis=-1)
-
+        _X, _, _ = X.to_numpy()
+        
+        return _X.squeeze(axis=-1)
 
 def sklearn_to_pkl(
         model: Union[BaseEstimator, Pipeline], filename: str) -> None:
