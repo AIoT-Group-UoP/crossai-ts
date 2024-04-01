@@ -32,8 +32,8 @@ def robustness_analysis(
         sample_rate: int,
         ws: float,
         perc_overlap: float,
-        cutoff: float,
         ground_truths: list[tuple],
+        cutoff: float,
         repeats: int = 5,
         metrics: str = "all",
         prob_th: float = 0.7,
@@ -57,9 +57,9 @@ def robustness_analysis(
         sample_rate: Sampling rate of the input data.
         ws: Window size for segmenting the data.
         perc_overlap: Percentage of overlap between consecutive data segments.
-        cutoff: Cut-off frequency for the low-pass filter applied to the data.
         ground_truths: Ground truth events for comparison with model
                        predictions.
+        cutoff: Cut-off frequency for the low-pass filter applied to the data.
         repeats: Number of times the prediction process is repeated.
         metrics: Specifies which metrics to compute; 'all' computes all
                  available metrics.
@@ -133,9 +133,16 @@ def robustness_analysis(
 
     # Apply a low pass butterworth filter
     smoothed_probas = array([
-        filter_butterworth(cls_probas, sample_rate, cutoff_freq=cutoff)
+        filter_butterworth(
+            array=cls_probas,
+            fs=sample_rate,
+            filter_type="lowpass",
+            cutoff_freq=cutoff,
+            order=3
+        )
         for cls_probas in interpolated_probas.T
     ]).T
+
     # Append smoothed probabilities
     if "smoothed_probas" in options_to_include:
         results["smoothed_probas"] = smoothed_probas
