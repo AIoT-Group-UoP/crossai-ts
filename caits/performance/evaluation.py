@@ -126,10 +126,6 @@ def robustness_analysis(
     # Append interpolated probabilities
     if "interpolated_probas" in options_to_include:
         results["interpolated_probas"] = interpolated_probas
-    # Create figure plot for splines
-    interp_probas_fig = plot_interpolated_probas(
-        interpolated_probas, class_names, figsize
-    )
 
     # Apply a low pass butterworth filter
     smoothed_probas = array([
@@ -146,7 +142,9 @@ def robustness_analysis(
     # Append smoothed probabilities
     if "smoothed_probas" in options_to_include:
         results["smoothed_probas"] = smoothed_probas
-
+    interp_smoothed_probas_fig = plot_interpolated_probas(
+        smoothed_probas, class_names, figsize
+    )
     # Apply a probability threshold to the interpolated probabilities
     # and a `at least event time` duration
     threshold_probas = apply_probability_threshold(smoothed_probas, prob_th)
@@ -165,7 +163,7 @@ def robustness_analysis(
         results["figures"] = {
             # "pilot_signal": pilot_signal,
             "pred_probas_fig": pred_probas_fig,
-            "interp_probas_fig": interp_probas_fig,
+            "interp_probas_fig": interp_smoothed_probas_fig,
             "thresh_probas_fig": thresh_probas_fig
         }
 
