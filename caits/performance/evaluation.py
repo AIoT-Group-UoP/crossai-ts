@@ -135,10 +135,10 @@ def robustness_analysis(
     smoothed_probas = array([
         filter_butterworth(
             array=cls_probas,
-            sample_rate=sample_rate,
+            fs=sample_rate,
             filter_type="lowpass",
             cutoff_freq=cutoff,
-            order=4
+            order=3
         )
         for cls_probas in interpolated_probas.T
     ]).T
