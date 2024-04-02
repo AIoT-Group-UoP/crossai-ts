@@ -289,9 +289,7 @@ def robustness_analysis_batch(
                 figsize=figsize
             )  # TODO: Modify function to control the x axis mode (samples vs time)
 
-            results["figures"] = {
-                "pilot_signal": pilot_signal,
-            }
+            results.setdefault(filename, {}).setdefault("figures", {})["pilot_signal"] = pilot_signal
 
         # transform the data using the pipeline
         input_data = pipeline.transform(dataset_instance)
