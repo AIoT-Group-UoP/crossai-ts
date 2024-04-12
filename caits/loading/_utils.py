@@ -3,6 +3,7 @@ import os
 import glob
 import json
 from tqdm import tqdm
+from typing import List, Optional
 
 
 def load_yaml_config(config_path: str) -> dict:
@@ -33,7 +34,7 @@ def load_yaml_config(config_path: str) -> dict:
                              configuration: {config_path}") from e
 
 
-def json_loader(dataset_path: str) -> dict:
+def json_loader(dataset_path: str, classes: Optional[List[str]] = None) -> dict:
     """Loads JSON files from a directory, ensuring keys do
     not include file extensions. Each JSON file's contents are stored
     as a dictionary under the corresponding key.
@@ -52,15 +53,19 @@ def json_loader(dataset_path: str) -> dict:
     file_paths = glob.glob(search_pattern, recursive=True)
 
     for file_path in tqdm(file_paths, desc="Loading JSON files"):
-        # Extract filename without extension
-        filename = os.path.splitext(os.path.basename(file_path))[0]
-        try:
-            with open(file_path, 'r') as f:
-                # Assuming the top-level JSON structure is
-                # an object (i.e., a dictionary)
-                data = json.load(f)
-            json_data[filename] = data
-        except Exception as e:
-            print(f"Error loading file {file_path}: {e}")
+        
+        subdir = os.path.basename(os.path.dirname(file_path))
+        # check if desired
+        if classes is None or subdir in classes:
+            # Extract filename without extension
+            filename = os.path.splitext(os.path.basename(file_path))[0]
+            try:
+                with open(file_path, 'r') as f:
+                    # Assuming the top-level JSON structure is
+                    # an object (i.e., a dictionary)
+                    data = json.load(f)
+                json_data[filename] = data
+            except Exception as e:
+                print(f"Error loading file {file_path}: {e}")
 
     return json_data
