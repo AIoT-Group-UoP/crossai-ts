@@ -105,7 +105,7 @@ def robustness_analysis(
 
     # Get mean predicitons
     mean_pred_probas = pred_stats["mean_pred"]
-    print(f"Shape of mean predictions: {mean_pred_probas.shape}")
+    # print(f"Shape of mean predictions: {mean_pred_probas.shape}")
     # Create figure for probabilities plot
     pred_probas_fig = plot_prediction_probas(
         mean_pred_probas, sample_rate, ws, perc_overlap, class_names, figsize
@@ -113,7 +113,7 @@ def robustness_analysis(
 
     # Bring back to shape before sliding window
     non_overlap_probas = get_non_overlap_probas(mean_pred_probas, perc_overlap)
-    print(f"Shape of non-overlapping predictions: {non_overlap_probas.shape}")
+    # print(f"Shape of non-overlapping predictions: {non_overlap_probas.shape}")
     # Append non-overlapping probabilities
     if "non_overlapping_probas" in options_to_include:
         results["non_overlapping_probas"] = non_overlap_probas
@@ -122,7 +122,7 @@ def robustness_analysis(
     interpolated_probas = interpolate_probas(non_overlap_probas,
                                              sampling_rate=sample_rate,
                                              Ws=ws, kind="cubic", clamp=True)
-    print(f"Shape of interpolated probabilities: {interpolated_probas.shape}")
+    # print(f"Shape of interpolated probabilities: {interpolated_probas.shape}")
     # Append interpolated probabilities
     if "interpolated_probas" in options_to_include:
         results["interpolated_probas"] = interpolated_probas
@@ -169,8 +169,8 @@ def robustness_analysis(
 
     # Extract event segments after applying the rules
     predicted_events = get_continuous_events(threshold_probas)
-    print(f"Predicted Events: {predicted_events}")
-    print(f"Ground truth Events: {ground_truths}")
+    # print(f"Predicted Events: {predicted_events}")
+    # print(f"Ground truth Events: {ground_truths}")
 
     insertions, corrects, substitutions, deletions = \
         classify_events(predicted_events, ground_truths, IoU_th=iou_th)
