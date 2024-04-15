@@ -38,21 +38,6 @@ def instantaneous_frequency_hbt(
     return instant_freq
 
 
-def instantaneous_amplitude_hbt(signal: np.ndarray) -> np.ndarray:
-    """Calculates the instantaneous amplitude of a signal by computing first
-    the analytic signal using the Hilbert transform.
-
-    Args:
-        signal: The input signal as a numpy.ndarray.
-
-    Returns:
-        numpy.ndarray: The instantaneous amplitude of the input signal.
-    """
-    analytic_signal = hilbert(signal)
-    ia = np.abs(analytic_signal)
-    return ia
-
-
 def rolling_rms(
         signal: np.ndarray,
         frame_length: float,
