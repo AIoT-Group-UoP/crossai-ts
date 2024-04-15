@@ -1,25 +1,34 @@
+from typing import Optional
 import numpy as np
 from scipy.signal import hilbert
 
 
-def amplitude_envelope_hbt(signal: np.ndarray) -> np.ndarray:
+def amplitude_envelope_hbt(
+        signal: np.ndarray,
+        N: Optional[int] = None,
+        axis: Optional[int] = -1
+) -> np.ndarray:
     """Calculates the envelope of a signal by computing first the analytic
     signal using the Hilbert transform.
 
     Args:
         signal: The input signal as a numpy.ndarray.
+        N: Number of Fourier components. Default: signal.shape[axis]
+        axis: Axis along which to do the transformation. Default: -1.
 
     Returns:
         numpy.ndarray: The envelope of the input signal.
     """
-    analytic_signal = hilbert(signal)
+    analytic_signal = hilbert(x=signal, N=N, axis=axis)
     ae = np.abs(analytic_signal)
     return ae
 
 
 def instantaneous_frequency_hbt(
         signal: np.ndarray,
-        fs: int
+        fs: int,
+        N: Optional[int] = None,
+        axis: Optional[int] = -1,
 ) -> np.ndarray:
     """Calculates the instantaneous frequency of a signal by computing first
     the analytic signal using the Hilbert transform.
@@ -27,11 +36,13 @@ def instantaneous_frequency_hbt(
     Args:
         signal: The input signal as a numpy.ndarray.
         fs: The sampling frequency of the input signal.
+        N: Number of Fourier components. Default: signal.shape[axis]
+        axis: Axis along which to do the transformation. Default: -1.
 
     Returns:
         numpy.ndarray: The instantaneous frequency of the input signal.
     """
-    analytic_signal = hilbert(signal)
+    analytic_signal = hilbert(x=signal, N=N, axis=axis)
     instantaneous_phase = np.unwrap(np.angle(analytic_signal))
     instant_freq = (np.diff(instantaneous_phase) / (2.0 * np.pi) * fs)
 
