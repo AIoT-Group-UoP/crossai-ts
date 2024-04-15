@@ -41,6 +41,7 @@ def json_loader(dataset_path: str, classes: Optional[List[str]] = None) -> dict:
 
     Args:
         dataset_path: Path to the dataset directory containing JSON files.
+        classes: Optional list of directory names to include.
 
     Returns:
         dict: Dictionary with filenames (without extensions) as
@@ -53,12 +54,13 @@ def json_loader(dataset_path: str, classes: Optional[List[str]] = None) -> dict:
     file_paths = glob.glob(search_pattern, recursive=True)
 
     for file_path in tqdm(file_paths, desc="Loading JSON files"):
-        
         subdir = os.path.basename(os.path.dirname(file_path))
+
         # check if desired
         if classes is None or subdir in classes:
             # Extract filename without extension
             filename = os.path.splitext(os.path.basename(file_path))[0]
+
             try:
                 with open(file_path, 'r') as f:
                     # Assuming the top-level JSON structure is
