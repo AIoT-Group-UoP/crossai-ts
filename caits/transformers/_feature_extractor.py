@@ -15,8 +15,6 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
 
     def transform(self, X: Dataset) -> Dataset:
         transformed_X = []
-        transformed_y = X.y
-        transformed_id = X._id
 
         for df in X.X:
             features_dict = defaultdict(lambda: [])
@@ -51,4 +49,4 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
             ).T
             transformed_X.append(features_df)
 
-        return Dataset(transformed_X, transformed_y, transformed_id)
+        return Dataset(transformed_X, X.y, X._id)
