@@ -3,6 +3,7 @@ import numpy as np
 from pandas import DataFrame
 from typing import List, Dict
 from caits.dataset import Dataset
+from collections import defaultdict
 
 
 class FeatureExtractor(BaseEstimator, TransformerMixin):
@@ -18,7 +19,7 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
         transformed_id = X._id
 
         for df in X.X:
-            features_dict = {}
+            features_dict = defaultdict(lambda: [])
 
             for col_name, col_data in df.items():
                 for extractor in self.feature_extractors:
@@ -26,17 +27,19 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
                     params = extractor.get("params", {})
                     feature = func(col_data.values.flatten(), **params)
 
-                    # Populate features_dict with feature names as
-                    # keys and column names with values as lists
+                    # Flatten 2D arrays with a single column
+                    column_vector_cond = feature.ndim == 2 and feature.shape[1] == 1
+                    if column_vector_cond:
+                        feature = feature.ravel()
+
+                    # Handle all features, including scalars, 1D, and 2D arrays
                     if np.isscalar(feature) or feature.ndim == 0:
-                        features_dict.setdefault(func.__name__, []).append(feature)
-                    elif feature.ndim == 1:
+                        # For scalars or 0D arrays
+                        features_dict[func.__name__].append(feature)
+                    elif feature.ndim == 1 or column_vector_cond:
+                        # For 1D arrays or flattened 2D arrays
                         for i, val in enumerate(feature):
-                            features_dict.setdefault(f"{func.__name__}_{i}", []).append(val)
-                    elif feature.ndim == 2 and feature.shape[1] == 1:
-                        feature = feature.ravel()  # Flatten (n, 1) arrays
-                        for i, val in enumerate(feature):
-                            features_dict.setdefault(f"{func.__name__}_{i}", []).append(val)
+                            features_dict[f"{func.__name__}_{i}"].append(val)
                     else:
                         raise ValueError("Unexpected feature shape.")
 
