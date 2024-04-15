@@ -8,7 +8,7 @@ import scipy
 from numpy.typing import DTypeLike
 from typing_extensions import Literal
 from caits.base import expand_to, normalize
-from caits.fe._spectrum_lib import spectrogram_lib, power_to_db_lib
+from caits.fe._spectrum_lib import spectrogram, power_to_db
 from caits.base._typing_base import _WindowSpec, _PadModeSTFT, _ScalarOrSequence, _FloatLike_co
 
 
@@ -93,7 +93,7 @@ def mfcc_lib(
     if S is None:
     # multichannel behavior may be different due to relative noise floor
     # differences between channels
-        S = power_to_db_lib(melspectrogram_lib(y=y, sr=sr, **kwargs))
+        S = power_to_db(melspectrogram(y=y, sr=sr, **kwargs))
 
     M: np.ndarray = scipy.fftpack.dct(S, axis=-2, type=dct_type, norm=norm)[
         ..., :n_mfcc, :
@@ -171,7 +171,7 @@ def filter_mel(
     return weights
 
 
-def melspectrogram_lib(
+def melspectrogram(
         *,
         y: Optional[np.ndarray] = None,
         sr: float = 22050,
@@ -185,7 +185,7 @@ def melspectrogram_lib(
         power: float = 2.0,
         **kwargs: Any,
 ) -> np.ndarray:
-    S, n_fft = spectrogram_lib(
+    S, n_fft = spectrogram(
         y=y,
         S=S,
         n_fft=n_fft,
