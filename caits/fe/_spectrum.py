@@ -2,17 +2,19 @@
 # librosa v0.10.1:
 # https://github.com/librosa/librosa/blob/main/librosa/core/spectrum.py
 import numpy as np
-from scipy.signal import get_window
+import scipy
 import warnings
 from typing import Any, Tuple, Optional, Union, Callable
 from numpy import fft
+from typing import Literal
 from numpy.typing import ArrayLike, DTypeLike
-from ..base import is_positive_int, valid_audio, dtype_r2c, dtype_c2r
-from ..base import frame, pad_center, expand_to, get_window, tiny
-from ..base import __overlap_add, window_sumsquare
-from ..base import fix_length
-from ..base._typing_base import _WindowSpec, _PadModeSTFT, _ScalarOrSequence, _ComplexLike_co
-from ..base._phase import phasor
+from .base import is_positive_int, valid_audio, dtype_r2c, dtype_c2r
+from .base import frame, pad_center, expand_to, get_window, tiny
+from .base import __overlap_add, window_sumsquare
+from .base import fix_length
+from .base._typing_base import _WindowSpec, _PadModeSTFT, _ScalarOrSequence, _ComplexLike_co
+from .base._phase import phasor
+from .base._utility import mel_filter
 
 
 # Constrain STFT block sizes to 256 KB
@@ -403,6 +405,140 @@ def spectrogram(
         )
 
     return S, n_fft
+
+
+def mfcc_stats(
+    y: Optional[np.ndarray] = None,
+    sr: int = 22050,
+    S: Optional[np.ndarray] = None,
+    n_mfcc: int = 13,
+    dct_type: int = 2,
+    norm: Optional[str] = "ortho",
+    lifter: float = 0,
+    export: str = "array",
+    **kwargs: Any,
+) -> Union[np.ndarray, dict]:
+
+    mfcc_arr = mfcc(y=y, sr=sr, S=S, n_mfcc=n_mfcc, dct_type=dct_type,
+                        norm=norm, lifter=lifter, **kwargs)
+    delta_arr = delta(mfcc_arr)
+
+    mfcc_mean = np.mean(mfcc_arr, axis=1)
+    mfcc_std = np.std(mfcc_arr, axis=1)
+    delta_mean = np.mean(delta_arr, axis=1)
+    delta2_mean = np.mean(delta(mfcc_arr, order=2), axis=1)
+
+    if export == "array":
+        return np.concatenate([mfcc_mean, mfcc_std, delta_mean,
+                               delta2_mean],
+                              axis=1)
+    elif export == "dict":
+        return {
+            "mfcc_mean": mfcc_mean,
+            "mfcc_std": mfcc_std,
+            "delta_mean": delta_mean,
+            "delta2_mean": delta2_mean,
+        }
+    else:
+        raise ValueError(f"Unsupported export={export}")
+
+
+def delta(
+    data: np.ndarray,
+    *,
+    width: int = 9,
+    order: int = 1,
+    axis: int = -1,
+    mode: str = "interp",
+    **kwargs: Any,
+) -> np.ndarray:
+
+    data = np.atleast_1d(data)
+
+    if mode == "interp" and width > data.shape[axis]:
+        raise ValueError(
+            f"when mode='interp', width={width} "
+            f"cannot exceed data.shape[axis]={data.shape[axis]}"
+        )
+
+    if width < 3 or np.mod(width, 2) != 1:
+        raise ValueError("width must be an odd integer >= 3")
+
+    if order <= 0 or not isinstance(order, (int, np.integer)):
+        raise ValueError("order must be a positive integer")
+
+    kwargs.pop("deriv", None)
+    kwargs.setdefault("polyorder", order)
+    result: np.ndarray = scipy.signal.savgol_filter(
+        data, width, deriv=order, axis=axis, mode=mode, **kwargs
+    )
+    return result
+
+
+def mfcc(
+    y: Optional[np.ndarray] = None,
+    sr: int = 22050,
+    S: Optional[np.ndarray] = None,
+    n_mfcc: int = 20,
+    dct_type: int = 2,
+    norm: Optional[str] = "ortho",
+    lifter: float = 0,
+    **kwargs: Any,
+) -> np.ndarray:
+    if S is None:
+    # multichannel behavior may be different due to relative noise floor
+    # differences between channels
+        S = power_to_db(melspectrogram(y=y, sr=sr, **kwargs))
+
+    M: np.ndarray = scipy.fftpack.dct(S, axis=-2, type=dct_type, norm=norm)[
+        ..., :n_mfcc, :
+    ]
+
+    if lifter > 0:
+        # shape lifter for broadcasting
+        LI = np.sin(np.pi * np.arange(1, 1 + n_mfcc, dtype=M.dtype) / lifter)
+        LI = expand_to(LI, ndim=S.ndim, axes=-2)
+
+        M *= 1 + (lifter / 2) * LI
+        return M
+    elif lifter == 0:
+        return M
+    else:
+        raise ValueError(f"MFCC lifter={lifter} must be a non-negative number")
+
+
+def melspectrogram(
+        *,
+        y: Optional[np.ndarray] = None,
+        sr: float = 22050,
+        S: Optional[np.ndarray] = None,
+        n_fft: int = 2048,
+        hop_length: int = 512,
+        win_length: Optional[int] = None,
+        window: _WindowSpec = "hann",
+        center: bool = True,
+        pad_mode: _PadModeSTFT = "constant",
+        power: float = 2.0,
+        **kwargs: Any,
+) -> np.ndarray:
+    S, n_fft = spectrogram(
+        y=y,
+        S=S,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        power=power,
+        win_length=win_length,
+        window=window,
+        center=center,
+        pad_mode=pad_mode,
+    )
+
+    # Build a Mel filter
+    mel_basis = mel_filter(sr=sr, n_fft=n_fft, **kwargs)
+
+    melspec: np.ndarray = np.einsum("...ft,mf->...mt", S, mel_basis,
+                                    optimize=True)
+    return melspec
 
 
 def power_to_db(
