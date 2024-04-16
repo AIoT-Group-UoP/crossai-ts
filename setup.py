@@ -15,6 +15,7 @@ setup(
         "caits.fe.base",
         "caits.transformers",
         "caits.eda",
+        "caits.experimental",
         "caits.performance",
         "caits.resources_handling"
     ],
