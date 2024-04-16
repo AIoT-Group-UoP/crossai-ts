@@ -24,14 +24,14 @@ def mfcc_stats(
     **kwargs: Any,
 ) -> Union[np.ndarray, dict]:
 
-    mfcc_arr = mfcc_lib(y=y, sr=sr, S=S, n_mfcc=n_mfcc, dct_type=dct_type,
+    mfcc_arr = mfcc(y=y, sr=sr, S=S, n_mfcc=n_mfcc, dct_type=dct_type,
                         norm=norm, lifter=lifter, **kwargs)
-    delta_arr = delta_lib(mfcc_arr)
+    delta_arr = delta(mfcc_arr)
 
     mfcc_mean = np.mean(mfcc_arr, axis=1)
     mfcc_std = np.std(mfcc_arr, axis=1)
     delta_mean = np.mean(delta_arr, axis=1)
-    delta2_mean = np.mean(delta_lib(mfcc_arr, order=2), axis=1)
+    delta2_mean = np.mean(delta(mfcc_arr, order=2), axis=1)
 
     if export == "array":
         return np.concatenate([mfcc_mean, mfcc_std, delta_mean,
@@ -48,7 +48,7 @@ def mfcc_stats(
         raise ValueError(f"Unsupported export={export}")
 
 
-def delta_lib(
+def delta(
     data: np.ndarray,
     *,
     width: int = 9,
@@ -80,7 +80,7 @@ def delta_lib(
     return result
 
 
-def mfcc_lib(
+def mfcc(
     y: Optional[np.ndarray] = None,
     sr: int = 22050,
     S: Optional[np.ndarray] = None,
@@ -112,7 +112,7 @@ def mfcc_lib(
         raise ValueError(f"MFCC lifter={lifter} must be a non-negative number")
 
 
-def filter_mel(
+def mel_filter(
     *,
     sr: float,
     n_fft: int,
@@ -198,7 +198,7 @@ def melspectrogram(
     )
 
     # Build a Mel filter
-    mel_basis = filter_mel(sr=sr, n_fft=n_fft, **kwargs)
+    mel_basis = mel_filter(sr=sr, n_fft=n_fft, **kwargs)
 
     melspec: np.ndarray = np.einsum("...ft,mf->...mt", S, mel_basis,
                                     optimize=True)
