@@ -3,8 +3,8 @@ import numpy as np
 from numpy.typing import DTypeLike
 from ..base._typing_base import _WindowSpec, _PadModeSTFT
 from ..base._utility import nnls
-from ..fe._mel_lib import mel_filter
-from ..fe._spectrum_lib import griffinlim
+from ..fe._mel import mel_filter
+from ..fe._spectrum import griffinlim
 
 
 def mel_to_stft(
