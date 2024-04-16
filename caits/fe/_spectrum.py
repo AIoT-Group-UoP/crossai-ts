@@ -2,17 +2,19 @@
 # librosa v0.10.1:
 # https://github.com/librosa/librosa/blob/main/librosa/core/spectrum.py
 import numpy as np
-from scipy.signal import get_window
+import scipy
 import warnings
 from typing import Any, Tuple, Optional, Union, Callable
 from numpy import fft
+from typing import Literal
 from numpy.typing import ArrayLike, DTypeLike
-from ..base import is_positive_int, valid_audio, dtype_r2c, dtype_c2r
-from ..base import frame, pad_center, expand_to, get_window, tiny
-from ..base import __overlap_add, window_sumsquare
-from ..base import fix_length
-from ..base._typing_base import _WindowSpec, _PadModeSTFT, _ScalarOrSequence, _ComplexLike_co
-from ..base._phase import phasor
+from .base import is_positive_int, valid_audio, dtype_r2c, dtype_c2r
+from .base import frame, pad_center, expand_to, get_window, tiny
+from .base import __overlap_add, window_sumsquare
+from .base import fix_length
+from .base._typing_base import _WindowSpec, _PadModeSTFT, _ScalarOrSequence, _ComplexLike_co
+from .base._phase import phasor
+from .base._utility import mel_filter
 
 
 # Constrain STFT block sizes to 256 KB
@@ -405,6 +407,140 @@ def spectrogram(
     return S, n_fft
 
 
+def mfcc_stats(
+    y: Optional[np.ndarray] = None,
+    sr: int = 22050,
+    S: Optional[np.ndarray] = None,
+    n_mfcc: int = 13,
+    dct_type: int = 2,
+    norm: Optional[str] = "ortho",
+    lifter: float = 0,
+    export: str = "array",
+    **kwargs: Any,
+) -> Union[np.ndarray, dict]:
+
+    mfcc_arr = mfcc(y=y, sr=sr, S=S, n_mfcc=n_mfcc, dct_type=dct_type,
+                        norm=norm, lifter=lifter, **kwargs)
+    delta_arr = delta(mfcc_arr)
+
+    mfcc_mean = np.mean(mfcc_arr, axis=1)
+    mfcc_std = np.std(mfcc_arr, axis=1)
+    delta_mean = np.mean(delta_arr, axis=1)
+    delta2_mean = np.mean(delta(mfcc_arr, order=2), axis=1)
+
+    if export == "array":
+        return np.concatenate([mfcc_mean, mfcc_std, delta_mean,
+                               delta2_mean],
+                              axis=1)
+    elif export == "dict":
+        return {
+            "mfcc_mean": mfcc_mean,
+            "mfcc_std": mfcc_std,
+            "delta_mean": delta_mean,
+            "delta2_mean": delta2_mean,
+        }
+    else:
+        raise ValueError(f"Unsupported export={export}")
+
+
+def delta(
+    data: np.ndarray,
+    *,
+    width: int = 9,
+    order: int = 1,
+    axis: int = -1,
+    mode: str = "interp",
+    **kwargs: Any,
+) -> np.ndarray:
+
+    data = np.atleast_1d(data)
+
+    if mode == "interp" and width > data.shape[axis]:
+        raise ValueError(
+            f"when mode='interp', width={width} "
+            f"cannot exceed data.shape[axis]={data.shape[axis]}"
+        )
+
+    if width < 3 or np.mod(width, 2) != 1:
+        raise ValueError("width must be an odd integer >= 3")
+
+    if order <= 0 or not isinstance(order, (int, np.integer)):
+        raise ValueError("order must be a positive integer")
+
+    kwargs.pop("deriv", None)
+    kwargs.setdefault("polyorder", order)
+    result: np.ndarray = scipy.signal.savgol_filter(
+        data, width, deriv=order, axis=axis, mode=mode, **kwargs
+    )
+    return result
+
+
+def mfcc(
+    y: Optional[np.ndarray] = None,
+    sr: int = 22050,
+    S: Optional[np.ndarray] = None,
+    n_mfcc: int = 20,
+    dct_type: int = 2,
+    norm: Optional[str] = "ortho",
+    lifter: float = 0,
+    **kwargs: Any,
+) -> np.ndarray:
+    if S is None:
+    # multichannel behavior may be different due to relative noise floor
+    # differences between channels
+        S = power_to_db(melspectrogram(y=y, sr=sr, **kwargs))
+
+    M: np.ndarray = scipy.fftpack.dct(S, axis=-2, type=dct_type, norm=norm)[
+        ..., :n_mfcc, :
+    ]
+
+    if lifter > 0:
+        # shape lifter for broadcasting
+        LI = np.sin(np.pi * np.arange(1, 1 + n_mfcc, dtype=M.dtype) / lifter)
+        LI = expand_to(LI, ndim=S.ndim, axes=-2)
+
+        M *= 1 + (lifter / 2) * LI
+        return M
+    elif lifter == 0:
+        return M
+    else:
+        raise ValueError(f"MFCC lifter={lifter} must be a non-negative number")
+
+
+def melspectrogram(
+        *,
+        y: Optional[np.ndarray] = None,
+        sr: float = 22050,
+        S: Optional[np.ndarray] = None,
+        n_fft: int = 2048,
+        hop_length: int = 512,
+        win_length: Optional[int] = None,
+        window: _WindowSpec = "hann",
+        center: bool = True,
+        pad_mode: _PadModeSTFT = "constant",
+        power: float = 2.0,
+        **kwargs: Any,
+) -> np.ndarray:
+    S, n_fft = spectrogram(
+        y=y,
+        S=S,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        power=power,
+        win_length=win_length,
+        window=window,
+        center=center,
+        pad_mode=pad_mode,
+    )
+
+    # Build a Mel filter
+    mel_basis = mel_filter(sr=sr, n_fft=n_fft, **kwargs)
+
+    melspec: np.ndarray = np.einsum("...ft,mf->...mt", S, mel_basis,
+                                    optimize=True)
+    return melspec
+
+
 def power_to_db(
         S: _ScalarOrSequence[_ComplexLike_co],
         *,
@@ -560,201 +696,3 @@ def db_to_amplitude(S_db: np.ndarray, *, ref: float = 1.0) -> np.ndarray:
     # librosa v0.10.1:
     # https://github.com/librosa/librosa/blob/main/librosa/core/spectrum.py
     return db_to_power(S_db, ref=ref**2) ** 0.5
-
-
-def griffinlim(
-    S: np.ndarray,
-    *,
-    n_iter: int = 32,
-    hop_length: Optional[int] = None,
-    win_length: Optional[int] = None,
-    n_fft: Optional[int] = None,
-    window: _WindowSpec = "hann",
-    center: bool = True,
-    dtype: Optional[DTypeLike] = None,
-    length: Optional[int] = None,
-    pad_mode: _PadModeSTFT = "constant",
-    momentum: float = 0.99,
-    init: Optional[str] = "random",
-    random_state: Optional[
-        Union[int, np.random.RandomState, np.random.Generator]
-    ] = None,
-) -> np.ndarray:
-    """Approximate magnitude spectrogram inversion using the "fast" Griffin-Lim algorithm.
-
-    Given a short-time Fourier transform magnitude matrix (``S``), the algorithm randomly
-    initializes phase estimates, and then alternates forward- and inverse-STFT
-    operations. [#]_
-
-    Note that this assumes reconstruction of a real-valued time-domain signal, and
-    that ``S`` contains only the non-negative frequencies (as computed by
-    `stft`).
-
-    The "fast" GL method [#]_ uses a momentum parameter to accelerate convergence.
-
-    .. [#] D. W. Griffin and J. S. Lim,
-        "Signal estimation from modified short-time Fourier transform,"
-        IEEE Trans. ASSP, vol.32, no.2, pp.236–243, Apr. 1984.
-
-    .. [#] Perraudin, N., Balazs, P., & Søndergaard, P. L.
-        "A fast Griffin-Lim algorithm,"
-        IEEE Workshop on Applications of Signal Processing to Audio and Acoustics (pp. 1-4),
-        Oct. 2013.
-
-    Args:
-        S: np.ndarray [shape=(..., n_fft // 2 + 1, t), non-negative]
-            An array of short-time Fourier transform magnitudes as produced by
-            `stft`.
-
-        n_iter: int > 0
-            The number of iterations to run
-
-        hop_length: None or int > 0
-            The hop length of the STFT.  If not provided, it will default to ``n_fft // 4``
-
-        win_length: None or int > 0
-            The window length of the STFT.  By default, it will equal ``n_fft``
-
-        n_fft: None or int > 0
-            The number of samples per frame.
-            By default, this will be inferred from the shape of ``S`` as an even number.
-            However, if an odd frame length was used, you can explicitly set ``n_fft``.
-
-        window: string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
-            A window specification as supported by `stft` or `istft`
-
-        center: boolean
-            If ``True``, the STFT is assumed to use centered frames.
-            If ``False``, the STFT is assumed to use left-aligned frames.
-
-        dtype: np.dtype
-            Real numeric type for the time-domain signal.  Default is inferred
-            to match the precision of the input spectrogram.
-
-        length: None or int > 0
-            If provided, the output ``y`` is zero-padded or clipped to exactly ``length``
-            samples.
-
-        pad_mode: string
-            If ``center=True``, the padding mode to use at the edges of the signal.
-            By default, STFT uses zero padding.
-
-        momentum: number >= 0
-            The momentum parameter for fast Griffin-Lim.
-            Setting this to 0 recovers the original Griffin-Lim method [1]_.
-            Values near 1 can lead to faster convergence, but above 1 may not converge.
-
-        init: None or 'random' [default]
-            If 'random' (the default), then phase values are initialized randomly
-            according to ``random_state``.  This is recommended when the input ``S`` is
-            a magnitude spectrogram with no initial phase estimates.
-
-            If `None`, then the phase is initialized from ``S``.  This is useful when
-            an initial guess for phase can be provided, or when you want to resume
-            Griffin-Lim from a previous output.
-
-        random_state: None, int, np.random.RandomState, or np.random.Generator
-            If int, random_state is the seed used by the random number generator
-            for phase initialization.
-
-            If `np.random.RandomState` or `np.random.Generator` instance, the random number
-            generator itself.
-
-            If `None`, defaults to the `np.random.default_rng()` object.
-
-        Returns:
-            y: np.ndarray [shape=(..., n)]
-                time-domain signal reconstructed from ``S``
-    """
-    # The functionality in this implementation is basically derived from
-    # librosa v0.10.1:
-    # https://github.com/librosa/librosa/blob/main/librosa/core/spectrum.py
-    if random_state is None:
-        rng = np.random.default_rng()
-    elif isinstance(random_state, int):
-        rng = np.random.RandomState(seed=random_state)  # type: ignore
-    elif isinstance(random_state, (np.random.RandomState, np.random.Generator)):
-        rng = random_state  # type: ignore
-    else:
-        raise ValueError(f"Unsupported random_state={random_state!r}")
-
-    if momentum > 1:
-        warnings.warn(
-            f"Griffin-Lim with momentum={momentum} > 1 can be unstable. "
-            "Proceed with caution!",
-            stacklevel=2,
-        )
-    elif momentum < 0:
-        raise ValueError(f"griffinlim() called with momentum={momentum} < 0")
-
-    # Infer n_fft from the spectrogram shape
-    if n_fft is None:
-        n_fft = 2 * (S.shape[-2] - 1)
-
-    # Infer the dtype from S
-    angles = np.empty(S.shape, dtype=dtype_r2c(S.dtype))
-    eps = tiny(angles)
-
-    if init == "random":
-        # randomly initialize the phase
-        angles[:] = phasor((2 * np.pi * rng.random(size=S.shape)))
-    elif init is None:
-        # Initialize an all ones complex matrix
-        angles[:] = 1.0
-    else:
-        raise ValueError(f"init={init} must either None or 'random'")
-
-    # Place-holders for temporary data and reconstructed buffer
-    rebuilt = None
-    tprev = None
-    inverse = None
-
-    # Absorb magnitudes into angles
-    angles *= S
-    for _ in range(n_iter):
-        # Invert with our current estimate of the phases
-        inverse = istft(
-            angles,
-            hop_length=hop_length,
-            win_length=win_length,
-            n_fft=n_fft,
-            window=window,
-            center=center,
-            dtype=dtype,
-            length=length,
-            out=inverse,
-        )
-
-        # Rebuild the spectrogram
-        rebuilt = stft(
-            inverse,
-            n_fft=n_fft,
-            hop_length=hop_length,
-            win_length=win_length,
-            window=window,
-            center=center,
-            pad_mode=pad_mode,
-            out=rebuilt,
-        )
-
-        # Update our phase estimates
-        angles[:] = rebuilt
-        if tprev is not None:
-            angles -= (momentum / (1 + momentum)) * tprev
-        angles /= np.abs(angles) + eps
-        angles *= S
-        # Store
-        rebuilt, tprev = tprev, rebuilt
-
-    # Return the final phase estimates
-    return istft(
-        angles,
-        hop_length=hop_length,
-        win_length=win_length,
-        n_fft=n_fft,
-        window=window,
-        center=center,
-        dtype=dtype,
-        length=length,
-        out=inverse,
-    )
