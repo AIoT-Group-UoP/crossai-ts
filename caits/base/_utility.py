@@ -10,6 +10,9 @@ from numpy.typing import ArrayLike, DTypeLike
 from numpy.lib.stride_tricks import as_strided
 from ._typing_base import _FloatLike_co, _WindowSpec
 
+# Constrain STFT block sizes to 256 KB
+MAX_MEM_BLOCK = 2**8 * 2**10
+
 
 def frame(
     x: np.ndarray,
@@ -21,8 +24,6 @@ def frame(
     subok: bool = False,
 ) -> np.ndarray:
     
-
-
     x = np.array(x, copy=False, subok=subok)
 
     if x.shape[axis] < frame_length:
@@ -285,3 +286,112 @@ def __overlap_add(y, ytmp, hop_length):
             N = y.shape[-1] - sample
 
         y[..., sample: (sample + N)] += ytmp[..., :N, frame]
+
+
+def _nnls_obj(
+    x: np.ndarray, shape: Sequence[int], A: np.ndarray, B: np.ndarray
+) -> Tuple[float, np.ndarray]:
+    """Compute the objective and gradient for NNLS"""
+    # Scipy's lbfgs flattens all arrays, so we first reshape
+    # the iterate x
+    x = x.reshape(shape)
+
+    # Compute the difference matrix
+    diff = np.einsum("mf,...ft->...mt", A, x, optimize=True) - B
+
+    # Compute the objective value
+    value = (1 / B.size) * 0.5 * np.sum(diff**2)
+
+    # And the gradient
+    grad = (1 / B.size) * np.einsum("mf,...mt->...ft", A, diff, optimize=True)
+
+    # Flatten the gradient
+    return value, grad.flatten()
+
+
+def _nnls_lbfgs_block(
+    A: np.ndarray, B: np.ndarray, x_init: Optional[np.ndarray] = None, **kwargs: Any
+) -> np.ndarray:
+    """Solve the constrained problem over a single block
+
+    Parameters
+    ----------
+    A : np.ndarray [shape=(m, d)]
+        The basis matrix
+    B : np.ndarray [shape=(m, N)]
+        The regression targets
+    x_init : np.ndarray [shape=(d, N)]
+        An initial guess
+    **kwargs
+        Additional keyword arguments to `scipy.optimize.fmin_l_bfgs_b`
+
+    Returns
+    -------
+    x : np.ndarray [shape=(d, N)]
+        Non-negative matrix such that Ax ~= B
+    """
+    # If we don't have an initial point, start at the projected
+    # least squares solution
+    if x_init is None:
+        # Suppress type checks because mypy can't find pinv
+        x_init = np.einsum("fm,...mt->...ft", np.linalg.pinv(A), B, optimize=True)
+        np.clip(x_init, 0, None, out=x_init)
+
+    # Adapt the hessian approximation to the dimension of the problem
+    kwargs.setdefault("m", A.shape[1])
+
+    # Construct non-negative bounds
+    bounds = [(0, None)] * x_init.size
+    shape = x_init.shape
+
+    # optimize
+    x: np.ndarray
+    x, obj_value, diagnostics = scipy.optimize.fmin_l_bfgs_b(
+        _nnls_obj, x_init, args=(shape, A, B), bounds=bounds, **kwargs
+    )
+    # reshape the solution
+    return x.reshape(shape)
+
+
+def nnls(A: np.ndarray, B: np.ndarray, **kwargs: Any) -> np.ndarray:
+    """Non-negative least squares.
+
+    Given two matrices A and B, find a non-negative matrix X
+    that minimizes the sum squared error::
+
+        err(X) = sum_i,j ((AX)[i,j] - B[i, j])^2
+
+    Args:
+        A: np.ndarray [shape=(m, n)]
+            The basis matrix
+        B: np.ndarray [shape=(..., m, N)]
+            The target array.  Additional leading dimensions are supported.
+        **kwargs
+            Additional keyword arguments to `scipy.optimize.fmin_l_bfgs_b`
+
+    Returns
+        X: np.ndarray [shape=(..., n, N), non-negative]
+        A minimizing solution to ``|AX - B|^2``
+    """
+    # If B is a single vector, punt up to the scipy method
+    if B.ndim == 1:
+        return scipy.optimize.nnls(A, B)[0]  # type: ignore
+
+    n_columns = int(MAX_MEM_BLOCK // (np.prod(B.shape[:-1]) * A.itemsize))
+    n_columns = max(n_columns, 1)
+
+    # Process in blocks:
+    if B.shape[-1] <= n_columns:
+        return _nnls_lbfgs_block(A, B, **kwargs).astype(A.dtype)
+
+    x: np.ndarray
+    x = np.einsum("fm,...mt->...ft", np.linalg.pinv(A), B, optimize=True)
+    np.clip(x, 0, None, out=x)
+    x_init = x
+
+    for bl_s in range(0, x.shape[-1], n_columns):
+        bl_t = min(bl_s + n_columns, B.shape[-1])
+        x[..., bl_s:bl_t] = _nnls_lbfgs_block(
+            A, B[..., bl_s:bl_t], x_init=x_init[..., bl_s:bl_t], **kwargs
+        )
+    return x
