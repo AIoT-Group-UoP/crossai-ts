@@ -2,12 +2,9 @@ from ._pcen import *
 from ._statistical import *
 from ._spectrum import *
 from ._spectral import *
-from .inverse import *
 
 __all__ = [
     "pcen",
-    "mel_to_stft",
-    "mel_to_audio",
     "std_value",
     "variance_value",
     "mean_value",
