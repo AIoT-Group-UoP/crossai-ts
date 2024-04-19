@@ -14,12 +14,15 @@ def normalize_signal(
     Returns:
         array-like: The normalized signal.
     """
-    try:
-        intinfo = np.iinfo(sig.dtype)
-        return sig / max(intinfo.max, -intinfo.min)
+    if np.all(sig == 0):
+        return sig
+    else:  
+        try:
+            intinfo = np.iinfo(sig.dtype)
+            return sig / max(intinfo.max, -intinfo.min)
 
-    except ValueError:  # array is not integer dtype
-        return sig / max(sig.max(), -sig.min())
+        except ValueError:  # array is not integer dtype
+            return sig / max(sig.max(), -sig.min())
 
 
 def resample_signal(
