@@ -6,7 +6,6 @@ import scipy
 import warnings
 from typing import Any, Tuple, Optional, Union, Callable
 from numpy import fft
-from typing import Literal
 from numpy.typing import ArrayLike, DTypeLike
 
 from .core_spectrum import expand_to
