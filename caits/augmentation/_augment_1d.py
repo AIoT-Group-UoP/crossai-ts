@@ -1,8 +1,10 @@
 from typing import Optional, Union, Tuple, List, Any
 import numpy as np
-from caits.base import fix_length, is_positive_int, resample
+from caits.core._core_fix import fix_length
+from caits.core._core_checks import is_positive_int
+from caits.core._core_resample import resample
 from caits.fe._spectrum import stft, istft
-from caits.base import phase_vocoder
+from caits.fe.core_spectrum import phase_vocoder
 
 
 def add_white_noise(

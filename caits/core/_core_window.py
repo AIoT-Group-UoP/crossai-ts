@@ -1,7 +1,9 @@
 import numpy as np
+import scipy
+from numpy.typing import DTypeLike, ArrayLike
 from numpy.lib.stride_tricks import as_strided
 from typing import Optional, Union, Callable, Tuple, Any, Sequence, List, Literal
-from caits.core._typing_base import _FloatLike_co, _WindowSpec, _ScalarOrSequence
+from caits.core._core_typing import _FloatLike_co, _WindowSpec, _ScalarOrSequence
 
 
 def frame(
@@ -132,7 +134,9 @@ def __window_ss_fill(x, win_sq, n_frames, hop_length):  # pragma: no cover
     n_fft = len(win_sq)
     for i in range(n_frames):
         sample = i * hop_length
-        x[sample : min(n, sample + n_fft)] += win_sq[: max(0, min(n_fft, n - sample))]
+        x[sample: min(n, sample + n_fft)] += win_sq[: max(
+            0, min(n_fft, n - sample)
+        )]
 
 
 def normalize(
@@ -228,4 +232,3 @@ def tiny(
         dtype = np.dtype(np.float32)
 
     return np.finfo(dtype).tiny
-
