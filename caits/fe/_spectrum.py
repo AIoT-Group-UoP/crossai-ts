@@ -18,7 +18,7 @@ from caits.core._core_checks import (is_positive_int, valid_audio, dtype_r2c,
                                      dtype_c2r)
 from caits.core._core_typing import (_WindowSpec, _PadModeSTFT,
                                      _ScalarOrSequence, _ComplexLike_co)
-from .core_spectrum._utility import mel_filter
+from .core_spectrum._utils import mel_filter
 
 
 # Constrain STFT block sizes to 256 KB

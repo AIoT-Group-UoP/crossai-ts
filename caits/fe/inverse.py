@@ -3,7 +3,7 @@ import numpy as np
 from typing import Any, Optional, Union
 from numpy.typing import DTypeLike
 from caits.core._core_typing import _WindowSpec, _PadModeSTFT
-from .core_spectrum._utility import nnls, mel_filter
+from .core_spectrum._utils import nnls, mel_filter
 from caits.core._core_window import tiny
 from .core_spectrum._phase import phasor
 from ._spectrum import istft, stft
