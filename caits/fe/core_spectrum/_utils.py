@@ -8,7 +8,8 @@ import numpy as np
 import scipy
 import warnings
 from numpy.typing import DTypeLike
-from caits.core._typing_base import _FloatLike_co, _ScalarOrSequence
+from caits.core._core_typing import _FloatLike_co, _ScalarOrSequence
+from caits.core._core_window import normalize
 
 # Constrain STFT block sizes to 256 KB
 MAX_MEM_BLOCK = 2**8 * 2**10
@@ -62,11 +63,14 @@ def __overlap_add(y, ytmp, hop_length):
 
 
 def _nnls_obj(
-    x: np.ndarray, shape: Sequence[int], A: np.ndarray, B: np.ndarray
+    x: np.ndarray,
+    shape: Sequence[int],
+    A: np.ndarray,
+    B: np.ndarray
 ) -> Tuple[float, np.ndarray]:
     """Computes the objective and gradient for NNLS"""
     # Scipy's lbfgs flattens all arrays, so we first reshape
-    # the iterate x
+    # the iteration x
     x = x.reshape(shape)
 
     # Compute the difference matrix

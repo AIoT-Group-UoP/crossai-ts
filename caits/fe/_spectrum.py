@@ -9,13 +9,16 @@ from numpy import fft
 from typing import Literal
 from numpy.typing import ArrayLike, DTypeLike
 
-from .base import pad_center, expand_to
-from .base import __overlap_add
-from caits.core._utility import frame, get_window, tiny, window_sumsquare
-from caits.core._fix import fix_length
-from caits.core._checks import is_positive_int, valid_audio, dtype_r2c, dtype_c2r
-from caits.core._typing_base import _WindowSpec, _PadModeSTFT, _ScalarOrSequence, _ComplexLike_co
-from .base._utility import mel_filter
+from .core_spectrum import expand_to
+from .core_spectrum import __overlap_add
+from caits.core._core_window import pad_center
+from caits.core._core_window import frame, get_window, tiny, window_sumsquare
+from caits.core._core_fix import fix_length
+from caits.core._core_checks import (is_positive_int, valid_audio, dtype_r2c,
+                                     dtype_c2r)
+from caits.core._core_typing import (_WindowSpec, _PadModeSTFT,
+                                     _ScalarOrSequence, _ComplexLike_co)
+from .core_spectrum._utility import mel_filter
 
 
 # Constrain STFT block sizes to 256 KB
