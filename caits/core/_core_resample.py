@@ -6,7 +6,7 @@ import scipy
 import samplerate
 import resampy
 import soxr
-from ._fix import fix_length
+from ._core_fix import fix_length
 
 
 def resample(

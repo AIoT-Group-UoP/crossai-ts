@@ -1,8 +1,10 @@
 from typing import Optional, Union, Tuple, List, Any
 import numpy as np
-from caits.base import fix_length, is_positive_int, resample
-from caits.fe._spectrum_lib import stft_lib, istft_lib
-from caits.base import phase_vocoder
+from caits.core._core_fix import fix_length
+from caits.core._core_checks import is_positive_int
+from caits.core._core_resample import resample
+from caits.fe._spectrum import stft, istft
+from caits.fe.core_spectrum import phase_vocoder
 
 
 def add_white_noise(
@@ -643,7 +645,7 @@ def time_stretch_ts(
         raise ValueError("rate must be a positive number")
 
     # Construct the short-term Fourier transform (STFT)
-    stft_item = stft_lib(y, **kwargs)
+    stft_item = stft(y, **kwargs)
 
     # Stretch by phase vocoding
     stft_stretch = phase_vocoder(
@@ -657,8 +659,8 @@ def time_stretch_ts(
     len_stretch = int(round(y.shape[-1] / rate))
 
     # Invert the STFT
-    y_stretch = istft_lib(stft_stretch, dtype=y.dtype, length=len_stretch,
-                          **kwargs)
+    y_stretch = istft(stft_stretch, dtype=y.dtype, length=len_stretch,
+                      **kwargs)
 
     return y_stretch
 

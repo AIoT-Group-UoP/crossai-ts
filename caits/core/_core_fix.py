@@ -23,4 +23,3 @@ def fix_length(
         return np.pad(array=data, pad_width=lengths, **kwargs)
 
     return data
-
