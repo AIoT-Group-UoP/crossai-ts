@@ -2,8 +2,8 @@ import numpy as np
 import scipy
 from numpy.typing import DTypeLike, ArrayLike
 from numpy.lib.stride_tricks import as_strided
-from typing import Optional, Union, Callable, Tuple, Any, Sequence, List, Literal
-from caits.core._core_typing import _FloatLike_co, _WindowSpec, _ScalarOrSequence
+from typing import Optional, Union, Callable, Tuple, Any
+from caits.core._core_typing import _FloatLike_co, _WindowSpec
 
 
 def frame(
