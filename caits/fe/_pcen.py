@@ -9,7 +9,6 @@
 # A part of implementation is also based on the librosa's functionality,
 # however with minor modifications:
 # https://librosa.github.io/librosa/generated/librosa.core.pcen.html
-
 from typing import Optional
 import numpy as np
 import scipy

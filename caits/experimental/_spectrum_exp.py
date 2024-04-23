@@ -1,7 +1,7 @@
 import numpy as np
 import scipy
 from scipy.signal import stft
-from caits.core._utility import get_window
+from caits.core._core_window import get_window
 
 
 def pre(
