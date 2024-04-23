@@ -97,7 +97,7 @@ class DatasetToArray(BaseEstimator, TransformerMixin):
         """
         _X, _, _ = X.to_numpy()
         
-        return _X.squeeze(axis=-1)
+        return _X
 
 def sklearn_to_pkl(
         model: Union[BaseEstimator, Pipeline], filename: str) -> None:
