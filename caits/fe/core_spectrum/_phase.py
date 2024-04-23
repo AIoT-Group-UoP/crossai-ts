@@ -2,10 +2,9 @@
 # librosa v0.10.1:
 # https://github.com/librosa/librosa/blob/main/librosa/core/spectrum.py
 # https://github.com/librosa/librosa/blob/main/librosa/util/utils.py
-
 from typing import Optional, Union
 import numpy as np
-from ._typing_base import _Real, _Number
+from caits.core._core_typing import _Real, _Number
 
 
 def phase_vocoder(

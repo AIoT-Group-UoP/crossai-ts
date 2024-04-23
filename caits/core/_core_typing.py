@@ -44,5 +44,3 @@ _STFTPad = Literal[
     "symmetric",
     "empty",
 ]
-
-
