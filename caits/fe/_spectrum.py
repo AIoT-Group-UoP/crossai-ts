@@ -8,12 +8,13 @@ from typing import Any, Tuple, Optional, Union, Callable
 from numpy import fft
 from typing import Literal
 from numpy.typing import ArrayLike, DTypeLike
-from .base import is_positive_int, valid_audio, dtype_r2c, dtype_c2r
-from .base import frame, pad_center, expand_to, get_window, tiny
-from .base import __overlap_add, window_sumsquare
-from .base import fix_length
-from .base._typing_base import _WindowSpec, _PadModeSTFT, _ScalarOrSequence, _ComplexLike_co
-from .base._phase import phasor
+
+from .base import pad_center, expand_to
+from .base import __overlap_add
+from caits.core._utility import frame, get_window, tiny, window_sumsquare
+from caits.core._fix import fix_length
+from caits.core._checks import is_positive_int, valid_audio, dtype_r2c, dtype_c2r
+from caits.core._typing_base import _WindowSpec, _PadModeSTFT, _ScalarOrSequence, _ComplexLike_co
 from .base._utility import mel_filter
 
 

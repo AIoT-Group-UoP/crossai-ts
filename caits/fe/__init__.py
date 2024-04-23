@@ -2,6 +2,7 @@ from ._pcen import *
 from ._statistical import *
 from ._spectrum import *
 from ._spectral import *
+from .inverse import *
 
 __all__ = [
     "pcen",
@@ -46,5 +47,5 @@ __all__ = [
     "melspectrogram",
     "power_to_db",
     "amplitude_to_db",
-    "griffinlim",
+    "griffinlim"
 ]
