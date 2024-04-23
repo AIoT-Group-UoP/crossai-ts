@@ -2,11 +2,12 @@ from typing import Any, Optional, Union
 import numpy as np
 import warnings
 from numpy.typing import DTypeLike
-from .base._typing_base import _WindowSpec, _PadModeSTFT
-from .base._utility import nnls, mel_filter, tiny
+from caits.core._typing_base import _WindowSpec, _PadModeSTFT
+from .base._utility import nnls, mel_filter
+from caits.core._utility import tiny
 from .base._phase import phasor
 from ._spectrum import istft, stft
-from .base._checks import dtype_r2c
+from caits.core._checks import dtype_r2c
 
 
 def mel_to_stft(

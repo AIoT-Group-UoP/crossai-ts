@@ -5,7 +5,7 @@
 
 from typing import Optional, Union
 import numpy as np
-from ._typing_base import _Real, _Number
+from caits.core._typing_base import _Real, _Number
 
 
 def phase_vocoder(
