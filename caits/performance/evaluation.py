@@ -169,8 +169,8 @@ def robustness_analysis(
 
     # Extract event segments after applying the rules
     predicted_events = get_continuous_events(threshold_probas)
-    # print(f"Predicted Events: {predicted_events}")
-    # print(f"Ground truth Events: {ground_truths}")
+    print(f"Predicted Events: {predicted_events}")
+    print(f"Ground truth Events: {ground_truths}")
 
     insertions, corrects, substitutions, deletions = \
         classify_events(predicted_events, ground_truths, IoU_th=iou_th)
