@@ -31,6 +31,7 @@ setup(
         "tensorflow-metal==1.1.0; platform_system=='Darwin'",
         "tensorflow_addons>=0.21.0",
         "pandas==2.2.0",
+        "pyarrow==15.0.2",
         "scipy==1.12.0",
         "scikit-learn==1.4.0",
         "seaborn>=0.12.2",
