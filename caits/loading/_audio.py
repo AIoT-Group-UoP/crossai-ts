@@ -51,7 +51,7 @@ def wav_loader(
 
     # Define channel names if not provided
     if channels is None:
-        channels = [f"channel_{i+1}" for i in range(audio_data.shape[1])]
+        channels = [f"Ch_{i+1}" for i in range(audio_data.shape[1])]
 
     # Create DataFrame from the audio data
     df = pd.DataFrame(audio_data, columns=channels)
