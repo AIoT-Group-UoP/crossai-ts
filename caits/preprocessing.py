@@ -43,7 +43,7 @@ def resample_signal(
         np.ndarray: The resampled signal.
     """
     duration = len(sig) / native_sr
-    n_target_samples = int(duration * g_sr)
+    n_target_samples = int(duration * target_sr)
     time_x_source = np.linspace(0, duration, len(sig),
                                 dtype=d_type)
     time_x = np.linspace(0, duration, n_target_samples,
