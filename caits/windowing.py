@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from typing import Union
 
@@ -122,3 +123,21 @@ def windowing_df(
         return pd.DataFrame({"X": windows_list, "y": y_list})
     else:
         return "Invalid mode. Use 'dict' or 'df' as mode."
+
+
+def create_chunks(
+        array: np.ndarray,
+        chunk_length: int
+) -> list[np.ndarray]:
+    """
+
+    Args:
+        array:
+        chunk_length:
+
+    Returns:
+
+    """
+    n_chunks = ceil(len(array) / float(chunk_length))
+    return [array[i * chunk_length:(i + 1) * chunk_length]
+            for i in range(int(n_chunks))]

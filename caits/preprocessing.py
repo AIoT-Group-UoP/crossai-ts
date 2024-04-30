@@ -1,6 +1,4 @@
 import numpy as np
-from math import log, ceil
-from functools import reduce
 
 
 def normalize_signal(
@@ -28,7 +26,7 @@ def normalize_signal(
 def resample_signal(
         sig: np.ndarray,
         native_sr: int,
-        g_sr: int,
+        target_sr: int,
         d_type: np.dtype = np.float32
 ) -> np.ndarray:
     """Resamples an input audio buffer to the goal sampling rate. Linear
@@ -38,7 +36,7 @@ def resample_signal(
     Args:
         sig: The input signal as a numpy.ndarray.
         native_sr: The native sampling rate of the input signal as integer.
-        g_sr: The goal sampling rate as integer.
+        target_sr: The goal sampling rate as integer.
         d_type: The data type of the resampled audio buffer.
 
     Returns:
@@ -65,7 +63,7 @@ def resample_2d(
     Args:
         audio_data: The input audio data as a 2D numpy (n_samples, n_channels).
         native_sr: The native sampling rate of the input audio data.
-        target_sr: The target sampling rate.
+        target_sr: The target sampling rate as integer.
 
     Returns:
         np.ndarray: The resampled audio data as a 2D numpy.ndarray.
@@ -118,72 +116,3 @@ def trim_signal(
     stop = length - stop
 
     return array[start:stop]
-
-
-def create_chunks(
-        array: np.ndarray,
-        chunk_length: int
-) -> list[np.ndarray]:
-    """
-
-    Args:
-        array:
-        chunk_length:
-
-    Returns:
-
-    """
-    n_chunks = ceil(len(array) / float(chunk_length))
-    return [array[i * chunk_length:(i + 1) * chunk_length]
-            for i in range(int(n_chunks))]
-
-
-def dBFS(
-        array: np.ndarray,
-        sample_width: int
-) -> float:
-    """Calculates the decibels relative to full scale (dBFS) of an audio.
-
-    Args:
-        array:
-        sample_width:
-
-    Returns:
-
-    """
-    from caits.fe._statistical import rms_value
-    rms = rms_value(array)
-    if not rms:
-        return -float("infinity")
-    return ratio_to_db(rms / max_possible_amplitude(sample_width))
-
-
-def max_possible_amplitude(
-        sample_width: int
-) -> float:
-    bits = sample_width * 8
-    max_possible_val = (2 ** bits)
-
-    # since half is above 0 and half is below the max amplitude is divided
-    return max_possible_val / 2
-
-
-def ratio_to_db(ratio, val2=None, using_amplitude=True):
-    """
-    Converts the input float to db, which represents the equivalent
-    to the ratio in power represented by the multiplier passed in.
-    """
-    ratio = float(ratio)
-
-    # accept 2 values and use the ratio of val1 to val2
-    if val2 is not None:
-        ratio = ratio / val2
-
-    # special case for multiply-by-zero (convert to silence)
-    if ratio == 0:
-        return -float('inf')
-
-    if using_amplitude:
-        return 20 * log(ratio, 10)
-    else:  # using power
-        return 10 * log(ratio, 10)
