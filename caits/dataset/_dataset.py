@@ -71,14 +71,12 @@ class Dataset:
 
     def unify(self, other: 'Dataset') -> 'Dataset':
         """Concatenates two Dataset objects by appending their rows."""
-        if len(self) != len(other):
-            raise ValueError("Both datasets must have the same length.")
 
-        unified_X = self.X + other.X
-        unified_y = self.y + other.y
-        unified_id = self._id + other._id
-
-        return Dataset(unified_X, unified_y, unified_id)
+        return Dataset(
+            self.X + other.X,
+            self.y + other.y,
+            self._id + other._id
+        )
     
     def to_numpy(self, dtype=np.float32):
         """Converts data to NumPy arrays."""
