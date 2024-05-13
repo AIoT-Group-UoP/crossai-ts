@@ -11,6 +11,10 @@ class Dataset:
             y: List[str],
             id: List[str]
     ) -> None:
+        # Check if X, y, and id are lists
+        if not all(isinstance(data, list) for data in [X, y, id]):
+            raise TypeError("X, y, and id must be lists.")
+        
         # Check that all inputs have the same length
         if not (len(X) == len(y) == len(id)):
             raise ValueError("All input lists must have the same length.")
@@ -65,6 +69,17 @@ class Dataset:
 
             yield X_batch, y_batch, id_batch
 
+    def unify(self, other: 'Dataset') -> 'Dataset':
+        """Concatenates two Dataset objects by appending their rows."""
+        if len(self) != len(other):
+            raise ValueError("Both datasets must have the same length.")
+
+        unified_X = self.X + other.X
+        unified_y = self.y + other.y
+        unified_id = self._id + other._id
+
+        return Dataset(unified_X, unified_y, unified_id)
+    
     def to_numpy(self, dtype=np.float32):
         """Converts data to NumPy arrays."""
         X_np = np.array(self.X, dtype=dtype)
