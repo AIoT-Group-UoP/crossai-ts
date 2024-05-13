@@ -121,7 +121,10 @@ def audio_loader(
         }
 
 
-def wav_specs_check(wav_file_path: str) -> dict:
+def wav_specs_check(
+    wav_file_path: str,
+    print_base: bool = False
+) -> dict:
     """Checks the specifications of a WAV file.
 
     It returns the sample rate, the number of channels and other information
@@ -136,12 +139,14 @@ def wav_specs_check(wav_file_path: str) -> dict:
     with wave.open(wav_file_path, 'rb') as wf:
         num_channels = wf.getnchannels()
         sr = wf.getframerate()
-        print(f"Sample rate: {sr} Hz")
-        if num_channels == 1:
+        if print_base:
+            print(f"Sample rate: {sr} Hz")
+
+        if num_channels == 1 and print_base:
             print("Mono")
-        elif num_channels == 2:
+        elif num_channels == 2 and print_base:
             print("Stereo")
-        else:
-            print(f"Multi-channel ({num_channels} channels)")
+        elif num_channels > 2 and print_base:
+            print(f"Multi-channel: ({num_channels} channels)")
 
     return wf.getparams()._asdict()
