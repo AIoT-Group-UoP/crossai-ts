@@ -39,13 +39,15 @@ class Augmenter1D(BaseEstimator, TransformerMixin):
             transformed_id.append(id_)
 
             for _ in range(self.repeats):  # Repeat augmentation process
+                # Create a copy of the original DataFrame for each repeat
+                augmented_df = df.copy()
                 # Apply each augmentation and append augmented instances
                 for augmentation in self.augmentations:
                     _callable = augmentation["func"]
                     _params = augmentation["params"]
-                    augmented_df = df.apply(lambda col: _callable(col.values, **_params))
-                    transformed_X.append(augmented_df)
-                    transformed_y.append(label)  # Duplicate label
-                    transformed_id.append(id_)  # Duplicate ID
+                    augmented_df = augmented_df.apply(lambda col: _callable(col.values, **_params))
+                transformed_X.append(augmented_df)
+                transformed_y.append(label)  # Duplicate label
+                transformed_id.append(id_)  # Duplicate ID
 
         return Dataset(transformed_X, transformed_y, transformed_id)
