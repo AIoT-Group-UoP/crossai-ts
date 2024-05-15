@@ -1,3 +1,5 @@
+import numpy as np
+from math import ceil
 import pandas as pd
 from typing import Union
 
@@ -122,3 +124,51 @@ def windowing_df(
         return pd.DataFrame({"X": windows_list, "y": y_list})
     else:
         return "Invalid mode. Use 'dict' or 'df' as mode."
+
+
+def frame_signal(
+        array: np.ndarray,
+        frame_length: int,
+        hop_length: int
+) -> np.ndarray:
+    """Distinguishes a signal into overlapping frames.
+
+    Args:
+        array: The input signal as a numpy.ndarray.
+        frame_length: The length of the frame in samples.
+        hop_length: The number of samples to advance between frames (overlap).
+
+    Returns:
+        numpy.ndarray: The framed signal in the form of a 2D numpy.ndarray
+            (frame_length x num_frames).
+    """
+    # Number of frames
+    num_frames = 1 + int(np.floor((len(array) - frame_length) / hop_length))
+    # Row indices
+    rows = np.arange(frame_length)[:, None]
+    # Column indices
+    cols = np.arange(num_frames) * hop_length
+    # Index matrix for each frame
+    indices = rows + cols
+    # Frame the signal according to calculated indices
+    frames = array[indices]
+    return frames
+
+
+
+def create_chunks(
+        array: np.ndarray,
+        chunk_length: int
+) -> list[np.ndarray]:
+    """
+
+    Args:
+        array:
+        chunk_length:
+
+    Returns:
+
+    """
+    n_chunks = ceil(len(array) / float(chunk_length))
+    return [array[i * chunk_length:(i + 1) * chunk_length]
+            for i in range(int(n_chunks))]
