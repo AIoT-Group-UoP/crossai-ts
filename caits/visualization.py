@@ -163,7 +163,8 @@ def plot_signal(
     mode: str = "samples",
     name: str = "Signal",
     channels: Optional[Union[List[str], str]] = None,
-    figsize: Tuple[int, int] = (10, 4)
+    figsize: Tuple[int, int] = (10, 4),
+    return_mode: bool = True
 ) -> plt.Figure:
     """Plots a signal and returns the matplotlib figure object.
 
@@ -172,9 +173,11 @@ def plot_signal(
         sr: The sampling rate of the signal. Defaults to 44100.
         mode: Plot mode - "samples" or "time". Defaults to "samples".
         name: Name of the signal. Defaults to "Signal".
-        channels: Channel names, applicable for multi-channel signals
+        channels: Channel names, applicable for multichannel signals
                   or a single label.
         figsize: Figure size in inches. Defaults to (10, 4).
+        return_mode: Whether to return the plot in the function.
+            Defaults to False.
 
     Returns:
         plt.Figure: The figure object containing the plot.
@@ -207,8 +210,8 @@ def plot_signal(
     # single label is provided for single-channel signal
     if channels:
         plt.legend()
-
-    return fig
+    if return_mode:
+        return fig
 
 
 def plot_spectrogram(

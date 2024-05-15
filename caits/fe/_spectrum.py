@@ -84,7 +84,7 @@ def stft(
         if pad_mode in ("wrap", "maximum", "mean", "median", "minimum"):
             # Note: padding with a user-provided function "works", but
             # use at your own risk.
-            # Since we don't pass-through kwargs here, any arguments
+            # Since we don't passthrough kwargs here, any arguments
             # to a user-provided pad function should be encapsulated
             # by using functools.partial:
             #

@@ -1,3 +1,4 @@
+from ._loudness import *
 from ._pcen import *
 from ._statistical import *
 from ._spectrum import *
@@ -5,6 +6,7 @@ from ._spectral import *
 from .inverse import *
 
 __all__ = [
+    "dBFS",
     "pcen",
     "std_value",
     "variance_value",

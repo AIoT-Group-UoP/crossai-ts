@@ -85,25 +85,28 @@ def griffinlim(
         Union[int, np.random.RandomState, np.random.Generator]
     ] = None,
 ) -> np.ndarray:
-    """Approximate magnitude spectrogram inversion using the "fast" Griffin-Lim algorithm.
+    """Approximate magnitude spectrogram inversion using the "fast" Griffin-Lim
+    algorithm.
 
-    Given a short-time Fourier transform magnitude matrix (``S``), the algorithm randomly
-    initializes phase estimates, and then alternates forward- and inverse-STFT
-    operations. [#]_
+    Given a short-time Fourier transform magnitude matrix (``S``), the
+    algorithm randomly initializes phase estimates, and then alternates
+    forward- and inverse-STFT operations. [#]_
 
-    Note that this assumes reconstruction of a real-valued time-domain signal, and
-    that ``S`` contains only the non-negative frequencies (as computed by
+    Note that this assumes reconstruction of a real-valued time-domain signal,
+    and that ``S`` contains only the non-negative frequencies (as computed by
     `stft`).
 
-    The "fast" GL method [#]_ uses a momentum parameter to accelerate convergence.
+    The "fast" GL method [#]_ uses a momentum parameter to accelerate
+    convergence.
 
-    .. [#] D. W. Griffin and J. S. Lim,
+    [#] D. W. Griffin and J. S. Lim,
         "Signal estimation from modified short-time Fourier transform,"
         IEEE Trans. ASSP, vol.32, no.2, pp.236–243, Apr. 1984.
 
-    .. [#] Perraudin, N., Balazs, P., & Søndergaard, P. L.
+    [#] Perraudin, N., Balazs, P., & Søndergaard, P. L.
         "A fast Griffin-Lim algorithm,"
-        IEEE Workshop on Applications of Signal Processing to Audio and Acoustics (pp. 1-4),
+        IEEE Workshop on Applications of Signal Processing to Audio and
+        Acoustics (pp. 1-4),
         Oct. 2013.
 
     Args:
@@ -115,15 +118,17 @@ def griffinlim(
             The number of iterations to run
 
         hop_length: None or int > 0
-            The hop length of the STFT.  If not provided, it will default to ``n_fft // 4``
+            The hop length of the STFT.  If not provided, it will default to
+                ``n_fft // 4``
 
         win_length: None or int > 0
             The window length of the STFT.  By default, it will equal ``n_fft``
 
         n_fft: None or int > 0
             The number of samples per frame.
-            By default, this will be inferred from the shape of ``S`` as an even number.
-            However, if an odd frame length was used, you can explicitly set ``n_fft``.
+            By default, this will be inferred from the shape of ``S`` as an
+                even number. However, if an odd frame length was used, you can
+                explicitly set ``n_fft``.
 
         window: string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
             A window specification as supported by `stft` or `istft`
@@ -137,33 +142,35 @@ def griffinlim(
             to match the precision of the input spectrogram.
 
         length: None or int > 0
-            If provided, the output ``y`` is zero-padded or clipped to exactly ``length``
-            samples.
+            If provided, the output ``y`` is zero-padded or clipped to exactly
+            ``length`` samples.
 
         pad_mode: string
-            If ``center=True``, the padding mode to use at the edges of the signal.
-            By default, STFT uses zero padding.
+            If ``center=True``, the padding mode to use at the edges of the
+            signal. By default, STFT uses zero padding.
 
         momentum: number >= 0
             The momentum parameter for fast Griffin-Lim.
             Setting this to 0 recovers the original Griffin-Lim method [1]_.
-            Values near 1 can lead to faster convergence, but above 1 may not converge.
+            Values near 1 can lead to faster convergence, but above 1 may not
+            converge.
 
         init: None or 'random' [default]
-            If 'random' (the default), then phase values are initialized randomly
-            according to ``random_state``.  This is recommended when the input ``S`` is
-            a magnitude spectrogram with no initial phase estimates.
+            If 'random' (the default), then phase values are initialized
+            randomly according to ``random_state``.  This is recommended when
+            the input ``S`` isa magnitude spectrogram with no initial phase
+            estimates.
 
-            If `None`, then the phase is initialized from ``S``.  This is useful when
-            an initial guess for phase can be provided, or when you want to resume
-            Griffin-Lim from a previous output.
+            If `None`, then the phase is initialized from ``S``.  This is
+            useful when an initial guess for phase can be provided, or when
+            you want to resume Griffin-Lim from a previous output.
 
         random_state: None, int, np.random.RandomState, or np.random.Generator
-            If int, random_state is the seed used by the random number generator
-            for phase initialization.
+            If int, random_state is the seed used by the random number
+            generator for phase initialization.
 
-            If `np.random.RandomState` or `np.random.Generator` instance, the random number
-            generator itself.
+            If `np.random.RandomState` or `np.random.Generator` instance, the
+            random number generator itself.
 
             If `None`, defaults to the `np.random.default_rng()` object.
 
@@ -292,7 +299,8 @@ def mel_to_audio(
         n_fft: int > 0 [scalar]
             number of FFT components in the resulting STFT
         hop_length: None or int > 0
-            The hop length of the STFT.  If not provided, it will default to ``n_fft // 4``
+            The hop length of the STFT.  If not provided, it will default to
+            ``n_fft // 4``
         win_length: None or int > 0
             The window length of the STFT.  By default, it will equal ``n_fft``
         window: string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
@@ -301,17 +309,18 @@ def mel_to_audio(
             If `True`, the STFT is assumed to use centered frames.
             If `False`, the STFT is assumed to use left-aligned frames.
         pad_mode: string
-            If ``center=True``, the padding mode to use at the edges of the signal.
-            By default, STFT uses zero padding.
+            If ``center=True``, the padding mode to use at the edges of the
+            signal. By default, STFT uses zero padding.
         power: float > 0 [scalar]
             Exponent for the magnitude melspectrogram
         n_iter: int > 0
             The number of iterations for Griffin-Lim
         length: None or int > 0
-            If provided, the output ``y`` is zero-padded or clipped to exactly ``length``
-            samples.
+            If provided, the output ``y`` is zero-padded or clipped to exactly
+            ``length`` samples.
         dtype: np.dtype
-            Real numeric type for the time-domain signal.  Default is 32-bit float.
+            Real numeric type for the time-domain signal.  Default is 32-bit
+            float.
         **kwargs: additional keyword arguments for Mel filter bank parameters
         fmin: float >= 0 [scalar]
             lowest frequency (in Hz)
