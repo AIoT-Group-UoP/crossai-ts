@@ -35,7 +35,6 @@ setup(
         "scipy==1.12.0",
         "scikit-learn==1.4.0",
         "seaborn>=0.12.2",
-        "pydub==0.25.1",
         "soundfile==0.12.1",
         "tsaug==0.2.1",
         "resampy==0.4.2",
