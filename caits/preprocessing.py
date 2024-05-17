@@ -24,31 +24,41 @@ def normalize_signal(
 
 
 def resample_signal(
-        sig: np.ndarray,
-        native_sr: int,
-        target_sr: int,
-        d_type: np.dtype = np.float32
+    sig: np.ndarray,
+    native_sr: int,
+    target_sr: int,
+    dtype: str = "float32"
 ) -> np.ndarray:
-    """Resamples an input audio buffer to the goal sampling rate. Linear
-    resampling using numpy is significantly faster than Librosa's default
-    technique.
+    """Resamples an audio signal to the target sampling rate.
+
+    This function prioritizes computational accuracy by performing the resampling
+    internally using the highest precision available (usually float64). However,
+    the final result is cast to the specified `dtype` to ensure the output matches
+    the desired format.
 
     Args:
-        sig: The input signal as a numpy.ndarray.
-        native_sr: The native sampling rate of the input signal as integer.
-        target_sr: The goal sampling rate as integer.
-        d_type: The data type of the resampled audio buffer.
+        sig: The input audio signal as a NumPy array.
+        native_sr: The original sample rate of the signal (samples per second).
+        target_sr: The desired sample rate of the resampled signal.
+        d_type: The desired data type for the resampled signal (default: float32).
 
     Returns:
-        np.ndarray: The resampled signal.
+        The resampled signal as a NumPy array with the specified `dtype`.
     """
+    
     duration = len(sig) / native_sr
     n_target_samples = int(duration * target_sr)
-    time_x_source = np.linspace(0, duration, len(sig),
-                                dtype=d_type)
-    time_x = np.linspace(0, duration, n_target_samples,
-                         dtype=d_type)
+
+    # Generate time arrays (default to float64 for maximum precision)
+    time_x_source = np.linspace(0, duration, len(sig))
+    time_x = np.linspace(0, duration, n_target_samples)
+
+    # Perform resampling (np.interp will use float64 internally)
     resampled_buffer = np.interp(time_x, time_x_source, sig)
+
+    # Cast resampled buffer to desired data type
+    resampled_buffer = resampled_buffer.astype(dtype)
+
     return resampled_buffer
 
 
@@ -56,7 +66,8 @@ def resample_signal(
 def resample_2d(
         audio_data: np.ndarray,
         native_sr: int,
-        target_sr: int
+        target_sr: int,
+        dtype: str = "float32"
 ) -> np.ndarray:
     """Resamples 2D audio data (multi-channel) to a target sampling rate.
 
@@ -67,7 +78,17 @@ def resample_2d(
 
     Returns:
         np.ndarray: The resampled audio data as a 2D numpy.ndarray.
+        
+    Raises:
+        ValueError: If the input `audio_data` is not a 2-dimensional NumPy array.
     """
+    
+    # Check if audio data is 2D
+    if audio_data.ndim != 2:
+        raise ValueError(
+            "Input audio data must be a 2-dimensional NumPy array "
+            "(n_samples, n_channels)."
+        )
 
     # Initialize a list to hold resampled channels
     resampled_channels = []
@@ -75,9 +96,9 @@ def resample_2d(
     # Iterate through each channel in the audio data
     for i in range(audio_data.shape[1]):
         channel_data = audio_data[:, i]
-        resampled_channel_data = resample_signal(channel_data,
-                                                 native_sr,
-                                                 target_sr)
+        resampled_channel_data = resample_signal(
+            channel_data, native_sr, target_sr, dtype
+        )
 
         resampled_channels.append(resampled_channel_data)
 
