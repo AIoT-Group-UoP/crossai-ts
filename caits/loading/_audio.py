@@ -6,80 +6,86 @@ from typing import Union, List, Optional
 from tqdm import tqdm
 import glob
 from caits.preprocessing import resample_2d
+import soundfile as sf
+from scipy.io import wavfile
 
 
 def wav_loader(
-        mode: str = "soundfile",
-        file_path: str = None,
-        channels: List[str] = None,
-        target_sr: int = None
+    file_path: str,
+    mode: str = "soundfile",
+    target_sr: int = None,
+    dtype: str = "float64",
+    channels: list[str] = None,
 ) -> pd.DataFrame:
     """Loads and optionally resamples a mono or multichannel audio
-    file into a DataFrame, ensuring the output is always 2D.
+    file into a DataFrame.
 
     Args:
-        mode: Loading mode ("soundfile", "scipy", "pydub").
         file_path: Path to the audio file.
+        mode: Loading mode ("soundfile", "scipy").
+        target_sr: Optional target sampling rate for resampling. In case of
+                   more than one channel, the resampling is done per channel.
+        dtype: The desired data type for the audio data. Supported options:
+            - "float64" (default): Double-precision floating-point, normalized to [-1, 1]
+            - "float32": Single-precision floating-point, normalized to [-1, 1]
+            - "int16": 16-bit signed integer, no normalization
+            - "int32": 32-bit signed integer, no normalization
         channels: List of channel names for the DataFrame.
-                  Defaults None.
-        target_sr: Optional target sampling rate for resampling.
 
     Returns:
         pd.DataFrame: Loaded and optionally resampled audio data in 2D shape.
     """
-    # Load audio data
-    if mode == "scipy":
-        from scipy.io import wavfile
+    
+    if mode == "soundfile":
+        audio_data, sample_rate = sf.read(file_path, always_2d=True, dtype=dtype)
+    elif mode == "scipy":
         sample_rate, audio_data = wavfile.read(file_path)
+        if audio_data.dtype != dtype and dtype in ["float32", "float64"]:
+            # Normalize to [-1, 1] for float types
+            audio_data = audio_data / np.iinfo(audio_data.dtype).max
+            audio_data = audio_data.astype(dtype)  # Convert to specified type
         if audio_data.ndim == 1:
             audio_data = audio_data.reshape(-1, 1)
-    elif mode == "pydub":
-        from pydub import AudioSegment
-        audio = AudioSegment.from_wav(file_path)
-        sample_rate = audio.frame_rate
-        audio_data = np.array(audio.get_array_of_samples())
-        audio_data = audio_data.reshape((-1, audio.channels))
-    elif mode == "soundfile":
-        import soundfile as sf
-        audio_data, sample_rate = sf.read(file_path, always_2d=True)
     else:
         raise ValueError(f"Unsupported mode: {mode}")
 
-    # Resample if a target sample rate is provided
     if target_sr is not None and target_sr != sample_rate:
+        # Resamples audio to target_sr per channel
         audio_data = resample_2d(audio_data, sample_rate, target_sr)
+    
+    if channels is None or len(channels) != audio_data.shape[1]:
+        channels = [f"ch_{i+1}" for i in range(audio_data.shape[1])]
 
-    # Define channel names if not provided
-    if channels is None:
-        channels = [f"Ch_{i+1}" for i in range(audio_data.shape[1])]
-
-    # Create DataFrame from the audio data
-    df = pd.DataFrame(audio_data, columns=channels)
-
-    return df
+    return pd.DataFrame(audio_data, columns=channels)
 
 
 def audio_loader(
         dataset_path: str,
         mode: str = "soundfile",
         format: str = "wav",
+        dtype: str = "float64",
+        target_sr: int = None,
+        classes: Optional[List[str]] = None,
         channels: list = ["Ch_1"],
         export: str = "dict",
-        target_sr: int = None,
-        classes: Optional[List[str]] = None
 ) -> Union[pd.DataFrame, dict]:
     """Loads audio files from a directory into a DataFrame
     or dictionary with optional resampling.
 
     Args:
         dataset_path: Path to the dataset directory.
-        mode: Loading mode, supports "soundfile", "scipy", or "pydub".
+        mode: Loading mode, supports "soundfile" or "scipy".
         format: Audio file format, defaults to "wav".
-        channels: List of channel names for the DataFrame.
-        export: Format to export the loaded data, "dict" or "df" for DataFrame.
+        dtype: The desired data type for the audio data. Supported options:
+            - "float64" (default): Double-precision floating-point, normalized to [-1, 1]
+            - "float32": Single-precision floating-point, normalized to [-1, 1]
+            - "int16": 16-bit signed integer, no normalization
+            - "int32": 32-bit signed integer, no normalization
         target_sr: Optional target sampling rate for resampling.
         classes: Optional list of directory names to include;
                  if None, all directories are included.
+        channels: List of channel names for the DataFrame.
+        export: Format to export the loaded data, "dict" or "df" for DataFrame.
 
     Returns:
         pd.DataFrame or dict: Loaded and optionally resampled audio
@@ -99,8 +105,7 @@ def audio_loader(
         if classes is None or subdir in classes:
             file = os.path.basename(file_path)
             try:
-                df = wav_loader(mode, file_path, channels,
-                                target_sr=target_sr)
+                df = wav_loader(file_path, mode, target_sr, dtype, channels)
                 all_features.append(df)
                 all_y.append(subdir)
                 all_id.append(file)
