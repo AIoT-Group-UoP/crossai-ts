@@ -2,7 +2,7 @@ import os
 import wave
 import pandas as pd
 import numpy as np
-from typing import Union, List, Optional
+from typing import Union, List, Optional, Tuple
 from tqdm import tqdm
 import glob
 from caits.preprocessing import resample_2d
@@ -16,7 +16,7 @@ def wav_loader(
     target_sr: int = None,
     dtype: str = "float64",
     channels: list[str] = None,
-) -> pd.DataFrame:
+) -> Tuple[pd.DataFrame, int]:
     """Loads and optionally resamples a mono or multichannel audio
     file into a DataFrame.
 
@@ -34,10 +34,12 @@ def wav_loader(
 
     Returns:
         pd.DataFrame: Loaded and optionally resampled audio data in 2D shape.
+        int: Sample rate of the audio file.
     """
     
     if mode == "soundfile":
-        audio_data, sample_rate = sf.read(file_path, always_2d=True, dtype=dtype)
+        audio_data, sample_rate = sf.read(file_path, always_2d=True,
+                                          dtype=dtype)
     elif mode == "scipy":
         sample_rate, audio_data = wavfile.read(file_path)
         if audio_data.dtype != dtype and dtype in ["float32", "float64"]:
@@ -52,11 +54,13 @@ def wav_loader(
     if target_sr is not None and target_sr != sample_rate:
         # Resamples audio to target_sr per channel
         audio_data = resample_2d(audio_data, sample_rate, target_sr)
+    else:
+        target_sr = sample_rate
     
     if channels is None or len(channels) != audio_data.shape[1]:
         channels = [f"ch_{i+1}" for i in range(audio_data.shape[1])]
 
-    return pd.DataFrame(audio_data, columns=channels)
+    return pd.DataFrame(audio_data, columns=channels), target_sr
 
 
 def audio_loader(
@@ -105,8 +109,9 @@ def audio_loader(
         if classes is None or subdir in classes:
             file = os.path.basename(file_path)
             try:
-                df = wav_loader(file_path, mode, target_sr, dtype, channels)
+                df, _ = wav_loader(file_path, mode, target_sr, dtype, channels)
                 all_features.append(df)
+                # todo: add sample rate to the dictionary
                 all_y.append(subdir)
                 all_id.append(file)
             except Exception as e:
