@@ -1,5 +1,6 @@
+import math
 import numpy as np
-from math import log
+from ._statistical import rms_value
 
 
 def dBFS(
@@ -19,9 +20,6 @@ def dBFS(
     if not rms:
         return -float("infinity")
     return ratio_to_db(rms / max_possible_amplitude(sample_width))
-
-
-import math
 
 
 def rms_dbfs(arr: np.ndarray) -> float:
@@ -94,6 +92,6 @@ def ratio_to_db(
         return -float('inf')
 
     if using_amplitude:
-        return 20 * log(ratio, 10)
+        return 20 * math.log(ratio, 10)
     else:  # using power
-        return 10 * log(ratio, 10)
+        return 10 * math.log(ratio, 10)
