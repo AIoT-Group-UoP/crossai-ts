@@ -288,7 +288,7 @@ def drift_ts(
         return arr
 
 
-def dropouts_ts(
+def dropout_ts(
         array: np.ndarray,
         p: Union[float, Tuple[float, float], List[float]] = 0.05,
         size: Union[int, Tuple[int, int], List[int]] = 1,
