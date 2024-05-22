@@ -1,5 +1,6 @@
+import math
 import numpy as np
-from math import log
+from ._statistical import rms_value
 
 
 def dBFS(
@@ -15,38 +16,10 @@ def dBFS(
     Returns:
 
     """
-    rms = rms_dbfs(array)
+    rms = rms_value(array)
     if not rms:
         return -float("infinity")
     return ratio_to_db(rms / max_possible_amplitude(sample_width))
-
-
-import math
-
-
-def rms_dbfs(arr: np.ndarray) -> float:
-    """Calculates the root mean square of an audio signal using math module.
-
-    Args:
-        arr: The input audio signal as a numpy.ndarray.
-
-    Returns:
-        float: The root mean square of the audio signal.
-    """
-    square = 0
-    mean = 0.0
-    root = 0.0
-
-    # Calculate square
-    n = len(arr)
-    for i in range(0, n):
-        square += (arr[i] ** 2)
-    # Calculate Mean
-    mean = (square / (float)(n))
-    # Calculate Root
-    root = math.sqrt(mean)
-
-    return root
 
 
 def max_possible_amplitude(
@@ -94,6 +67,6 @@ def ratio_to_db(
         return -float('inf')
 
     if using_amplitude:
-        return 20 * log(ratio, 10)
+        return 20 * math.log(ratio, 10)
     else:  # using power
-        return 10 * log(ratio, 10)
+        return 10 * math.log(ratio, 10)
