@@ -1,6 +1,7 @@
 import numpy as np
 import scipy
 from scipy.integrate import simps
+from typing import Union
 
 
 def spectral_centroid(array: np.ndarray, fs: int) -> float:
