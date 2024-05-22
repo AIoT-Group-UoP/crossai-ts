@@ -2,6 +2,7 @@ from typing import Optional
 import numpy as np
 from scipy.signal import hilbert
 from caits.windowing import frame_signal
+from typing import Any
 
 
 def amplitude_envelope_hbt(
@@ -157,3 +158,66 @@ def rolling_zcr(
     zcr = np.sum(zero_crossings, axis=0) / float(frame_length)
 
     return zcr
+
+
+def max_rms(
+    signal: np.ndarray,
+    frame_length: int,
+    hop_length: int,
+    **kwargs: Any
+) -> float:
+    """Computes the maximum of the Root Mean Square (RMS) values of a signal.
+
+    Args:
+        signal: The input signal.
+        frame_length: The length of the frame in samples.
+        hop_length: The number of samples to advance between frames (overlap).
+        **kwargs: Additional keyword arguments passed to `rolling_rms`.
+
+    Returns:
+        float: The maximum RMS value.
+    """
+    rms_values = rolling_rms(signal, frame_length, hop_length, **kwargs)
+    return np.max(rms_values)
+
+
+def min_rms(
+    signal: np.ndarray,
+    frame_length: int,
+    hop_length: int,
+    **kwargs: Any
+) -> float:
+    """Computes the minimum of the Root Mean Square (RMS) values of a signal.
+
+    Args:
+        signal: The input signal.
+        frame_length: The length of the frame in samples.
+        hop_length: The number of samples to advance between frames (overlap).
+        **kwargs: Additional keyword arguments passed to `rolling_rms`.
+
+    Returns:
+        float: The minimum RMS value.
+    """
+    rms_values = rolling_rms(signal, frame_length, hop_length, **kwargs)
+    return np.min(rms_values)
+
+
+def mean_rms(
+    signal: np.ndarray,
+    frame_length: int,
+    hop_length: int,
+    **kwargs: Any
+) -> float:
+    """Computes the mean of the Root Mean Square (RMS) values of a signal.
+
+    Args:
+        signal: The input signal.
+        frame_length: The length of the frame in samples.
+        hop_length: The number of samples to advance between frames (overlap).
+        **kwargs: Additional keyword arguments passed to `rolling_rms`.
+
+    Returns:
+        float: The mean RMS value.
+    """
+    rms_values = rolling_rms(signal, frame_length, hop_length, **kwargs)
+    return np.mean(rms_values)

@@ -308,36 +308,50 @@ def envelope_energy_peak_detection(
     stop: int = 1000,
     freq_step: int = 50,
     fcl_add: int = 50,
-    export: str = "array"
+    export: str = "array",
 ) -> Union[np.ndarray, dict]:
-    """Computes the Envelope Energy Peak Detection of a signal.
+    """Computes the Envelope Energy Peak Detection of a signal within
+    frequency bands.
 
     Args:
-        array:
-        fs:
-        start:
-        stop:
-        freq_step:
-        fcl_add:
-        export:
+        array: The input time-domain signal.
+        fs: The sampling frequency of the signal (Hz).
+        start: The lower frequency bound of the first band (Hz). Default: 50.
+        stop: The upper frequency bound of the last band (Hz). Default: 1000.
+        freq_step: The width of each frequency band (Hz). Default: 50.
+        fcl_add: Additional width added to the upper bound of each band.
+                 Default: 50.
+        export: The desired output format ("array" for NumPy array, "dict" for
+                dictionary). Default: "array".
 
     Returns:
+        Union[np.ndarray, dict]: The number of peaks detected in each
+                                 frequency band.
 
+    Raises:
+        ValueError: If an unsupported export format is provided.
     """
-    names = []
 
-    f_nyq = fs/2
+    f_nyq = fs / 2  # Nyquist frequency
+    names = []
     n_peaks = []
-    for fcl in range(start, stop, freq_step):
-        names = names + ['EEPD'+str(fcl)+'_'+str(fcl+freq_step)]
-        fc = [fcl/f_nyq, (fcl + fcl_add)/f_nyq]
-        b, a = butter(1, fc, btype='bandpass')
+
+    for fcl in range(start, stop, freq_step):  # Iterate over frequency bands
+        names.append(f"EEPD{fcl}_{fcl + freq_step}")
+
+        # Bandpass filtering
+        fc = [fcl / f_nyq, (fcl + fcl_add) / f_nyq]
+        b, a = butter(1, fc, btype="bandpass")
         bp_filter = filtfilt(b, a, array)
-        b, a = butter(2, 10/f_nyq, btype='lowpass')
+
+        # Lowpass filtering for envelope energy
+        b, a = butter(2, 10 / f_nyq, btype="lowpass")
         eed = filtfilt(b, a, bp_filter**2)
-        eed = eed/np.max(eed+1e-17)
-        peaks,_ = find_peaks(eed)
+        eed /= np.max(eed + 1e-17)  # Normalize envelope energy
+
+        peaks, _ = find_peaks(eed)  # Peak detection
         n_peaks.append(peaks.shape[0])
+
     if export == "array":
         return np.array(n_peaks)
     elif export == "dict":
