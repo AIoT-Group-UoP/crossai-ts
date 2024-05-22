@@ -510,6 +510,27 @@ def mfcc(
         raise ValueError(f"MFCC lifter={lifter} must be a non-negative number")
 
 
+def mean_mfcc(
+    y: np.ndarray,
+    sr: int = 22050,
+    n_mfcc: int = 20,
+    **kwargs: Any
+) -> np.ndarray:
+    """Calculates the mean of each MFCC coefficient over time.
+
+    Args:
+        y: Audio time series.
+        sr: Sampling rate of y. Default: 22050 Hz.
+        n_mfcc: Number of MFCCs to return. Default: 20.
+        **kwargs: Additional keyword arguments passed to `mfcc`.
+
+    Returns:
+        np.ndarray: Mean MFCC values (n_mfcc,).
+    """
+    mfcc_features = mfcc(y, sr=sr, n_mfcc=n_mfcc, **kwargs)
+    return np.mean(mfcc_features, axis=1)
+
+
 def melspectrogram(
         *,
         y: Optional[np.ndarray] = None,
