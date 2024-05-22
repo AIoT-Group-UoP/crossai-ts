@@ -1,5 +1,7 @@
 import numpy as np
 import scipy
+from scipy.integrate import simps
+from typing import Union
 
 
 def spectral_centroid(array: np.ndarray, fs: int) -> float:
@@ -95,15 +97,34 @@ def underlying_spectral(
     array: np.ndarray,
     fs: int
 ) -> tuple[np.ndarray, np.ndarray, float]:
+    """Calculates the magnitudes and frequencies of the positive side of the
+    Fourier Transform of a signal, along with the total sum of the magnitudes.
 
-    magnitudes = np.abs(
-        np.fft.rfft(array))  # magnitudes of positive frequencies
+    Args:
+        array (np.ndarray): The input signal.
+        fs (int): Sampling frequency of the signal.
+
+    Returns:
+        tuple[np.ndarray, np.ndarray, float]: A tuple containing:
+            * magnitudes: Array of magnitudes of the positive frequencies.
+            * freqs: Array of positive frequencies.
+            * sum_mag: Sum of all magnitudes.
+
+    Raises:
+        TypeError: If the input array is not of type float32 or float64.
+    """
+
+    if array.dtype not in (np.float32, np.float64):
+        raise TypeError("Input array must be of type np.float32 or np.float64")
+
+    # Ensure correct data type for output arrays
+    magnitudes = np.abs(np.fft.rfft(array)).astype(array.dtype)
     length = len(array)
-    freqs = np.abs(np.fft.fftfreq(length, 1.0 / fs)[
-                   :length // 2 + 1])  # positive frequencies
+    freqs = np.abs(
+        np.fft.fftfreq(length, 1.0 / fs)[: length // 2 + 1]
+    ).astype(array.dtype)
 
     sum_mag = np.sum(magnitudes)
-
     return magnitudes, freqs, sum_mag
 
 
@@ -137,28 +158,28 @@ def spectral_bandwidth(
     """
     # Compute the FFT
     fft_result = np.fft.fft(array)
-    
+
     # Calculate the two-sided power spectrum
     power_spectrum = np.abs(fft_result) ** 2
-    
+
     # Consider only the positive frequencies (single-sided spectrum)
     if array.size % 2 == 0:
         power_spectrum = power_spectrum[:array.size // 2] * 2
     else:
         power_spectrum = power_spectrum[:(array.size - 1) // 2] * 2
-    
+
     # Normalize power spectrum
     power_spectrum /= np.sum(power_spectrum)
-    
+
     # Frequency vector
     freqs = np.fft.fftfreq(array.size, d=1/fs)[:array.size // 2]
-    
+
     # Mean frequency (center of gravity)
     mean_freq = np.sum(freqs * power_spectrum)
-    
+
     # Spectral bandwidth (standard deviation)
     spectral_bw = np.sqrt(np.sum(((freqs - mean_freq) ** 2) * power_spectrum))
-    
+
     return spectral_bw
 
 
@@ -246,27 +267,58 @@ def power_spectral_density(
     fs: int,
     nperseg_th: int = 900,
     noverlap_th: int = 600,
-    freq_cuts: list[tuple[int, int]] = [(0,200),(300,425),(500,650),(950,1150),
-                                        (1400,1800),(2300,2400),(2850,2950),
-                                        (3800,3900)]
-) -> dict[str, float]:
-    from scipy.integrate import simps
+    freq_cuts: list[tuple[int, int]] = [
+        (0, 200), (300, 425), (500, 650), (950, 1150),
+        (1400, 1800), (2300, 2400), (2850, 2950), (3800, 3900)
+    ],
+    export: str = "array"
+) -> Union[np.ndarray, dict[str, float]]:
+    """Calculates the power spectral density (PSD) of a signal and returns
+    the relative power in specific frequency bands.
 
-    feat = []
+    Args:
+        array: The input time-domain signal.
+        fs: The sampling frequency of the signal (Hz).
+        nperseg_th: The theoretical length of each segment for the Welch
+                    method. Default: 900.
+        noverlap_th: The theoretical number of points to overlap between
+                     segments. Default: 600.
+        freq_cuts: A list of tuples defining the frequency bands of interest.
+                   Default: Predefined bands.
+        export: The desired output format ("array" for NumPy array, "dict" for
+                      dictionary). Default: "array".
+
+    Returns:
+        Union[np.ndarray, dict[str, float]]: The relative power in each
+            frequency band.
+            - If `export` is "array", returns a NumPy array of relative powers.
+            - If `export` is "dict", returns a dictionary mapping band names
+                to their relative powers.
+
+    Raises:
+        ValueError: If an unsupported export format is provided.
+    """
     nperseg = min(nperseg_th, len(array))
-    noverlap=min(noverlap_th, int(nperseg/2))
-    freqs, psd = scipy.signal.welch(array, fs, nperseg=nperseg,
-                                    noverlap=noverlap)
-    dx_freq = freqs[1]-freqs[0]
+    noverlap = min(noverlap_th, nperseg / 2)
+
+    freqs, psd = scipy.signal.welch(array, fs, nperseg=nperseg, noverlap=noverlap)
+    dx_freq = freqs[1] - freqs[0]
     total_power = simps(psd, dx=dx_freq)
+
+    band_powers = []
     for lf, hf in freq_cuts:
         idx_band = np.logical_and(freqs >= lf, freqs <= hf)
         band_power = simps(psd[idx_band], dx=dx_freq)
-        feat.append(band_power/total_power)
-    feat = np.array(feat)
-    feat_names = [f'PSD_{lf}-{hf}' for lf, hf in freq_cuts]
+        band_powers.append(band_power / total_power)
 
-    return dict(zip(feat_names, feat))
+    # Handle export format
+    if export == "array":
+        return np.array(band_powers)
+    elif export == "dict":
+        feat_names = [f"PSD_{lf}-{hf}" for lf, hf in freq_cuts]
+        return dict(zip(feat_names, band_powers))
+    else:
+        raise ValueError(f"Unsupported export={export}")
 
 
 def zcr_mean(
