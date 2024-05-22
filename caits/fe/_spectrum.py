@@ -637,7 +637,11 @@ def power_to_db(
     return log_spec
 
 
-def db_to_power(S_db: np.ndarray, *, ref: float = 1.0) -> np.ndarray:
+def db_to_power(
+    S_db: np.ndarray,
+    *,
+    ref: float = 1.0
+) -> np.ndarray:
     # The functionality in this implementation is basically derived from
     # librosa v0.10.1:
     # https://github.com/librosa/librosa/blob/main/librosa/core/spectrum.py
@@ -688,7 +692,11 @@ def amplitude_to_db(
     return power_to_db(power, ref=ref_value**2, amin=amin**2, top_db=top_db)
 
 
-def db_to_amplitude(S_db: np.ndarray, *, ref: float = 1.0) -> np.ndarray:
+def db_to_amplitude(
+    S_db: np.ndarray,
+    *,
+    ref: float = 1.0
+) -> np.ndarray:
     """Convert a dB-scaled spectrogram to an amplitude spectrogram.
 
     This effectively inverts `amplitude_to_db`::
