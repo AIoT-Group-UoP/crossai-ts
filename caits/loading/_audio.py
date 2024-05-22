@@ -111,7 +111,7 @@ def audio_loader(
             try:
                 df, _ = wav_loader(file_path, mode, target_sr, dtype, channels)
                 all_features.append(df)
-                # todo: add sample rate to the dictionary
+                # todo: add sample rate, sample width to the dictionary?
                 all_y.append(subdir)
                 all_id.append(file)
             except Exception as e:
