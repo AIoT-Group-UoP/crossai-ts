@@ -3,11 +3,13 @@
 # https://github.com/librosa/librosa/blob/main/librosa/util/utils.py
 # https://github.com/librosa/librosa/blob/main/librosa/filters.py
 # https://github.com/librosa/librosa/blob/main/librosa/core/spectrum.py
-from typing import Optional, Union, Callable, Tuple, Any, Sequence, List, Literal
+import warnings
+from typing import Any, List, Literal, Optional, Sequence, Tuple, Union
+
 import numpy as np
 import scipy
-import warnings
 from numpy.typing import DTypeLike
+
 from caits.core._core_typing import _FloatLike_co, _ScalarOrSequence
 from caits.core._core_window import normalize
 
@@ -15,12 +17,7 @@ from caits.core._core_window import normalize
 MAX_MEM_BLOCK = 2**8 * 2**10
 
 
-def expand_to(
-    x: np.ndarray,
-    *,
-    ndim: int,
-    axes: Union[int, slice, Sequence[int], Sequence[slice]]
-) -> np.ndarray:
+def expand_to(x: np.ndarray, *, ndim: int, axes: Union[int, slice, Sequence[int], Sequence[slice]]) -> np.ndarray:
     # Force axes into a tuple
     axes_tup: Tuple[int]
     try:
@@ -29,15 +26,10 @@ def expand_to(
         axes_tup = tuple([axes])  # type: ignore
 
     if len(axes_tup) != x.ndim:
-        raise ValueError(
-            f"Shape mismatch between axes={axes_tup} and input "
-            f"x.shape={x.shape}"
-        )
+        raise ValueError(f"Shape mismatch between axes={axes_tup} and input " f"x.shape={x.shape}")
 
     if ndim < x.ndim:
-        raise ValueError(
-            f"Cannot expand x.shape={x.shape} to fewer dimensions ndim={ndim}"
-        )
+        raise ValueError(f"Cannot expand x.shape={x.shape} to fewer dimensions ndim={ndim}")
 
     shape: List[int] = [1] * ndim
     for i, axi in enumerate(axes_tup):
@@ -59,15 +51,10 @@ def __overlap_add(y, ytmp, hop_length):
         if N > y.shape[-1] - sample:
             N = y.shape[-1] - sample
 
-        y[..., sample: (sample + N)] += ytmp[..., :N, frame]
+        y[..., sample : (sample + N)] += ytmp[..., :N, frame]
 
 
-def _nnls_obj(
-    x: np.ndarray,
-    shape: Sequence[int],
-    A: np.ndarray,
-    B: np.ndarray
-) -> Tuple[float, np.ndarray]:
+def _nnls_obj(x: np.ndarray, shape: Sequence[int], A: np.ndarray, B: np.ndarray) -> Tuple[float, np.ndarray]:
     """Computes the objective and gradient for NNLS"""
     # Scipy's lbfgs flattens all arrays, so we first reshape
     # the iteration x
@@ -86,9 +73,7 @@ def _nnls_obj(
     return value, grad.flatten()
 
 
-def _nnls_lbfgs_block(
-    A: np.ndarray, B: np.ndarray, x_init: Optional[np.ndarray] = None, **kwargs: Any
-) -> np.ndarray:
+def _nnls_lbfgs_block(A: np.ndarray, B: np.ndarray, x_init: Optional[np.ndarray] = None, **kwargs: Any) -> np.ndarray:
     """Solves the constrained problem over a single block.
 
     Parameters
@@ -168,9 +153,7 @@ def nnls(A: np.ndarray, B: np.ndarray, **kwargs: Any) -> np.ndarray:
 
     for bl_s in range(0, x.shape[-1], n_columns):
         bl_t = min(bl_s + n_columns, B.shape[-1])
-        x[..., bl_s:bl_t] = _nnls_lbfgs_block(
-            A, B[..., bl_s:bl_t], x_init=x_init[..., bl_s:bl_t], **kwargs
-        )
+        x[..., bl_s:bl_t] = _nnls_lbfgs_block(A, B[..., bl_s:bl_t], x_init=x_init[..., bl_s:bl_t], **kwargs)
     return x
 
 
@@ -234,14 +217,10 @@ def mel_filter(
 
 
 def fft_frequencies(*, sr: float = 22050, n_fft: int = 2048) -> np.ndarray:
-
     return np.fft.rfftfreq(n=n_fft, d=1.0 / sr)
 
 
-def mel_frequencies(
-    n_mels: int = 128, *, fmin: float = 0.0, fmax: float = 11025.0, htk: bool = False
-) -> np.ndarray:
-
+def mel_frequencies(n_mels: int = 128, *, fmin: float = 0.0, fmax: float = 11025.0, htk: bool = False) -> np.ndarray:
     # 'Center freqs' of mel bands - uniformly spaced between limits
     min_mel = hz_to_mel(fmin, htk=htk)
     max_mel = hz_to_mel(fmax, htk=htk)
@@ -255,7 +234,6 @@ def mel_frequencies(
 def hz_to_mel(
     frequencies: _ScalarOrSequence[_FloatLike_co], *, htk: bool = False
 ) -> Union[np.floating[Any], np.ndarray]:
-
     frequencies = np.asanyarray(frequencies)
 
     if htk:
@@ -277,8 +255,7 @@ def hz_to_mel(
     if frequencies.ndim:
         # If we have array data, vectorize
         log_t = frequencies >= min_log_hz
-        mels[log_t] = min_log_mel + np.log(
-            frequencies[log_t] / min_log_hz) / logstep
+        mels[log_t] = min_log_mel + np.log(frequencies[log_t] / min_log_hz) / logstep
     elif frequencies >= min_log_hz:
         # If we have scalar data, heck directly
         mels = min_log_mel + np.log(frequencies / min_log_hz) / logstep
@@ -286,10 +263,7 @@ def hz_to_mel(
     return mels
 
 
-def mel_to_hz(
-    mels: _ScalarOrSequence[_FloatLike_co], *, htk: bool = False
-) -> Union[np.floating[Any], np.ndarray]:
-
+def mel_to_hz(mels: _ScalarOrSequence[_FloatLike_co], *, htk: bool = False) -> Union[np.floating[Any], np.ndarray]:
     mels = np.asanyarray(mels)
 
     if htk:

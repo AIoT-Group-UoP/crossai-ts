@@ -1,20 +1,20 @@
-from typing import Union, Callable
+from typing import Callable, Tuple, Union
+
 import tensorflow as tf
+from tensorflow.keras.layers import Conv1D, Dense, Flatten, GlobalAveragePooling1D, Input, MaxPooling1D
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, Flatten
-from tensorflow.keras.layers import Dense, Conv1D, MaxPooling1D, \
-    GlobalAveragePooling1D
+
 from caits.ai import dropout_layer_1d
 
 
 def CNN1D(
-    input_shape: tuple,
+    input_shape: Tuple[int, ...],
     include_top: bool = True,
     num_classes: int = 1,
     classifier_activation: Union[str, Callable] = "softmax",
-    drp_rate: float = 0.,
+    drp_rate: float = 0.0,
     spatial: bool = False,
-    mc_inference: Union[bool, None] = None
+    mc_inference: Union[bool, None] = None,
 ) -> tf.keras.Model:
     """Creates a simple 1D CNN model for experimental purposes.
 
@@ -50,8 +50,7 @@ def CNN1D(
     # retain tensor shape (keepdims) since Spatial Dropout expects 3D input
     x = GlobalAveragePooling1D(keepdims=True if spatial else False)(x)
 
-    x = dropout_layer_1d(inputs=x, drp_rate=drp_rate, spatial=spatial,
-                         mc_inference=mc_inference)
+    x = dropout_layer_1d(inputs=x, drp_rate=drp_rate, spatial=spatial, mc_inference=mc_inference)
     if include_top is True:
         x = Flatten()(x)
         outputs = Dense(num_classes, activation=classifier_activation)(x)

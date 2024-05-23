@@ -1,17 +1,18 @@
-from typing import Optional, List, Union
-import pandas as pd
-from matplotlib.figure import Figure as Fig
-import matplotlib.pyplot as plt
-import seaborn as sns
-import numpy as np
 import itertools
+from typing import Dict, List, Optional, Tuple, Union
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from matplotlib.figure import Figure as Fig
 
 
 def plot_dim_reduced_scatter(
-    dataframes_dict: dict,
+    dataframes_dict: Dict[str, pd.DataFrame],
     dimensions: int = 2,
-    fig_size: tuple = (10, 8),
-    fig_title: str = ''
+    fig_size: Tuple[int, int] = (10, 8),
+    fig_title: str = "",
 ) -> Fig:
     """Plots dimensional reduced scatter plots for the given
         dataframes with either 2D or 3D dimensions.
@@ -36,39 +37,33 @@ def plot_dim_reduced_scatter(
 
     # Color and marker setup
     colors = plt.cm.tab10(np.linspace(0, 1, len(dataframes_dict)))
-    markers = ['o', 's', 'v', '^', '<', '>', 'p',
-               '*', 'H', '+', 'x', 'D', 'd', '|', '_']
-    color_map = {disease: colors[i]
-                 for i, disease in enumerate(dataframes_dict)}
-    marker_map = {disease: markers[i % len(markers)]
-                  for i, disease in enumerate(dataframes_dict)}
+    markers = ["o", "s", "v", "^", "<", ">", "p", "*", "H", "+", "x", "D", "d", "|", "_"]
+    color_map = {disease: colors[i] for i, disease in enumerate(dataframes_dict)}
+    marker_map = {disease: markers[i % len(markers)] for i, disease in enumerate(dataframes_dict)}
 
     # Setup figure and axes
-    fig, ax = plt.subplots(
-        figsize=fig_size,
-        subplot_kw={'projection': '3d'} if dimensions == 3 else {}
-    )
+    fig, ax = plt.subplots(figsize=fig_size, subplot_kw={"projection": "3d"} if dimensions == 3 else {})
 
     # Scatter plot
     for label, df in dataframes_dict.items():
         if dimensions == 2:
-            ax.scatter(df[0], df[1], color=color_map[label], s=30,
-                       label=label, marker=marker_map[label], alpha=0.7)
+            ax.scatter(df[0], df[1], color=color_map[label], s=30, label=label, marker=marker_map[label], alpha=0.7)
         elif dimensions == 3:
-            ax.scatter(df[0], df[1], df[2], color=color_map[label], s=10,
-                       label=label, marker=marker_map[label], alpha=0.7)
+            ax.scatter(
+                df[0], df[1], df[2], color=color_map[label], s=10, label=label, marker=marker_map[label], alpha=0.7
+            )
 
     # Set labels and title
-    ax.set_xlabel('Principal Component 1', fontsize=10)
-    ax.set_ylabel('Principal Component 2', fontsize=10)
+    ax.set_xlabel("Principal Component 1", fontsize=10)
+    ax.set_ylabel("Principal Component 2", fontsize=10)
     if dimensions == 3:
-        ax.set_zlabel('Principal Component 3', fontsize=10)
+        ax.set_zlabel("Principal Component 3", fontsize=10)
     if fig_title:
         plt.title(fig_title, fontsize=20)
 
     # Set legend and grid
     ax.legend(fontsize=8)
-    ax.grid(True, which='both', linestyle='--', linewidth=0.5)
+    ax.grid(True, which="both", linestyle="--", linewidth=0.5)
 
     return fig
 
@@ -76,9 +71,9 @@ def plot_dim_reduced_scatter(
 def plot_distribution(
     dataframe: pd.DataFrame,
     target_column: str,
-    plot_type: str = 'boxplot',
+    plot_type: str = "boxplot",
     n_rows: int = 9,
-    n_cols: int = 7
+    n_cols: int = 7,
 ) -> Fig:
     """Plots each feature in the dataframe, differentiated by the class labels
     specified in the target_column, either as a boxplot or a histogram with
@@ -106,8 +101,7 @@ def plot_distribution(
     """
 
     # Create a figure and a grid of subplots with shared x-axis
-    fig, axes = plt.subplots(nrows=n_rows, ncols=n_cols,
-                             figsize=(30, 30), sharex='col')
+    fig, axes = plt.subplots(nrows=n_rows, ncols=n_cols, figsize=(30, 30), sharex="col")
     axes = axes.flatten()  # Flatten the axes array for easy indexing
 
     # Loop through each feature and plot
@@ -116,27 +110,25 @@ def plot_distribution(
             break
 
         ax = axes[i]
-        if plot_type == 'boxplot':
+        if plot_type == "boxplot":
             sns.boxplot(x=target_column, y=feature, data=dataframe, ax=ax)
-        elif plot_type == 'histogram':
-            sns.histplot(data=dataframe, x=feature, hue=target_column,
-                         element="step", kde=True, ax=ax)
+        elif plot_type == "histogram":
+            sns.histplot(data=dataframe, x=feature, hue=target_column, element="step", kde=True, ax=ax)
 
-        ax.set_title(f'{feature}')
-        ax.set_ylabel('')
+        ax.set_title(f"{feature}")
+        ax.set_ylabel("")
 
         # Only modify x-axis labels for the last row
         if i >= (n_rows - 1) * n_cols:
-            ax.tick_params(axis='x', labelrotation=45)
+            ax.tick_params(axis="x", labelrotation=45)
         else:
             ax.set_xticklabels([])
 
     # Set x-axis labels with actual class names for the last row
-    if plot_type == 'boxplot':
+    if plot_type == "boxplot":
         for j in range((n_rows - 1) * n_cols, n_rows * n_cols):
             if j < len(axes):  # Check if the subplot exists
-                axes[j].set_xticklabels(dataframe[target_column].unique(),
-                                        rotation=45)
+                axes[j].set_xticklabels(dataframe[target_column].unique(), rotation=45)
     return fig
 
 
@@ -144,13 +136,13 @@ def plot_triu_corr_heatmap(
     df: pd.DataFrame,
     target_column: Optional[str] = None,
     target_value: Optional[Union[str, int]] = None,
-    title: str = 'Triangle Correlation Heatmap',
-    cmap: str = 'coolwarm',
+    title: str = "Triangle Correlation Heatmap",
+    cmap: str = "coolwarm",
     fmt: str = ".2f",
     vmin: float = -1,
     vmax: float = 1,
     annot_size: int = 6,
-    label_size: int = 6
+    label_size: int = 6,
 ) -> Fig:
     """Plots a triangular (upper triangle) correlation heatmap for the given
     DataFrame.
@@ -199,7 +191,7 @@ def plot_triu_corr_heatmap(
     # drop non-numeric columns
     # in case `target_column` is numeric, an extra row on the correlation
     # heatmap will be created
-    df = df.select_dtypes(include=['number'])
+    df = df.select_dtypes(include=["number"])
 
     # calculate pearson correlation
     corr_matrix = df.corr()
@@ -215,12 +207,12 @@ def plot_triu_corr_heatmap(
         annot=True,
         cmap=cmap,
         fmt=fmt,
-        annot_kws={"size": annot_size}
+        annot_kws={"size": annot_size},
     )
     # Adjusting font size for feature labels
     heatmap.set_xticklabels(heatmap.get_xticklabels(), fontsize=label_size)
     heatmap.set_yticklabels(heatmap.get_yticklabels(), fontsize=label_size)
-    heatmap.set_title(title, fontdict={'fontsize': 15}, pad=16)
+    heatmap.set_title(title, fontdict={"fontsize": 15}, pad=16)
 
     return fig
 
@@ -231,7 +223,7 @@ def plot_scatter_feature_pairs(
     target_value: Optional[str] = None,
     feature_list: List[str] = [],
     n_rows: int = 10,
-    n_cols: int = 5
+    n_cols: int = 5,
 ) -> Fig:
     """Creates a grid of scatter plots for combinations of features
     from a given DataFrame.
@@ -285,21 +277,17 @@ def plot_scatter_feature_pairs(
         if i >= n_rows * n_cols:  # Break if more combinations than subplots
             break
 
-        sns.scatterplot(x=feature1, y=feature2,
-                        hue=target_column, data=dataframe, ax=axes[i])
-        axes[i].set_title(f'Scatter Plot for {feature1} vs {feature2}')
+        sns.scatterplot(x=feature1, y=feature2, hue=target_column, data=dataframe, ax=axes[i])
+        axes[i].set_title(f"Scatter Plot for {feature1} vs {feature2}")
 
     # Hide any unused subplots
-    for j in range(i+1, n_rows * n_cols):
+    for j in range(i + 1, n_rows * n_cols):
         fig.delaxes(axes[j])
 
     return fig
 
 
-def plot_explained_variance(
-    exp_var_ratio: List[float],
-    title: str = "Explained Variance"
-) -> Fig:
+def plot_explained_variance(exp_var_ratio: List[float], title: str = "Explained Variance") -> Fig:
     """Plots the explained variance and cumulative explained variance from the
     provided PCA explained variance ratios.
 
@@ -326,13 +314,13 @@ def plot_explained_variance(
 
     # Create the visualization plot
     fig, ax = plt.subplots()
-    ax.bar(range(0, len(exp_var_ratio)), exp_var_ratio, alpha=0.5,
-           align='center', label='Individual explained variance')
-    ax.step(range(0, len(cum_sum_eigenvalues)), cum_sum_eigenvalues,
-            where='mid', label='Cumulative explained variance')
-    ax.set_ylabel('Explained variance ratio')
-    ax.set_xlabel('Principal component index')
+    ax.bar(
+        range(0, len(exp_var_ratio)), exp_var_ratio, alpha=0.5, align="center", label="Individual explained variance"
+    )
+    ax.step(range(0, len(cum_sum_eigenvalues)), cum_sum_eigenvalues, where="mid", label="Cumulative explained variance")
+    ax.set_ylabel("Explained variance ratio")
+    ax.set_xlabel("Principal component index")
     ax.set_title(title)
-    ax.legend(loc='best')
+    ax.legend(loc="best")
 
     return fig

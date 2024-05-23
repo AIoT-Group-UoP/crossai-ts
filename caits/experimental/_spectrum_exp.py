@@ -1,13 +1,13 @@
+from typing import Optional, Tuple
+
 import numpy as np
 import scipy
 from scipy.signal import stft
+
 from caits.core._core_window import get_window
 
 
-def pre(
-    array: np.ndarray,
-    fs: int
-) -> float:
+def pre(array: np.ndarray, fs: int) -> float:
     """Computes the Phase Power Ratio Estimation
 
     Args:
@@ -17,31 +17,30 @@ def pre(
     Returns:
         float: The Phase Power Ratio Estimation of the input signal.
     """
-    phaseLen = int(array.shape[0]//3)
+    phaseLen = int(array.shape[0] // 3)
     P1 = array[:phaseLen]
-    P2 = array[phaseLen:2*phaseLen]
+    P2 = array[phaseLen : 2 * phaseLen]
     # P3 = array[2*phaseLen:]
     # f = np.fft.fftfreq(phaseLen, 1/fs)
     P1 = np.abs(np.fft.fft(P1)[:phaseLen])
     P2 = np.abs(np.fft.fft(P2)[:phaseLen])
     # P3 = np.abs(np.fft.fft(P3)[:phaseLen])
-    P2norm = P2/(np.sum(P1)+1e-17)
-    fBin = fs/(2*phaseLen +1e-17)
-    f750, f1k, f2k5 = (int(-(-750//fBin)), int(-(-1000//fBin)),
-                       int(-(-2500//fBin)))
+    P2norm = P2 / (np.sum(P1) + 1e-17)
+    fBin = fs / (2 * phaseLen + 1e-17)
+    f750, f1k, f2k5 = (int(-(-750 // fBin)), int(-(-1000 // fBin)), int(-(-2500 // fBin)))
 
     return np.sum(P2norm[f1k:f2k5]) / np.sum(P2norm[:f750])
 
 
 def compute_spectrogram(
-        signal: np.ndarray,
-        fs: int,
-        window: str = "hann",
-        nperseg: int = 256,
-        noverlap: int = None,
-        nfft: int =None,
-        fmin: float = None,
-        fmax: float = None
+    signal: np.ndarray,
+    fs: int,
+    window: str = "hann",
+    nperseg: int = 256,
+    noverlap: Optional[int] = None,
+    nfft: Optional[int] = None,
+    fmin: Optional[float] = None,
+    fmax: Optional[float] = None,
 ):
     """Computes the spectrogram of a signal.
 
@@ -70,22 +69,21 @@ def compute_spectrogram(
     if fmax is None:
         fmax = fs / 2.0
 
-    f, t, spec = stft(signal, fs=fs, window=window, nperseg=nperseg,
-                      noverlap=noverlap, nfft=nfft, boundary=None)
+    f, t, spec = stft(signal, fs=fs, window=window, nperseg=nperseg, noverlap=noverlap, nfft=nfft, boundary=None)
     freq_mask = (f >= fmin) & (f <= fmax)
     return f[freq_mask], t, np.abs(spec[freq_mask, :])
 
 
 def compute_power_spectrogram(
-        signal: np.ndarray,
-        fs: int,
-        window: str = 'hann',
-        nperseg: int = 256,
-        noverlap: int = None,
-        nfft: int = None,
-        fmin: float = None,
-        fmax: float = None
-) -> (np.ndarray, np.ndarray, np.ndarray):
+    signal: np.ndarray,
+    fs: int,
+    window: str = "hann",
+    nperseg: int = 256,
+    noverlap: Optional[int] = None,
+    nfft: Optional[int] = None,
+    fmin: Optional[float] = None,
+    fmax: Optional[float] = None,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Computes the power spectrogram of a signal.
 
     Args:
@@ -117,18 +115,18 @@ def compute_power_spectrogram(
     freq_mask = (f >= fmin) & (f <= fmax)
     f = f[freq_mask]
     spec = np.abs(Zxx[freq_mask, :])
-    Pxx = np.abs(spec)**2
+    Pxx = np.abs(spec) ** 2
     return f, t, Pxx
 
 
 def compute_mel_spectrogram(
-        signal: np.ndarray,
-        sr: int,
-        n_fft: int = 2048,
-        hop_length: int = 512,
-        n_mels: int = 128,
-        fmin: float = None,
-        fmax: float = None
+    signal: np.ndarray,
+    sr: int,
+    n_fft: int = 2048,
+    hop_length: int = 512,
+    n_mels: int = 128,
+    fmin: Optional[float] = None,
+    fmax: Optional[float] = None,
 ) -> np.ndarray:
     """Computes the Mel spectrogram of a signal.
 
@@ -154,9 +152,8 @@ def compute_mel_spectrogram(
         fmax = sr / 2.0
 
     # Compute power spectrogram
-    window = get_window('hann', n_fft)
-    _, _, Sxx = scipy.signal.stft(signal, fs=sr, window=window, nperseg=n_fft,
-                                  noverlap=n_fft - hop_length)
+    window = get_window("hann", n_fft)
+    _, _, Sxx = scipy.signal.stft(signal, fs=sr, window=window, nperseg=n_fft, noverlap=n_fft - hop_length)
     power_spectrogram = np.abs(Sxx) ** 2
 
     # Compute Mel filterbanks
@@ -168,13 +165,7 @@ def compute_mel_spectrogram(
     return mel_spectrogram
 
 
-def _compute_mel_filterbanks(
-        sr: int,
-        n_fft: int,
-        n_mels: int,
-        fmin: float,
-        fmax: float
-) -> np.ndarray:
+def _compute_mel_filterbanks(sr: int, n_fft: int, n_mels: int, fmin: float, fmax: float) -> np.ndarray:
     """Computes Mel filterbanks.
 
     Args:
@@ -198,14 +189,12 @@ def _compute_mel_filterbanks(
     filters = np.zeros((n_mels, n_fft // 2 + 1))
 
     for i in range(1, n_mels + 1):
-        filters[i - 1, bin_points[i - 1]:bin_points[i]] = (
-                (np.arange(bin_points[i - 1], bin_points[i]) - bin_points[
-                    i - 1]) /
-                (bin_points[i] - bin_points[i - 1]))
-        filters[i - 1, bin_points[i]:bin_points[i + 1]] = (
-                1 - (np.arange(bin_points[i], bin_points[i + 1]) - bin_points[
-            i]) /
-                (bin_points[i + 1] - bin_points[i]))
+        filters[i - 1, bin_points[i - 1] : bin_points[i]] = (
+            np.arange(bin_points[i - 1], bin_points[i]) - bin_points[i - 1]
+        ) / (bin_points[i] - bin_points[i - 1])
+        filters[i - 1, bin_points[i] : bin_points[i + 1]] = 1 - (
+            np.arange(bin_points[i], bin_points[i + 1]) - bin_points[i]
+        ) / (bin_points[i + 1] - bin_points[i])
 
     return filters
 
@@ -234,9 +223,7 @@ def _mel_to_hz(mel: float) -> float:
     return 700 * (10 ** (mel / 2595) - 1)
 
 
-def spec_to_power(
-        spec: np.ndarray
-) -> np.ndarray:
+def spec_to_power(spec: np.ndarray) -> np.ndarray:
     """Transforms a complex-valued spectrogram to a power spectrogram.
 
     Args: Input complex-valued spectrogram in np.ndarray.
@@ -244,13 +231,10 @@ def spec_to_power(
     Returns:
         mp.ndarray: The power spectrogram.
     """
-    return np.abs(spec)**2
+    return np.abs(spec) ** 2
 
 
-def power_to_db(
-        power_spectrogram: np.ndarray,
-        ref=1.0
-) -> np.ndarray:
+def power_to_db(power_spectrogram: np.ndarray, ref=1.0) -> np.ndarray:
     """Converts a power spectrogram to decibel (dB) units.
     Args:
         power_spectrogram: Input power spectrogram in np.ndarray.
@@ -261,4 +245,3 @@ def power_to_db(
         np.ndarray: The power spectrogram in dB.
     """
     return 10 * np.log10(power_spectrogram / ref)
-

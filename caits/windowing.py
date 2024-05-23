@@ -1,16 +1,17 @@
-import numpy as np
 from math import ceil
+from typing import List, Union
+
+import numpy as np
 import pandas as pd
-from typing import Union
 
 
 def rolling_window_df(
-        df: pd.DataFrame,
-        ws: int = 500,
-        overlap: int = 250,
-        w_type: str = "hann",
-        w_center: bool = True,
-        print_stats: bool = False
+    df: pd.DataFrame,
+    ws: int = 500,
+    overlap: int = 250,
+    w_type: str = "hann",
+    w_center: bool = True,
+    print_stats: bool = False,
 ) -> list:
     """Applies the sliding window algorithm to the DataFrame rows.
 
@@ -35,8 +36,7 @@ def rolling_window_df(
     # have a value;
     # For a window that is specified by an integer, min_periods will default
     # to the size of the window.
-    for window in df.rolling(window=ws, step=overlap, min_periods=ws,
-                             win_type=w_type, center=w_center):
+    for window in df.rolling(window=ws, step=overlap, min_periods=ws, win_type=w_type, center=w_center):
         if window[window.columns[0]].count() >= ws:
             if print_stats:
                 print("Print Window:", counter)
@@ -49,11 +49,7 @@ def rolling_window_df(
     return windows_list
 
 
-def sliding_window_df(
-        df: pd.DataFrame,
-        window_size: int,
-        overlap: int
-) -> list[pd.DataFrame]:
+def sliding_window_df(df: pd.DataFrame, window_size: int, overlap: int) -> List[pd.DataFrame]:
     """Generate windowed DataFrames based on the specified
     window size and overlap.
 
@@ -82,12 +78,12 @@ def sliding_window_df(
 
 
 def windowing_df(
-        df: pd.DataFrame,
-        ws: int = 500,
-        overlap: int = 250,
-        w_type: str = "hann",
-        w_center: bool = False,
-        mode: str = "dict"
+    df: pd.DataFrame,
+    ws: int = 500,
+    overlap: int = 250,
+    w_type: str = "hann",
+    w_center: bool = False,
+    mode: str = "dict",
 ) -> Union[dict, pd.DataFrame, str]:
     """Applies the sliding window algorithm to the DataFrame rows and returns
     the windows as a dictionary or a DataFrame, containing the corresponding
@@ -112,9 +108,14 @@ def windowing_df(
     windows_list = []
     y_list = []
     for index, row in df.iterrows():
-        windows = rolling_window_df(row["X"], ws=ws, overlap=overlap,
-                                    w_type=w_type, w_center=w_center,
-                                    print_stats=False)
+        windows = rolling_window_df(
+            row["X"],
+            ws=ws,
+            overlap=overlap,
+            w_type=w_type,
+            w_center=w_center,
+            print_stats=False,
+        )
         windows_list.extend(windows)
         y_list.extend([row["y"]] * len(windows))
 
@@ -126,11 +127,7 @@ def windowing_df(
         return "Invalid mode. Use 'dict' or 'df' as mode."
 
 
-def frame_signal(
-        array: np.ndarray,
-        frame_length: int,
-        hop_length: int
-) -> np.ndarray:
+def frame_signal(array: np.ndarray, frame_length: int, hop_length: int) -> np.ndarray:
     """Distinguishes a signal into overlapping frames.
 
     Args:
@@ -155,11 +152,7 @@ def frame_signal(
     return frames
 
 
-
-def create_chunks(
-        array: np.ndarray,
-        chunk_length: int
-) -> list[np.ndarray]:
+def create_chunks(array: np.ndarray, chunk_length: int) -> List[np.ndarray]:
     """
 
     Args:
@@ -170,5 +163,4 @@ def create_chunks(
 
     """
     n_chunks = ceil(len(array) / float(chunk_length))
-    return [array[i * chunk_length:(i + 1) * chunk_length]
-            for i in range(int(n_chunks))]
+    return [array[i * chunk_length : (i + 1) * chunk_length] for i in range(int(n_chunks))]

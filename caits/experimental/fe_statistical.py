@@ -1,4 +1,5 @@
 import math
+
 import numpy as np
 
 
@@ -18,9 +19,9 @@ def rms_dbfs(arr: np.ndarray) -> float:
     # Calculate square
     n = len(arr)
     for i in range(0, n):
-        square += (arr[i] ** 2)
+        square += arr[i] ** 2
     # Calculate Mean
-    mean = (square / (float)(n))
+    mean = square / float(n)
     # Calculate Root
     root = math.sqrt(mean)
 

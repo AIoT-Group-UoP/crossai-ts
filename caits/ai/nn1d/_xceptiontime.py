@@ -1,29 +1,40 @@
+from typing import Callable, List, Optional, Tuple, Union
+
 import tensorflow as tf
-from tensorflow.keras.layers import Input, Dense, Conv1D, MaxPooling1D
-from tensorflow.keras.layers import SeparableConv1D, Flatten, Add, Concatenate
-from tensorflow.keras.layers import BatchNormalization, Activation
-from tensorflow.keras import Model
-from tensorflow.keras.regularizers import l2
-from tensorflow.keras.constraints import MaxNorm
-from .._layers_dropout import dropout_layer_1d
 import tensorflow_addons as tfa
-from typing import Union, Callable
+from tensorflow.keras import Model
+from tensorflow.keras.constraints import MaxNorm
+from tensorflow.keras.layers import (
+    Activation,
+    Add,
+    BatchNormalization,
+    Concatenate,
+    Conv1D,
+    Dense,
+    Flatten,
+    Input,
+    MaxPooling1D,
+    SeparableConv1D,
+)
+from tensorflow.keras.regularizers import l2
+
+from .._layers_dropout import dropout_layer_1d
 
 
 # Implementation of XceptionTime NN model based on:
 # - https://arxiv.org/pdf/1911.03803.pdf
 # - https://ieeexplore.ieee.org/document/9881698/
 def XceptionTime(
-    input_shape: tuple,
+    input_shape: Tuple[int, ...],
     include_top: bool = True,
     num_classes: int = 1,
     classifier_activation: Union[str, Callable] = "softmax",
     xception_adaptive_size: int = 50,
     xception_adapt_ws_divide: int = 4,
     n_filters: int = 16,
-    drp_low: float = 0.,
-    drp_mid: float = 0.,
-    drp_high: float = 0.,
+    drp_low: float = 0.0,
+    drp_mid: float = 0.0,
+    drp_high: float = 0.0,
     spatial: bool = False,
     kernel_initialize: Union[str, Callable] = "he_uniform",
     kernel_regularize: Union[str, float] = 4e-5,
@@ -87,8 +98,11 @@ def XceptionTime(
         xception_adaptive_size = xception_adaptive_size
         print("Provide a dividable number for the window size.")
         raise Exception("Provide a dividable number for the window size.")
-    print(f"Input size W of window transformed into a fixed length of \
-        {xception_adaptive_size} sample ""for AAP mid layer.")
+    print(
+        f"Input size W of window transformed into a fixed length of \
+        {xception_adaptive_size} sample "
+        "for AAP mid layer."
+    )
 
     # regularizer settings
     if isinstance(kernel_regularize, str):
@@ -104,14 +118,16 @@ def XceptionTime(
     input_layer = Input(shape=input_shape, name="input_layer")
 
     # Dropout
-    x = dropout_layer_1d(inputs=input_layer, drp_rate=drp_low,
-                         spatial=spatial, mc_inference=mc_inference)
+    x = dropout_layer_1d(inputs=input_layer, drp_rate=drp_low, spatial=spatial, mc_inference=mc_inference)
 
     # COMPONENT 1 - Xception Block
-    x = xception_block(inputs=x, n_filters=n_filters,
-                       kernel_initialize=kernel_initialize,
-                       kernel_regularize=kernel_regularize,
-                       kernel_constraint=kernel_constraint)
+    x = xception_block(
+        inputs=x,
+        n_filters=n_filters,
+        kernel_initialize=kernel_initialize,
+        kernel_regularize=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+    )
 
     # COMPONENT 2
     # Head of the sequential component
@@ -122,35 +138,48 @@ def XceptionTime(
     x = tfa.layers.AdaptiveAveragePooling1D(xception_adaptive_size)(x)
 
     # Dropout
-    x = dropout_layer_1d(inputs=x, drp_rate=drp_mid, spatial=spatial,
-                         mc_inference=mc_inference)
+    x = dropout_layer_1d(inputs=x, drp_rate=drp_mid, spatial=spatial, mc_inference=mc_inference)
 
     # stack 3 Conv1x1 Convolutions to reduce the time-series
     # to the number of the classes
-    x = conv1d_block(x, nf=head_nf/2, drp_on=False, drp_rate=0.5,
-                     spatial=True,
-                     kernel_initialize=kernel_initialize,
-                     kernel_regularize=kernel_regularize,
-                     kernel_constraint=kernel_constraint)
+    x = conv1d_block(
+        x,
+        nf=head_nf // 2,
+        drp_on=False,
+        drp_rate=0.5,
+        spatial=True,
+        kernel_initialize=kernel_initialize,
+        kernel_regularize=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+    )
 
-    x = conv1d_block(x, nf=head_nf/4, drp_on=False, drp_rate=0.5,
-                     spatial=True,
-                     kernel_initialize=kernel_initialize,
-                     kernel_regularize=kernel_regularize,
-                     kernel_constraint=kernel_constraint)
+    x = conv1d_block(
+        x,
+        nf=head_nf // 4,
+        drp_on=False,
+        drp_rate=0.5,
+        spatial=True,
+        kernel_initialize=kernel_initialize,
+        kernel_regularize=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+    )
 
-    x = conv1d_block(x, nf=num_classes, drp_on=False, drp_rate=0.5,
-                     spatial=True,
-                     kernel_initialize=kernel_initialize,
-                     kernel_regularize=kernel_regularize,
-                     kernel_constraint=kernel_constraint)
+    x = conv1d_block(
+        x,
+        nf=num_classes,
+        drp_on=False,
+        drp_rate=0.5,
+        spatial=True,
+        kernel_initialize=kernel_initialize,
+        kernel_regularize=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+    )
 
     # convert the length of the input signal to 1 with the
     x = tfa.layers.AdaptiveAveragePooling1D(1)(x)
 
     # # Dropout
-    x = dropout_layer_1d(inputs=x, drp_rate=drp_high, spatial=spatial,
-                         mc_inference=mc_inference)
+    x = dropout_layer_1d(inputs=x, drp_rate=drp_high, spatial=spatial, mc_inference=mc_inference)
 
     if include_top is True:
         # flatten
@@ -180,10 +209,10 @@ def conv1d_block(
     drp_on: bool = False,
     drp_rate: float = 0.5,
     spatial: bool = True,
-    mc_inference: bool = None,
-    kernel_initialize: str = None,
-    kernel_regularize: float = None,
-    kernel_constraint: int = None
+    mc_inference: Optional[bool] = None,
+    kernel_initialize: Optional[Union[str, Callable]] = None,
+    kernel_regularize: Optional[Union[str, float]] = None,
+    kernel_constraint: Optional[int] = None,
 ) -> tf.Tensor:
     """Creates a block of layers consisting of Conv1D, BatchNormalization,
         Activation and Dropout.
@@ -212,15 +241,16 @@ def conv1d_block(
         tensor: Output tensor after applying the block of layers.
     """
 
-    x = Conv1D(filters=nf,
-               kernel_size=ks,
-               strides=strd,
-               padding=pad,
-               use_bias=bias,
-               kernel_initializer=kernel_initialize,
-               kernel_regularizer=kernel_regularize,
-               kernel_constraint=kernel_constraint
-               )(inputs)
+    x = Conv1D(
+        filters=nf,
+        kernel_size=ks,
+        strides=strd,
+        padding=pad,
+        use_bias=bias,
+        kernel_initializer=kernel_initialize,
+        kernel_regularizer=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+    )(inputs)
 
     if bn:
         x = BatchNormalization()(x)
@@ -239,9 +269,9 @@ def xception_block(
     n_filters: int,
     depth: int = 4,
     use_residual: bool = True,
-    kernel_initialize: bool = None,
-    kernel_regularize: bool = None,
-    kernel_constraint: bool = None
+    kernel_initialize: Optional[Union[str, Callable]] = None,
+    kernel_regularize: Optional[Union[str, float]] = None,
+    kernel_constraint: Optional[int] = None,
 ) -> tf.Tensor:
     """Applies a series of Xception modules, potentially with residual
         connections.
@@ -263,20 +293,26 @@ def xception_block(
     input_res = inputs
 
     for d in range(depth):
-        xception_filters = n_filters * 2 ** d
-        x = xception_module(x, xception_filters,
-                            kernel_initialize=kernel_initialize,
-                            kernel_regularize=kernel_regularize,
-                            kernel_constraint=kernel_constraint)
+        xception_filters = n_filters * 2**d
+        x = xception_module(
+            x,
+            xception_filters,
+            kernel_initialize=kernel_initialize,
+            kernel_regularize=kernel_regularize,
+            kernel_constraint=kernel_constraint,
+        )
 
         if use_residual and d % 2 == 1:
-            residual_conv_filters = n_filters * 4 * (2 ** d)
-            res_out = Conv1D(filters=residual_conv_filters, kernel_size=1,
-                             padding="same", use_bias=False,
-                             kernel_initializer=kernel_initialize,
-                             kernel_regularizer=kernel_regularize,
-                             kernel_constraint=kernel_constraint
-                             )(input_res)
+            residual_conv_filters = n_filters * 4 * (2**d)
+            res_out = Conv1D(
+                filters=residual_conv_filters,
+                kernel_size=1,
+                padding="same",
+                use_bias=False,
+                kernel_initializer=kernel_initialize,
+                kernel_regularizer=kernel_regularize,
+                kernel_constraint=kernel_constraint,
+            )(input_res)
 
             shortcut_y = BatchNormalization()(res_out)
             res_out = Add()([shortcut_y, x])
@@ -293,9 +329,9 @@ def xception_module(
     use_bottleneck: bool = True,
     kernel_size: int = 41,
     stride: int = 1,
-    kernel_initialize: str = None,
-    kernel_regularize: float = None,
-    kernel_constraint: int = None
+    kernel_initialize: Optional[Union[str, Callable]] = None,
+    kernel_regularize: Optional[Union[str, float]] = None,
+    kernel_constraint: Optional[int] = None,
 ) -> tf.Tensor:
     """Applies the Xception module which is a series of SeparableConv1D layers
         and a MaxPooling1D layer, followed by concatenation.
@@ -316,14 +352,15 @@ def xception_module(
     """
 
     if use_bottleneck and n_filters > 1:
-        x = Conv1D(filters=n_filters,
-                   kernel_size=1,
-                   padding="valid",
-                   use_bias=False,
-                   kernel_initializer=kernel_initialize,
-                   kernel_regularizer=kernel_regularize,
-                   kernel_constraint=kernel_constraint
-                   )(inputs)
+        x = Conv1D(
+            filters=n_filters,
+            kernel_size=1,
+            padding="valid",
+            use_bias=False,
+            kernel_initializer=kernel_initialize,
+            kernel_regularizer=kernel_regularize,
+            kernel_constraint=kernel_constraint,
+        )(inputs)
     else:
         x = inputs
 
@@ -332,21 +369,28 @@ def xception_module(
 
     separable_conv_list = []
     for kernel in kernel_sizes:
-        separable_conv = SeparableConv1D(filters=n_filters, kernel_size=kernel,
-                                         strides=stride,
-                                         padding="same", use_bias=False,
-                                         kernel_initializer=kernel_initialize,
-                                         kernel_regularizer=kernel_regularize,
-                                         kernel_constraint=kernel_constraint
-                                         )(x)
+        separable_conv = SeparableConv1D(
+            filters=n_filters,
+            kernel_size=kernel,
+            strides=stride,
+            padding="same",
+            use_bias=False,
+            kernel_initializer=kernel_initialize,
+            kernel_regularizer=kernel_regularize,
+            kernel_constraint=kernel_constraint,
+        )(x)
         separable_conv_list.append(separable_conv)
 
     x2 = MaxPooling1D(pool_size=3, strides=stride, padding="same")(inputs)
-    x2 = Conv1D(filters=n_filters, kernel_size=1, padding="valid",
-                use_bias=False,
-                kernel_initializer=kernel_initialize,
-                kernel_regularizer=kernel_regularize,
-                kernel_constraint=kernel_constraint)(x2)
+    x2 = Conv1D(
+        filters=n_filters,
+        kernel_size=1,
+        padding="valid",
+        use_bias=False,
+        kernel_initializer=kernel_initialize,
+        kernel_regularizer=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+    )(x2)
 
     separable_conv_list.append(x2)
 
@@ -355,7 +399,7 @@ def xception_module(
     return x_post
 
 
-def kernel_padding_size_lists(max_kernel_size: int) -> tuple:
+def kernel_padding_size_lists(max_kernel_size: int) -> Tuple[List[int], List[int]]:
     """Generates lists of kernel sizes and corresponding paddings based on a
         given max kernel size.
 
@@ -376,7 +420,7 @@ def kernel_padding_size_lists(max_kernel_size: int) -> tuple:
     kernel_size_list = []
     padding_list = []
     while i < 3:
-        size = max_kernel_size // (2 ** i)
+        size = max_kernel_size // (2**i)
         if size == max_kernel_size:
             kernel_size_list.append(int(size))
             padding_list.append(int((size - 1) / 2))

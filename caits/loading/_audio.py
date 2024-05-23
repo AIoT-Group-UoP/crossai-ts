@@ -1,21 +1,23 @@
+import glob
 import os
 import wave
-import pandas as pd
+from typing import Dict, List, Literal, Optional, Tuple, Union
+
 import numpy as np
-from typing import Union, List, Optional, Tuple
-from tqdm import tqdm
-import glob
-from caits.preprocessing import resample_2d
+import pandas as pd
 import soundfile as sf
 from scipy.io import wavfile
+from tqdm import tqdm
+
+from caits.preprocessing import resample_2d
 
 
 def wav_loader(
     file_path: str,
     mode: str = "soundfile",
-    target_sr: int = None,
+    target_sr: Optional[int] = None,
     dtype: str = "float64",
-    channels: list[str] = None,
+    channels: Optional[List[str]] = None,
 ) -> Tuple[pd.DataFrame, int]:
     """Loads and optionally resamples a mono or multichannel audio
     file into a DataFrame.
@@ -36,10 +38,9 @@ def wav_loader(
         pd.DataFrame: Loaded and optionally resampled audio data in 2D shape.
         int: Sample rate of the audio file.
     """
-    
+
     if mode == "soundfile":
-        audio_data, sample_rate = sf.read(file_path, always_2d=True,
-                                          dtype=dtype)
+        audio_data, sample_rate = sf.read(file_path, always_2d=True, dtype=dtype)
     elif mode == "scipy":
         sample_rate, audio_data = wavfile.read(file_path)
         if audio_data.dtype != dtype and dtype in ["float32", "float64"]:
@@ -56,23 +57,23 @@ def wav_loader(
         audio_data = resample_2d(audio_data, sample_rate, target_sr)
     else:
         target_sr = sample_rate
-    
+
     if channels is None or len(channels) != audio_data.shape[1]:
-        channels = [f"ch_{i+1}" for i in range(audio_data.shape[1])]
+        channels = [f"ch_{i + 1}" for i in range(audio_data.shape[1])]
 
     return pd.DataFrame(audio_data, columns=channels), target_sr
 
 
 def audio_loader(
-        dataset_path: str,
-        mode: str = "soundfile",
-        format: str = "wav",
-        dtype: str = "float64",
-        target_sr: int = None,
-        classes: Optional[List[str]] = None,
-        channels: list = ["Ch_1"],
-        export: str = "dict",
-) -> Union[pd.DataFrame, dict]:
+    dataset_path: str,
+    mode: str = "soundfile",
+    format: str = "wav",
+    dtype: str = "float64",
+    target_sr: Optional[List[int]] = None,
+    classes: Optional[List[str]] = None,
+    channels: List[str] = ["Ch_1"],
+    export: Literal["df", "dict"] = "dict",
+) -> Union[pd.DataFrame, Dict[str, List]]:
     """Loads audio files from a directory into a DataFrame
     or dictionary with optional resampling.
 
@@ -118,35 +119,25 @@ def audio_loader(
                 print(f"Error loading file {file_path}: {e}")
 
     if export == "df":
-        return pd.DataFrame({
-            "X": all_features,
-            "y": all_y,
-            "id": all_id
-        })
+        return pd.DataFrame({"X": all_features, "y": all_y, "id": all_id})
     elif export == "dict":
-        return {
-            "X": all_features,
-            "y": all_y,
-            "id": all_id
-        }
+        return {"X": all_features, "y": all_y, "id": all_id}
 
 
-def wav_specs_check(
-    wav_file_path: str,
-    print_base: bool = False
-) -> dict:
+def wav_specs_check(wav_file_path: str, print_base: bool = False) -> Dict:
     """Checks the specifications of a WAV file.
 
     It returns the sample rate, the number of channels and other information
     regarding the wav file.
 
     Args:
+        print_base: If True, prints the sample rate and number of channels.
         wav_file_path: Path to the WAV file.
 
     Returns:
         A dictionary containing the specifications of the WAV file.
     """
-    with wave.open(wav_file_path, 'rb') as wf:
+    with wave.open(wav_file_path, "rb") as wf:
         num_channels = wf.getnchannels()
         sr = wf.getframerate()
         if print_base:

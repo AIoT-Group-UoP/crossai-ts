@@ -1,12 +1,13 @@
-import yaml
-import os
 import glob
 import json
+import os
+from typing import Any, Dict, List, Optional
+
+import yaml
 from tqdm import tqdm
-from typing import List, Optional
 
 
-def load_yaml_config(config_path: str) -> dict:
+def load_yaml_config(config_path: str) -> Dict[str, Any]:
     """Loads a YAML configuration file from a specified path.
 
     This function attempts to open and parse a YAML file, raising exceptions if
@@ -24,17 +25,21 @@ def load_yaml_config(config_path: str) -> dict:
         yaml.YAMLError: If an error occurs during parsing of the YAML content.
     """
     try:
-        with open(config_path, 'r') as file:
+        with open(config_path, "r") as file:
             return yaml.safe_load(file)
     except FileNotFoundError as e:
-        raise FileNotFoundError(f"Configuration file \
-                                not found: {config_path}") from e
+        raise FileNotFoundError(
+            f"Configuration file \
+                                not found: {config_path}"
+        ) from e
     except yaml.YAMLError as e:
-        raise yaml.YAMLError(f"Error parsing YAML \
-                             configuration: {config_path}") from e
+        raise yaml.YAMLError(
+            f"Error parsing YAML \
+                             configuration: {config_path}"
+        ) from e
 
 
-def json_loader(dataset_path: str, classes: Optional[List[str]] = None) -> dict:
+def json_loader(dataset_path: str, classes: Optional[List[str]] = None) -> Dict[str, Any]:
     """Loads JSON files from a directory, ensuring keys do
     not include file extensions. Each JSON file's contents are stored
     as a dictionary under the corresponding key.
@@ -62,7 +67,7 @@ def json_loader(dataset_path: str, classes: Optional[List[str]] = None) -> dict:
             filename = os.path.splitext(os.path.basename(file_path))[0]
 
             try:
-                with open(file_path, 'r') as f:
+                with open(file_path, "r") as f:
                     # Assuming the top-level JSON structure is
                     # an object (i.e., a dictionary)
                     data = json.load(f)

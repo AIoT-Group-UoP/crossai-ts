@@ -10,25 +10,26 @@
 # however with minor modifications:
 # https://librosa.github.io/librosa/generated/librosa.core.pcen.html
 from typing import Optional
+
 import numpy as np
 import scipy
 
 
 def pcen(
-        S: np.ndarray,
-        sr: int = 22050,
-        hop_length: int = 512,
-        gain: float = 0.98,
-        bias: float = 2,
-        power: float = 0.5,
-        time_constant: float = 0.400,
-        eps: float = 1e-6,
-        b: Optional[float] = None,
-        max_size: int = 1,
-        ref: Optional[np.ndarray] = None,
-        axis: int = -1,
-        max_axis: Optional[int] = None,
-        magnitude_increase: bool = False
+    S: np.ndarray,
+    sr: int = 22050,
+    hop_length: int = 512,
+    gain: float = 0.98,
+    bias: float = 2,
+    power: float = 0.5,
+    time_constant: float = 0.400,
+    eps: float = 1e-6,
+    b: Optional[float] = None,
+    max_size: int = 1,
+    ref: Optional[np.ndarray] = None,
+    axis: int = -1,
+    max_axis: Optional[int] = None,
+    magnitude_increase: bool = False,
 ) -> np.ndarray:
     """Generates artifacts in the output due to the zero-initialization of the
     low-pass filtered version of the input spectrogram used for normalization.
@@ -63,24 +64,22 @@ def pcen(
     """
 
     if power <= 0:
-        raise ValueError('power={} must be strictly positive'.format(power))
+        raise ValueError("power={} must be strictly positive".format(power))
 
     if gain < 0:
-        raise ValueError('gain={} must be non-negative'.format(gain))
+        raise ValueError("gain={} must be non-negative".format(gain))
 
     if bias < 0:
-        raise ValueError('bias={} must be non-negative'.format(bias))
+        raise ValueError("bias={} must be non-negative".format(bias))
 
     if eps <= 0:
-        raise ValueError('eps={} must be strictly positive'.format(eps))
+        raise ValueError("eps={} must be strictly positive".format(eps))
 
     if time_constant <= 0:
-        raise ValueError('time_constant={} must be strictly positive'.format(
-            time_constant))
+        raise ValueError("time_constant={} must be strictly positive".format(time_constant))
 
     if max_size < 1 or not isinstance(max_size, int):
-        raise ValueError('max_size={} must be a positive integer'.format(
-            max_size))
+        raise ValueError("max_size={} must be a positive integer".format(max_size))
 
     if b is None:
         t_frames = time_constant * sr / float(hop_length)
@@ -89,30 +88,30 @@ def pcen(
         # which approximates the full-width half-max of the
         # squared frequency response of the IIR low-pass filter
 
-        b = (np.sqrt(1 + 4 * t_frames ** 2) - 1) / (2 * t_frames ** 2)
+        b = (np.sqrt(1 + 4 * t_frames**2) - 1) / (2 * t_frames**2)
 
     if not 0 <= b <= 1:
-        raise ValueError('b={} must be between 0 and 1'.format(b))
+        raise ValueError("b={} must be between 0 and 1".format(b))
 
     if np.issubdtype(S.dtype, np.complexfloating):
-        print('pcen was called on complex input so phase '
-              'information will be discarded. To suppress this warning, '
-              'call pcen(np.abs(D)) instead.')
+        print(
+            "pcen was called on complex input so phase "
+            "information will be discarded. To suppress this warning, "
+            "call pcen(np.abs(D)) instead."
+        )
         S = np.abs(S)
 
     if ref is None:
         if max_size == 1:
             ref = S
         elif S.ndim == 1:
-            raise ValueError(
-                'Max-filtering cannot be applied to 1-dimensional input'
-            )
+            raise ValueError("Max-filtering cannot be applied to 1-dimensional input")
         else:
             if max_axis is None:
                 if S.ndim != 2:
                     raise ValueError(
-                        'Max-filtering a {:d}-dimensional spectrogram '
-                        'requires you to specify max_axis'.format(S.ndim))
+                        "Max-filtering a {:d}-dimensional spectrogram requires you to specify max_axis".format(S.ndim)
+                    )
                 # if axis = 0, max_axis=1
                 # if axis = +- 1, max_axis = 0
                 max_axis = np.mod(1 - axis, 2)
@@ -121,37 +120,27 @@ def pcen(
 
     if magnitude_increase:
         # forward-backward provides better results.
-        S_smooth = scipy.signal.filtfilt(
-            [b],
-            [1, b - 1],
-            ref,
-            axis=axis,
-            padtype=None)
+        S_smooth = scipy.signal.filtfilt([b], [1, b - 1], ref, axis=axis, padtype=None)
     else:
         # Use of a forward only pass of the filter - but initialize it more
         # carefully.
         S_smooth, _ = scipy.signal.lfilter(
-            [b], [1, b - 1], ref,
-            axis=axis,
-            zi=[scipy.signal.lfilter_zi(
-                [b],
-                [1, b - 1]
-            )] * S[:, 0].shape[0]
+            [b], [1, b - 1], ref, axis=axis, zi=[scipy.signal.lfilter_zi([b], [1, b - 1])] * S[:, 0].shape[0]
         )
 
     # Working in log-space gives us some stability, and a slight speedup
     smooth = np.exp(-gain * (np.log(eps) + np.log1p(S_smooth / eps)))
-    return (S * smooth + bias) ** power - bias ** power
+    return (S * smooth + bias) ** power - bias**power
 
 
 def pcen_base(
-        E: np.ndarray,
-        alpha: float = 0.98,
-        delta: float = 2,
-        r: float = 0.5,
-        s: float = 0.025,
-        eps: float = 1e-6,
-        magnitude_increase: bool = False
+    E: np.ndarray,
+    alpha: float = 0.98,
+    delta: float = 2,
+    r: float = 0.5,
+    s: float = 0.025,
+    eps: float = 1e-6,
+    magnitude_increase: bool = False,
 ) -> np.ndarray:
     """Implements the PCEN transform to apply on a batch of np.ndarray
     instances (spectrograms).
@@ -197,14 +186,11 @@ def pcen_base(
         return np.power(E * M + delta, r) - np.power(delta, r)
     else:
         # Naive implementation
-        smooth = (eps + M)**(-alpha)
-        return (E * smooth + delta)**r - delta**r
+        smooth = (eps + M) ** (-alpha)
+        return (E * smooth + delta) ** r - delta**r
 
 
-def _first_order_iir(
-        E: np.ndarray,
-        s: float
-) -> np.ndarray:
+def _first_order_iir(E: np.ndarray, s: float) -> np.ndarray:
     """Implements a first order Infinite Impulse Response (IIR) forward filter
     initialized using the input values. Specifically, this function implements
     the filter M defined in:

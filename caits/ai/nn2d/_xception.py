@@ -1,19 +1,29 @@
-from typing import Union, List, Callable
+from typing import Callable, List, Optional, Tuple, Union
+
 import tensorflow as tf
 from tensorflow.keras import Input, Model
-from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU, Dense
-from tensorflow.keras.layers import GlobalAveragePooling2D
-from tensorflow.keras.layers import SeparableConv2D, MaxPooling2D, Add, Flatten
-from tensorflow.keras.initializers import Initializer
-from tensorflow.keras.regularizers import Regularizer, l2
 from tensorflow.keras.constraints import Constraint, MaxNorm
-from .._layers_dropout import dense_drop_block
+from tensorflow.keras.initializers import Initializer
+from tensorflow.keras.layers import (
+    Add,
+    BatchNormalization,
+    Conv2D,
+    Dense,
+    Flatten,
+    GlobalAveragePooling2D,
+    MaxPooling2D,
+    ReLU,
+    SeparableConv2D,
+)
+from tensorflow.keras.regularizers import Regularizer, l2
+
+from caits.ai import dense_drop_block
 
 
 # Implementation of Xception NN model based on:
 # - https://arxiv.org/abs/1610.02357
 def Xception(
-    input_shape: tuple,
+    input_shape: Tuple[int, ...],
     include_top: bool = True,
     num_classes: int = 1,
     classifier_activation: Union[str, Callable] = "softmax",
@@ -26,7 +36,7 @@ def Xception(
     dropout_first: bool = False,
     dropout_rate: List[float] = [0.5, 0.5],
     spatial: bool = False,
-    mc_inference: Union[bool, None] = None
+    mc_inference: Optional[bool] = None,
 ) -> tf.keras.Model:
     """Constructs the Xception model, a deep convolutional neural network known
     for its depth and efficiency.
@@ -77,42 +87,48 @@ def Xception(
     input_layer = Input(shape=input_shape, name="input_layer")
 
     # Create entry section
-    x = entry_flow(inputs=input_layer,
-                   kernel_initialize=kernel_initialize,
-                   kernel_regularize=kernel_regularize,
-                   kernel_constraint=kernel_constraint
-                   )
+    x = entry_flow(
+        inputs=input_layer,
+        kernel_initialize=kernel_initialize,
+        kernel_regularize=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+    )
 
     # Create the middle section
-    x = middle_flow(x=x,
-                    kernel_initialize=kernel_initialize,
-                    kernel_regularize=kernel_regularize,
-                    kernel_constraint=kernel_constraint
-                    )
+    x = middle_flow(
+        x=x,
+        kernel_initialize=kernel_initialize,
+        kernel_regularize=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+    )
 
     # Create the exit section for 2 classes
-    x = exit_flow(x=x,
-                  kernel_initialize=kernel_initialize,
-                  kernel_regularize=kernel_regularize,
-                  kernel_constraint=kernel_constraint
-                  )
+    x = exit_flow(
+        x=x,
+        kernel_initialize=kernel_initialize,
+        kernel_regularize=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+    )
 
     if include_top:
         # flatten
         x = Flatten()(x)
 
         # apply multiple sequential dense/dropout layers
-        x = dense_drop_block(inputs=x, n_layers=dense_layers,
-                             dense_units=dense_units,
-                             dropout=dropout, drop_first=dropout_first,
-                             drop_rate=dropout_rate,
-                             activation_dense="relu",
-                             kernel_initialize=kernel_initialize,
-                             kernel_regularize=kernel_regularize,
-                             kernel_constraint=kernel_constraint,
-                             spatial=spatial,
-                             mc_inference=mc_inference
-                             )
+        x = dense_drop_block(
+            inputs=x,
+            n_layers=dense_layers,
+            dense_units=dense_units,
+            dropout=dropout,
+            drop_first=dropout_first,
+            drop_rate=dropout_rate,
+            activation_dense="relu",
+            kernel_initialize=kernel_initialize,
+            kernel_regularize=kernel_regularize,
+            kernel_constraint=kernel_constraint,
+            spatial=spatial,
+            mc_inference=mc_inference,
+        )
 
         # Fully connected output layer (classification)
         outputs = Dense(num_classes, activation=classifier_activation)(x)
@@ -128,7 +144,7 @@ def entry_flow(
     inputs: tf.Tensor,
     kernel_initialize: Union[Initializer, str],
     kernel_regularize: Union[Regularizer, float, None],
-    kernel_constraint: Union[Constraint, int, None]
+    kernel_constraint: Union[Constraint, int, None],
 ) -> tf.Tensor:
     """Creates the entry flow section of a convolutional neural network.
 
@@ -170,21 +186,27 @@ def entry_flow(
 
         # Strided convolution - dimensionality reduction
         # Reduce feature maps by 75%
-        x = Conv2D(32, (3, 3), strides=(2, 2),
-                   kernel_initializer=kernel_initialize,
-                   kernel_regularizer=kernel_regularize,
-                   kernel_constraint=kernel_constraint
-                   )(inputs)
+        x = Conv2D(
+            32,
+            (3, 3),
+            strides=(2, 2),
+            kernel_initializer=kernel_initialize,
+            kernel_regularizer=kernel_regularize,
+            kernel_constraint=kernel_constraint,
+        )(inputs)
         x = BatchNormalization()(x)
         x = ReLU()(x)
 
         # Convolution - dimensionality expansion
         # Double the number of filters
-        x = Conv2D(64, (3, 3), strides=(1, 1),
-                   kernel_initializer=kernel_initialize,
-                   kernel_regularizer=kernel_regularize,
-                   kernel_constraint=kernel_constraint
-                   )(x)
+        x = Conv2D(
+            64,
+            (3, 3),
+            strides=(1, 1),
+            kernel_initializer=kernel_initialize,
+            kernel_regularizer=kernel_regularize,
+            kernel_constraint=kernel_constraint,
+        )(x)
         x = BatchNormalization()(x)
         x = ReLU()(x)
 
@@ -195,8 +217,7 @@ def entry_flow(
 
     # Create three residual blocks using linear projection
     for n_filters in [128, 256, 728]:
-        x = projection_block(x, n_filters, kernel_initialize,
-                             kernel_regularize, kernel_constraint)
+        x = projection_block(x, n_filters, kernel_initialize, kernel_regularize, kernel_constraint)
 
     return x
 
@@ -205,7 +226,7 @@ def middle_flow(
     x: tf.Tensor,
     kernel_initialize: Union[Initializer, str],
     kernel_regularize: Union[Regularizer, float, None],
-    kernel_constraint: Union[Constraint, int, None]
+    kernel_constraint: Union[Constraint, int, None],
 ) -> tf.Tensor:
     """Creates the middle flow section of a convolutional neural network.
 
@@ -229,8 +250,7 @@ def middle_flow(
     """
     # Create 8 residual blocks
     for _ in range(8):
-        x = residual_block(x, 728, kernel_initialize, kernel_regularize,
-                           kernel_constraint)
+        x = residual_block(x, 728, kernel_initialize, kernel_regularize, kernel_constraint)
     return x
 
 
@@ -238,7 +258,7 @@ def exit_flow(
     x: tf.Tensor,
     kernel_initialize: Union[Initializer, str],
     kernel_regularize: Union[Regularizer, float, None],
-    kernel_constraint: Union[Constraint, int, None]
+    kernel_constraint: Union[Constraint, int, None],
 ) -> tf.Tensor:
     """Creates the exit flow section of a convolutional neural network.
 
@@ -264,37 +284,47 @@ def exit_flow(
     # 1x1 strided convolution to increase number and reduce size of
     # feature maps in identity link to match output of residual block for
     # the add operation (projection shortcut)
-    shortcut = Conv2D(1024, (1, 1), strides=(2, 2), padding="same",
-                      kernel_initializer=kernel_initialize,
-                      kernel_regularizer=kernel_regularize,
-                      kernel_constraint=kernel_constraint
-                      )(x)
+    shortcut = Conv2D(
+        1024,
+        (1, 1),
+        strides=(2, 2),
+        padding="same",
+        kernel_initializer=kernel_initialize,
+        kernel_regularizer=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+    )(x)
     shortcut = BatchNormalization()(shortcut)
 
     x = ReLU()(x)
     # First Depthwise Separable Convolution
     # Dimensionality reduction - reduce number of filters
-    x = SeparableConv2D(728, (3, 3), padding="same",
-                        depthwise_initializer=kernel_initialize,
-                        pointwise_initializer=kernel_initialize,
-                        depthwise_regularizer=kernel_regularize,
-                        pointwise_regularizer=kernel_regularize,
-                        depthwise_constraint=kernel_constraint,
-                        pointwise_constraint=kernel_constraint
-                        )(x)
+    x = SeparableConv2D(
+        728,
+        (3, 3),
+        padding="same",
+        depthwise_initializer=kernel_initialize,
+        pointwise_initializer=kernel_initialize,
+        depthwise_regularizer=kernel_regularize,
+        pointwise_regularizer=kernel_regularize,
+        depthwise_constraint=kernel_constraint,
+        pointwise_constraint=kernel_constraint,
+    )(x)
     x = BatchNormalization()(x)
 
     x = ReLU()(x)
     # Second Depthwise Separable Convolution
     # Dimensionality restoration
-    x = SeparableConv2D(1024, (3, 3), padding="same",
-                        depthwise_initializer=kernel_initialize,
-                        pointwise_initializer=kernel_initialize,
-                        depthwise_regularizer=kernel_regularize,
-                        pointwise_regularizer=kernel_regularize,
-                        depthwise_constraint=kernel_constraint,
-                        pointwise_constraint=kernel_constraint
-                        )(x)
+    x = SeparableConv2D(
+        1024,
+        (3, 3),
+        padding="same",
+        depthwise_initializer=kernel_initialize,
+        pointwise_initializer=kernel_initialize,
+        depthwise_regularizer=kernel_regularize,
+        pointwise_regularizer=kernel_regularize,
+        depthwise_constraint=kernel_constraint,
+        pointwise_constraint=kernel_constraint,
+    )(x)
     x = BatchNormalization()(x)
 
     # Create pooled feature maps, reduce size by 75%
@@ -304,26 +334,32 @@ def exit_flow(
     x = Add()([x, shortcut])
 
     # Third Depthwise Separable Convolution
-    x = SeparableConv2D(1556, (3, 3), padding="same",
-                        depthwise_initializer=kernel_initialize,
-                        pointwise_initializer=kernel_initialize,
-                        depthwise_regularizer=kernel_regularize,
-                        pointwise_regularizer=kernel_regularize,
-                        depthwise_constraint=kernel_constraint,
-                        pointwise_constraint=kernel_constraint
-                        )(x)
+    x = SeparableConv2D(
+        1556,
+        (3, 3),
+        padding="same",
+        depthwise_initializer=kernel_initialize,
+        pointwise_initializer=kernel_initialize,
+        depthwise_regularizer=kernel_regularize,
+        pointwise_regularizer=kernel_regularize,
+        depthwise_constraint=kernel_constraint,
+        pointwise_constraint=kernel_constraint,
+    )(x)
     x = BatchNormalization()(x)
     x = ReLU()(x)
 
     # Fourth Depthwise Separable Convolution
-    x = SeparableConv2D(2048, (3, 3), padding="same",
-                        depthwise_initializer=kernel_initialize,
-                        pointwise_initializer=kernel_initialize,
-                        depthwise_regularizer=kernel_regularize,
-                        pointwise_regularizer=kernel_regularize,
-                        depthwise_constraint=kernel_constraint,
-                        pointwise_constraint=kernel_constraint
-                        )(x)
+    x = SeparableConv2D(
+        2048,
+        (3, 3),
+        padding="same",
+        depthwise_initializer=kernel_initialize,
+        pointwise_initializer=kernel_initialize,
+        depthwise_regularizer=kernel_regularize,
+        pointwise_regularizer=kernel_regularize,
+        depthwise_constraint=kernel_constraint,
+        pointwise_constraint=kernel_constraint,
+    )(x)
     x = BatchNormalization()(x)
     x = ReLU()(x)
 
@@ -339,7 +375,7 @@ def projection_block(
     n_filters: int,
     kernel_initialize: Union[Initializer, str],
     kernel_regularize: Union[Regularizer, float, None],
-    kernel_constraint: Union[Constraint, int, None]
+    kernel_constraint: Union[Constraint, int, None],
 ) -> tf.Tensor:
     """Creates a residual block with depth-wise separable convolutions and a
     projection shortcut.
@@ -371,11 +407,15 @@ def projection_block(
     # Strided convolution to double number of filters in identity link to
     # match output of residual block for the add operation
     # (projection shortcut)
-    shortcut = Conv2D(n_filters, (1, 1), strides=(2, 2), padding="same",
-                      kernel_initializer=kernel_initialize,
-                      kernel_regularizer=kernel_regularize,
-                      kernel_constraint=kernel_constraint
-                      )(shortcut)
+    shortcut = Conv2D(
+        n_filters,
+        (1, 1),
+        strides=(2, 2),
+        padding="same",
+        kernel_initializer=kernel_initialize,
+        kernel_regularizer=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+    )(shortcut)
     shortcut = BatchNormalization()(shortcut)
 
     # ReLu activation is applied before SeparableConv2D
@@ -384,26 +424,32 @@ def projection_block(
         x = ReLU()(x)
 
     # First Depthwise Separable Convolution
-    x = SeparableConv2D(n_filters, (3, 3), padding="same",
-                        depthwise_initializer=kernel_initialize,
-                        pointwise_initializer=kernel_initialize,
-                        depthwise_regularizer=kernel_regularize,
-                        pointwise_regularizer=kernel_regularize,
-                        depthwise_constraint=kernel_constraint,
-                        pointwise_constraint=kernel_constraint
-                        )(x)
+    x = SeparableConv2D(
+        n_filters,
+        (3, 3),
+        padding="same",
+        depthwise_initializer=kernel_initialize,
+        pointwise_initializer=kernel_initialize,
+        depthwise_regularizer=kernel_regularize,
+        pointwise_regularizer=kernel_regularize,
+        depthwise_constraint=kernel_constraint,
+        pointwise_constraint=kernel_constraint,
+    )(x)
     x = BatchNormalization()(x)
     x = ReLU()(x)
 
     # Second depthwise Separable Convolution
-    x = SeparableConv2D(n_filters, (3, 3), padding="same",
-                        depthwise_initializer=kernel_initialize,
-                        pointwise_initializer=kernel_initialize,
-                        depthwise_regularizer=kernel_regularize,
-                        pointwise_regularizer=kernel_regularize,
-                        depthwise_constraint=kernel_constraint,
-                        pointwise_constraint=kernel_constraint
-                        )(x)
+    x = SeparableConv2D(
+        n_filters,
+        (3, 3),
+        padding="same",
+        depthwise_initializer=kernel_initialize,
+        pointwise_initializer=kernel_initialize,
+        depthwise_regularizer=kernel_regularize,
+        pointwise_regularizer=kernel_regularize,
+        depthwise_constraint=kernel_constraint,
+        pointwise_constraint=kernel_constraint,
+    )(x)
     x = BatchNormalization()(x)
 
     # Create pooled feature maps, reduce size by 75%
@@ -420,7 +466,7 @@ def residual_block(
     n_filters: int,
     kernel_initialize: Union[Initializer, str],
     kernel_regularize: Union[Regularizer, float, None],
-    kernel_constraint: Union[Constraint, int, None]
+    kernel_constraint: Union[Constraint, int, None],
 ) -> tf.Tensor:
     """Creates a residual block using depth-wise separable convolutions.
 
@@ -453,14 +499,17 @@ def residual_block(
     for _ in range(3):
         x = ReLU()(x)
         # First Depthwise Separable Convolution
-        x = SeparableConv2D(n_filters, (3, 3), padding="same",
-                            depthwise_initializer=kernel_initialize,
-                            pointwise_initializer=kernel_initialize,
-                            depthwise_regularizer=kernel_regularize,
-                            pointwise_regularizer=kernel_regularize,
-                            depthwise_constraint=kernel_constraint,
-                            pointwise_constraint=kernel_constraint
-                            )(x)
+        x = SeparableConv2D(
+            n_filters,
+            (3, 3),
+            padding="same",
+            depthwise_initializer=kernel_initialize,
+            pointwise_initializer=kernel_initialize,
+            depthwise_regularizer=kernel_regularize,
+            pointwise_regularizer=kernel_regularize,
+            depthwise_constraint=kernel_constraint,
+            pointwise_constraint=kernel_constraint,
+        )(x)
         x = BatchNormalization()(x)
 
     # Add the identity link to the output of the block

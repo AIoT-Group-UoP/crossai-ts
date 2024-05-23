@@ -1,6 +1,14 @@
+from typing import Callable, Dict, List
+
 from sklearn.base import BaseEstimator, TransformerMixin
-from typing import List, Dict
+from typing_extensions import TypedDict
+
 from caits.dataset import Dataset
+
+
+class Augmentation(TypedDict):
+    func: Callable
+    params: Dict
 
 
 class Augmenter1D(BaseEstimator, TransformerMixin):
@@ -16,11 +24,7 @@ class Augmenter1D(BaseEstimator, TransformerMixin):
         repeats: The number of times each augmentation should be applied.
     """
 
-    def __init__(
-            self,
-            augmentations: List[Dict[str, Dict]],
-            repeats: int = 1
-    ):
+    def __init__(self, augmentations: List[Augmentation], repeats: int = 1):
         self.augmentations = augmentations
         self.repeats = repeats
 
