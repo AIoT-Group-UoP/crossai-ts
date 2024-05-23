@@ -1,27 +1,26 @@
+from typing import Any, Callable, Optional, Tuple, Union
+
 import numpy as np
 import scipy
-from numpy.typing import DTypeLike, ArrayLike
 from numpy.lib.stride_tricks import as_strided
-from typing import Optional, Union, Callable, Tuple, Any
-from caits.core._core_typing import _FloatLike_co, _WindowSpec
+from numpy.typing import ArrayLike, DTypeLike
+
+from ._core_typing import _FloatLike_co, _WindowSpec
 
 
 def frame(
-        x: np.ndarray,
-        *,
-        frame_length: int,
-        hop_length: int,
-        axis: int = -1,
-        writeable: bool = False,
-        subok: bool = False,
+    x: np.ndarray,
+    *,
+    frame_length: int,
+    hop_length: int,
+    axis: int = -1,
+    writeable: bool = False,
+    subok: bool = False,
 ) -> np.ndarray:
     x = np.array(x, copy=False, subok=subok)
 
     if x.shape[axis] < frame_length:
-        raise ValueError(
-            f"Input is too short (n={x.shape[axis]:d}) for "
-            f"frame_length={frame_length:d}"
-        )
+        raise ValueError(f"Input is too short (n={x.shape[axis]:d}) for " f"frame_length={frame_length:d}")
 
     if hop_length < 1:
         raise ValueError(f"Invalid hop_length: {hop_length:d}")
@@ -34,10 +33,7 @@ def frame(
     x_shape_trimmed[axis] -= frame_length - 1
 
     out_shape = tuple(x_shape_trimmed) + tuple([frame_length])
-    xw = as_strided(
-        x, strides=out_strides, shape=out_shape, subok=subok,
-        writeable=writeable
-    )
+    xw = as_strided(x, strides=out_strides, shape=out_shape, subok=subok, writeable=writeable)
 
     if axis < 0:
         target_axis = axis - 1
@@ -62,7 +58,6 @@ def window_sumsquare(
     dtype: DTypeLike = np.float32,
     norm: Optional[float] = None,
 ) -> np.ndarray:
-
     if win_length is None:
         win_length = n_fft
 
@@ -80,14 +75,7 @@ def window_sumsquare(
     return x
 
 
-def pad_center(
-    data: np.ndarray,
-    *,
-    size: int,
-    axis: int = -1,
-    **kwargs: Any
-) -> np.ndarray:
-
+def pad_center(data: np.ndarray, *, size: int, axis: int = -1, **kwargs: Any) -> np.ndarray:
     kwargs.setdefault("mode", "constant")
 
     n = data.shape[axis]
@@ -98,9 +86,7 @@ def pad_center(
     lengths[axis] = (lpad, int(size - n - lpad))
 
     if lpad < 0:
-        raise ValueError(
-            f"Target size ({size:d}) must be at least input size ({n:d})"
-        )
+        raise ValueError(f"Target size ({size:d}) must be at least input size ({n:d})")
 
     return np.pad(data, lengths, **kwargs)
 
@@ -115,7 +101,6 @@ def get_window(
         return window(Nx)
 
     elif isinstance(window, (str, tuple)) or np.isscalar(window):
-
         win: np.ndarray = scipy.signal.get_window(window, Nx, fftbins=fftbins)
         return win
 
@@ -134,9 +119,7 @@ def __window_ss_fill(x, win_sq, n_frames, hop_length):  # pragma: no cover
     n_fft = len(win_sq)
     for i in range(n_frames):
         sample = i * hop_length
-        x[sample: min(n, sample + n_fft)] += win_sq[: max(
-            0, min(n_fft, n - sample)
-        )]
+        x[sample : min(n, sample + n_fft)] += win_sq[: max(0, min(n_fft, n - sample))]
 
 
 def normalize(
@@ -217,16 +200,12 @@ def normalize(
     return Snorm
 
 
-def tiny(
-        x: Union[float, np.ndarray]
-) -> _FloatLike_co:
+def tiny(x: Union[float, np.ndarray]) -> _FloatLike_co:
     # Make sure we have an array view
     x = np.asarray(x)
 
     # Only floating types generate a tiny
-    if np.issubdtype(x.dtype, np.floating) or np.issubdtype(
-        x.dtype, np.complexfloating
-    ):
+    if np.issubdtype(x.dtype, np.floating) or np.issubdtype(x.dtype, np.complexfloating):
         dtype = x.dtype
     else:
         dtype = np.dtype(np.float32)

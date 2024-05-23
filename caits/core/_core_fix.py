@@ -1,13 +1,12 @@
 # The functionality in this implementation are basically derived from
 # librosa v0.10.1:
 # https://github.com/librosa/librosa/blob/main/librosa/util/utils.py
-import numpy as np
 from typing import Any
 
+import numpy as np
 
-def fix_length(
-    data: np.ndarray, *, size: int, axis: int = -1, **kwargs: Any
-) -> np.ndarray:
+
+def fix_length(data: np.ndarray, *, size: int, axis: int = -1, **kwargs: Any) -> np.ndarray:
     kwargs.setdefault("mode", "constant")
 
     n = data.shape[axis]

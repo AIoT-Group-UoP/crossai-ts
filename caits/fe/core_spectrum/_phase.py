@@ -3,8 +3,10 @@
 # https://github.com/librosa/librosa/blob/main/librosa/core/spectrum.py
 # https://github.com/librosa/librosa/blob/main/librosa/util/utils.py
 from typing import Optional, Union
+
 import numpy as np
-from caits.core._core_typing import _Real, _Number
+
+from caits.core._core_typing import _Number, _Real
 
 
 def phase_vocoder(
@@ -69,7 +71,6 @@ def phasor(
     *,
     mag: Optional[Union[np.ndarray, _Number]] = None,
 ) -> Union[np.ndarray, np.complex_]:
-
     z = _phasor_angles(angles)
 
     if mag is not None:

@@ -1,16 +1,15 @@
-from typing import Optional, Union, Tuple, List, Any
+from typing import Any, List, Optional, Tuple, Union
+
 import numpy as np
-from caits.core._core_fix import fix_length
+
 from caits.core._core_checks import is_positive_int
+from caits.core._core_fix import fix_length
 from caits.core._core_resample import resample
-from caits.fe._spectrum import stft, istft
+from caits.fe._spectrum import istft, stft
 from caits.fe.core_spectrum import phase_vocoder
 
 
-def add_white_noise(
-        array: np.ndarray,
-        noise_factor: float
-) -> np.ndarray:
+def add_white_noise(array: np.ndarray, noise_factor: float) -> np.ndarray:
     """Adds white noise to a signal.
 
     Args:
@@ -24,11 +23,7 @@ def add_white_noise(
     return array + noise_factor * noise
 
 
-def random_gain(
-        array: np.ndarray,
-        min_factor: float = 0.1,
-        max_factor: float = 0.12
-) -> np.ndarray:
+def random_gain(array: np.ndarray, min_factor: float = 0.1, max_factor: float = 0.12) -> np.ndarray:
     """Applies random gain to a signal.
 
     Args:
@@ -43,9 +38,7 @@ def random_gain(
     return array * gain_rate
 
 
-def polarity_inversion(
-        array: np.ndarray,
-) -> np.ndarray:
+def polarity_inversion(array: np.ndarray) -> np.ndarray:
     """Inverts the polarity of a signal.
 
     Args:
@@ -58,18 +51,18 @@ def polarity_inversion(
 
 
 def add_noise_ts(
-        array: np.ndarray,
-        loc: Union[float, Tuple[float, float], List[float]] = 0.0,
-        scale: Union[float, Tuple[float, float], List[float]] = 0.1,
-        distribution: str = "gaussian",
-        kind: str = "additive",
-        per_channel: bool = True,
-        normalize: bool = True,
-        repeats: int = 1,
-        prob: float = 1.0,
-        seed: Optional[int] = None,
-        export_as_list: bool = False
-) -> Union[np.ndarray, list]:
+    array: np.ndarray,
+    loc: Union[float, Tuple[float, float], List[float]] = 0.0,
+    scale: Union[float, Tuple[float, float], List[float]] = 0.1,
+    distribution: str = "gaussian",
+    kind: str = "additive",
+    per_channel: bool = True,
+    normalize: bool = True,
+    repeats: int = 1,
+    prob: float = 1.0,
+    seed: Optional[int] = None,
+    export_as_list: bool = False,
+) -> Union[np.ndarray, List]:
     """Adds noise to a time series. The length of the time series is preserved
     and the noise is added to each channel independently if `per_channel` is
     True.
@@ -119,10 +112,17 @@ def add_noise_ts(
     """
     from tsaug import AddNoise
 
-    arr = AddNoise(loc=loc, scale=scale, distr=distribution,
-                   kind=kind, per_channel=per_channel,
-                   normalize=normalize, repeats=repeats,
-                   prob=prob, seed=seed).augment(array)
+    arr = AddNoise(
+        loc=loc,
+        scale=scale,
+        distr=distribution,
+        kind=kind,
+        per_channel=per_channel,
+        normalize=normalize,
+        repeats=repeats,
+        prob=prob,
+        seed=seed,
+    ).augment(array)
 
     if repeats > 1 and array.ndim > 1:
         length = array.shape[0]
@@ -135,15 +135,15 @@ def add_noise_ts(
 
 
 def convolve_ts(
-        array: np.ndarray,
-        window: Union[str, Tuple, List[Union[str, Tuple]]] = "hann",
-        kernel: Union[int, Tuple[int, int], List[int]] = 7,
-        per_channel: bool = False,
-        repeats: int = 1,
-        prob: float = 1.0,
-        seed: Optional[int] = None,
-        export_as_list: bool = False
-) -> Union[np.ndarray, list]:
+    array: np.ndarray,
+    window: Union[str, Tuple, List[Union[str, Tuple]]] = "hann",
+    kernel: Union[int, Tuple[int, int], List[int]] = 7,
+    per_channel: bool = False,
+    repeats: int = 1,
+    prob: float = 1.0,
+    seed: Optional[int] = None,
+    export_as_list: bool = False,
+) -> Union[np.ndarray, List]:
     """Convolves a time series with a kernel. The length of the time series is
     preserved and the convolution is applied to each channel independently if
     `per_channel` is True.
@@ -172,8 +172,10 @@ def convolve_ts(
         format or as a list. The list is returned if `export_as_list` is True.
     """
     from tsaug import Convolve
-    arr = Convolve(window=window, size=kernel, per_channel=per_channel,
-                   repeats=repeats, prob=prob, seed=seed).augment(array)
+
+    arr = Convolve(window=window, size=kernel, per_channel=per_channel, repeats=repeats, prob=prob, seed=seed).augment(
+        array
+    )
 
     if repeats > 1 and array.ndim > 1:
         length = array.shape[0]
@@ -186,14 +188,14 @@ def convolve_ts(
 
 
 def crop_ts(
-        array: np.ndarray,
-        size: Union[int, Tuple[int, int], List[int]],
-        resize: Optional[int] = None,
-        repeats: int = 1,
-        prob: float = 1.0,
-        seed: Optional[int] = None,
-        export_as_list: bool = False
-) -> Union[np.ndarray, list]:
+    array: np.ndarray,
+    size: Union[int, Tuple[int, int], List[int]],
+    resize: Optional[int] = None,
+    repeats: int = 1,
+    prob: float = 1.0,
+    seed: Optional[int] = None,
+    export_as_list: bool = False,
+) -> Union[np.ndarray, List]:
     """Crops a time series. The length of the time series is NOT preserved and
     the cropping is applied to all channels simultaneously.
 
@@ -218,8 +220,8 @@ def crop_ts(
         or as a list. The list is returned if `export_as_list` is True.
     """
     from tsaug import Crop
-    arr = Crop(size=size, resize=resize, repeats=repeats,
-               prob=prob, seed=seed).augment(array)
+
+    arr = Crop(size=size, resize=resize, repeats=repeats, prob=prob, seed=seed).augment(array)
 
     if repeats > 1 and array.ndim > 1:
         length = array.shape[0]
@@ -232,17 +234,17 @@ def crop_ts(
 
 
 def drift_ts(
-        array: np.ndarray,
-        max_drift: Union[float, Tuple[float, float]] = 0.5,
-        n_drift_points: Union[int, List[int]] = 3,
-        kind: str = "additive",
-        per_channel: bool = True,
-        normalize: bool = True,
-        repeats: int = 1,
-        prob: float = 1.0,
-        seed: Optional[int] = None,
-        export_as_list: bool = False
-) -> Union[np.ndarray, list]:
+    array: np.ndarray,
+    max_drift: Union[float, Tuple[float, float]] = 0.5,
+    n_drift_points: Union[int, List[int]] = 3,
+    kind: str = "additive",
+    per_channel: bool = True,
+    normalize: bool = True,
+    repeats: int = 1,
+    prob: float = 1.0,
+    seed: Optional[int] = None,
+    export_as_list: bool = False,
+) -> Union[np.ndarray, List]:
     """Drifts a time series. The length of the time series is preserved and the
     drift is applied to each channel independently if `per_channel` is True.
 
@@ -274,9 +276,17 @@ def drift_ts(
         format or as a list. The list is returned if `export_as_list` is True.
     """
     from tsaug import Drift
-    arr = Drift(max_drift=max_drift, n_drift_points=n_drift_points,
-                kind=kind, per_channel=per_channel, normalize=normalize,
-                repeats=repeats, prob=prob, seed=seed).augment(array)
+
+    arr = Drift(
+        max_drift=max_drift,
+        n_drift_points=n_drift_points,
+        kind=kind,
+        per_channel=per_channel,
+        normalize=normalize,
+        repeats=repeats,
+        prob=prob,
+        seed=seed,
+    ).augment(array)
 
     if repeats > 1 and array.ndim > 1:
         length = array.shape[0]
@@ -289,16 +299,16 @@ def drift_ts(
 
 
 def dropout_ts(
-        array: np.ndarray,
-        p: Union[float, Tuple[float, float], List[float]] = 0.05,
-        size: Union[int, Tuple[int, int], List[int]] = 1,
-        fill: Union[str, float] = "ffill",
-        per_channel: bool = False,
-        repeats: int = 1,
-        prob: float = 1.0,
-        seed: Optional[int] = None,
-        export_as_list: bool = False
-) -> Union[np.ndarray, list]:
+    array: np.ndarray,
+    p: Union[float, Tuple[float, float], List[float]] = 0.05,
+    size: Union[int, Tuple[int, int], List[int]] = 1,
+    fill: Union[str, float] = "ffill",
+    per_channel: bool = False,
+    repeats: int = 1,
+    prob: float = 1.0,
+    seed: Optional[int] = None,
+    export_as_list: bool = False,
+) -> Union[np.ndarray, List]:
     """Adds dropouts to a time series. The length of the time series is
     preserved and the dropouts are added to each channel independently if
     `per_channel` is True.
@@ -332,8 +342,10 @@ def dropout_ts(
         format or as a list. The list is returned if `export_as_list` is True.
     """
     from tsaug import Dropout
-    arr = Dropout(p=p, size=size, fill=fill, per_channel=per_channel,
-                  repeats=repeats, prob=prob, seed=seed).augment(array)
+
+    arr = Dropout(p=p, size=size, fill=fill, per_channel=per_channel, repeats=repeats, prob=prob, seed=seed).augment(
+        array
+    )
 
     if repeats > 1 and array.ndim > 1:
         length = array.shape[0]
@@ -346,15 +358,15 @@ def dropout_ts(
 
 
 def pool_ts(
-        array: np.ndarray,
-        kind: str = "ave",
-        size: Union[int, Tuple[int, int], List[int]] = 2,
-        per_channel: bool = False,
-        repeats: int = 1,
-        prob: float = 1.0,
-        seed: Optional[int] = None,
-        export_as_list: bool = False
-) -> Union[np.ndarray, list]:
+    array: np.ndarray,
+    kind: str = "ave",
+    size: Union[int, Tuple[int, int], List[int]] = 2,
+    per_channel: bool = False,
+    repeats: int = 1,
+    prob: float = 1.0,
+    seed: Optional[int] = None,
+    export_as_list: bool = False,
+) -> Union[np.ndarray, List]:
     """Reduces the temporal resolution of a time series without changing the
     length. The length of the time series is preserved and the pooling is
     applied to each channel independently if `per_channel` is True.
@@ -385,8 +397,8 @@ def pool_ts(
         `export_as_list` is True.
     """
     from tsaug import Pool
-    arr = Pool(kind=kind, size=size, per_channel=per_channel,
-               repeats=repeats, prob=prob, seed=seed).augment(array)
+
+    arr = Pool(kind=kind, size=size, per_channel=per_channel, repeats=repeats, prob=prob, seed=seed).augment(array)
 
     if repeats > 1 and array.ndim > 1:
         length = array.shape[0]
@@ -399,15 +411,15 @@ def pool_ts(
 
 
 def quantize_ts(
-        array: np.ndarray,
-        n_levels: Union[int, Tuple[int, int], List[int]] = 10,
-        how: str = "uniform",
-        per_channel: bool = False,
-        repeats: int = 1,
-        prob: float = 1.0,
-        seed: Optional[int] = None,
-        export_as_list: bool = False
-) -> Union[np.ndarray, list]:
+    array: np.ndarray,
+    n_levels: Union[int, Tuple[int, int], List[int]] = 10,
+    how: str = "uniform",
+    per_channel: bool = False,
+    repeats: int = 1,
+    prob: float = 1.0,
+    seed: Optional[int] = None,
+    export_as_list: bool = False,
+) -> Union[np.ndarray, List]:
     """Quantizes the time series to a level set. The values in a time series
     are rounded to the nearest level in the level set. The length of the time
     series is preserved and the quantization is applied to each channel if
@@ -440,8 +452,10 @@ def quantize_ts(
         or as a list. The list is returned if `export_as_list` is True.
     """
     from tsaug import Quantize
-    arr = Quantize(n_levels=n_levels, how=how, per_channel=per_channel,
-                   repeats=repeats, prob=prob, seed=seed).augment(array)
+
+    arr = Quantize(n_levels=n_levels, how=how, per_channel=per_channel, repeats=repeats, prob=prob, seed=seed).augment(
+        array
+    )
 
     if repeats > 1 and array.ndim > 1:
         length = array.shape[0]
@@ -454,13 +468,13 @@ def quantize_ts(
 
 
 def resize_ts(
-        array: np.ndarray,
-        size: int,
-        repeats: int = 1,
-        prob: float = 1.0,
-        seed: Optional[int] = None,
-        export_as_list: bool = False
-) -> Union[np.ndarray, list]:
+    array: np.ndarray,
+    size: int,
+    repeats: int = 1,
+    prob: float = 1.0,
+    seed: Optional[int] = None,
+    export_as_list: bool = False,
+) -> Union[np.ndarray, List]:
     """Changes the temporal resolution of time series. The length of the time
     series is NOT preserved. The resized time series is obtained by linear
     interpolation of the original time series.
@@ -481,8 +495,8 @@ def resize_ts(
         or as a list. The list is returned if `export_as_list` is True.
     """
     from tsaug import Resize
-    arr = Resize(size=size, repeats=repeats, prob=prob, seed=seed).augment(
-        array)
+
+    arr = Resize(size=size, repeats=repeats, prob=prob, seed=seed).augment(array)
 
     if repeats > 1 and array.ndim > 1:
         length = array.shape[0]
@@ -495,12 +509,12 @@ def resize_ts(
 
 
 def reverse_ts(
-        array: np.ndarray,
-        repeats: int = 1,
-        prob: float = 1.0,
-        seed: Optional[int] = None,
-        export_as_list: bool = False
-) -> Union[np.ndarray, list]:
+    array: np.ndarray,
+    repeats: int = 1,
+    prob: float = 1.0,
+    seed: Optional[int] = None,
+    export_as_list: bool = False,
+) -> Union[np.ndarray, List]:
     """Reverses the time series.
 
     Args:
@@ -518,6 +532,7 @@ def reverse_ts(
         or as a list. The list is returned if `export_as_list` is True.
     """
     from tsaug import Reverse
+
     arr = Reverse(repeats=repeats, prob=prob, seed=seed).augment(array)
 
     if repeats > 1 and array.ndim > 1:
@@ -531,15 +546,15 @@ def reverse_ts(
 
 
 def time_warp_ts(
-        array: np.ndarray,
-        n_speed_change: int = 3,
-        max_speed_ratio: Union[float, Tuple[float, float], List[float]] = 3.0,
-        repeats: int = 1,
-        prob: float = 1.0,
-        seed: Optional[int] = None,
-        export_as_list: bool = False
-) -> Union[np.ndarray, list]:
-    """ Changes the speed of the time series. The length of the time series is
+    array: np.ndarray,
+    n_speed_change: int = 3,
+    max_speed_ratio: Union[float, Tuple[float, float], List[float]] = 3.0,
+    repeats: int = 1,
+    prob: float = 1.0,
+    seed: Optional[int] = None,
+    export_as_list: bool = False,
+) -> Union[np.ndarray, List]:
+    """Changes the speed of the time series. The length of the time series is
     preserved. The time warping is controlled by the number of speed changes
     and the maximal ratio of max/min speed.
 
@@ -565,9 +580,10 @@ def time_warp_ts(
         format or as a list. The list is returned if `export_as_list` is True.
     """
     from tsaug import TimeWarp
-    arr = TimeWarp(n_speed_change=n_speed_change,
-                   max_speed_ratio=max_speed_ratio,
-                   repeats=repeats, prob=prob, seed=seed).augment(array)
+
+    arr = TimeWarp(
+        n_speed_change=n_speed_change, max_speed_ratio=max_speed_ratio, repeats=repeats, prob=prob, seed=seed
+    ).augment(array)
 
     if repeats > 1 and array.ndim > 1:
         length = array.shape[0]
@@ -579,11 +595,7 @@ def time_warp_ts(
         return arr
 
 
-def arr_splitter(
-        array: np.ndarray,
-        instance_samples_length: int,
-        repeats: int = None
-) -> np.ndarray:
+def arr_splitter(array: np.ndarray, instance_samples_length: int, repeats: int = None) -> np.ndarray:
     """Unpacks the array into a list of arrays that occurred from
      the augmentation process, and stacks them together in the form
      of a 3D array (instances, samples, axes)
@@ -601,16 +613,12 @@ def arr_splitter(
     index_start = 0
     arrays_list = []
     for i in range(repeats):
-        arrays_list.append(
-            array[index_start: index_start + instance_samples_length])
+        arrays_list.append(array[index_start : index_start + instance_samples_length])
         index_start += instance_samples_length
     return np.stack(arrays_list)
 
 
-def return_listed_augmentations(
-        array: np.ndarray,
-        repeats: int,
-) -> list:
+def return_listed_augmentations(array: np.ndarray, repeats: int) -> list:
     """Returns the augmented time series data in a list.
 
     Args:
@@ -631,12 +639,7 @@ def return_listed_augmentations(
     return augmented_data
 
 
-def time_stretch_ts(
-        y: np.ndarray,
-        *,
-        rate: float,
-        **kwargs: Any
-) -> np.ndarray:
+def time_stretch_ts(y: np.ndarray, *, rate: float, **kwargs: Any) -> np.ndarray:
     # The functionality in this implementation are basically derived from
     # librosa v0.10.1:
     # https://github.com/librosa/librosa/blob/main/librosa/effects.py
@@ -659,8 +662,7 @@ def time_stretch_ts(
     len_stretch = int(round(y.shape[-1] / rate))
 
     # Invert the STFT
-    y_stretch = istft(stft_stretch, dtype=y.dtype, length=len_stretch,
-                      **kwargs)
+    y_stretch = istft(stft_stretch, dtype=y.dtype, length=len_stretch, **kwargs)
 
     return y_stretch
 
@@ -680,9 +682,7 @@ def pitch_shift_ts(
     # https://github.com/librosa/librosa/blob/main/librosa/effects.py
 
     if not is_positive_int(bins_per_octave):
-        raise ValueError(
-            f"bins_per_octave={bins_per_octave} must be a positive integer."
-        )
+        raise ValueError(f"bins_per_octave={bins_per_octave} must be a positive integer.")
 
     rate = 2.0 ** (-float(n_steps) / bins_per_octave)
 

@@ -1,18 +1,19 @@
-from typing import Union, Callable, List
+from typing import Callable, List, Optional, Tuple, Union
+
 import tensorflow as tf
-from tensorflow.keras.layers import Input, Dense, Conv2D, MaxPool2D, Flatten
-from tensorflow.keras.layers import ReLU
-from tensorflow.keras.models import Model
-from tensorflow.keras.regularizers import Regularizer, l2
 from tensorflow.keras.constraints import Constraint, MaxNorm
 from tensorflow.keras.initializers import Initializer
-from .._layers_dropout import dense_drop_block
+from tensorflow.keras.layers import Conv2D, Dense, Flatten, Input, MaxPool2D, ReLU
+from tensorflow.keras.models import Model
+from tensorflow.keras.regularizers import Regularizer, l2
+
+from caits.ai import dense_drop_block
 
 
 # Implementation of Xception NN model based on:
 # - https://arxiv.org/abs/1409.1556
 def VGG16(
-    input_shape: tuple,
+    input_shape: Tuple[int, ...],
     include_top: bool = True,
     num_classes: int = 1,
     classifier_activation: Union[str, Callable] = "softmax",
@@ -25,7 +26,7 @@ def VGG16(
     dropout_first: bool = False,
     dropout_rate: List[float] = [0.5, 0.5],
     spatial: bool = False,
-    mc_inference: Union[bool, None] = None
+    mc_inference: Optional[bool] = None,
 ) -> tf.keras.Model:
     """Constructs the VGG16 model, a convolutional neural network architecture
     for image classification.
@@ -80,43 +81,45 @@ def VGG16(
     input_layer = Input(shape=input_shape, name="input_layer")
 
     # Blocks of VGG16
-    x = Conv2D(filters=64, kernel_size=(3, 3), padding="same",
-               kernel_initializer=kernel_initialize,
-               kernel_regularizer=kernel_regularize,
-               kernel_constraint=kernel_constraint)(input_layer)
+    x = Conv2D(
+        filters=64,
+        kernel_size=(3, 3),
+        padding="same",
+        kernel_initializer=kernel_initialize,
+        kernel_regularizer=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+    )(input_layer)
     x = ReLU()(x)
 
     # 1 conv layer, 64 channels
-    x = vgg_block(x, 1, 64, kernel_initialize, kernel_regularize,
-                  kernel_constraint)
+    x = vgg_block(x, 1, 64, kernel_initialize, kernel_regularize, kernel_constraint)
     # 2 conv layers, 128 channels
-    x = vgg_block(x, 2, 128, kernel_initialize, kernel_regularize,
-                  kernel_constraint)
+    x = vgg_block(x, 2, 128, kernel_initialize, kernel_regularize, kernel_constraint)
     # 3 conv layers, 256 channels
-    x = vgg_block(x, 3, 256, kernel_initialize, kernel_regularize,
-                  kernel_constraint)
+    x = vgg_block(x, 3, 256, kernel_initialize, kernel_regularize, kernel_constraint)
     # 3 conv layers, 512 channels
-    x = vgg_block(x, 3, 512, kernel_initialize, kernel_regularize,
-                  kernel_constraint)
+    x = vgg_block(x, 3, 512, kernel_initialize, kernel_regularize, kernel_constraint)
     # 3 conv layers, 512 channels
-    x = vgg_block(x, 3, 512, kernel_initialize, kernel_regularize,
-                  kernel_constraint)
+    x = vgg_block(x, 3, 512, kernel_initialize, kernel_regularize, kernel_constraint)
 
     if include_top:
         x = Flatten()(x)
 
         # apply multiple sequential dense/dropout layers
-        x = dense_drop_block(inputs=x, n_layers=dense_layers,
-                             dense_units=dense_units,
-                             dropout=dropout, drop_first=dropout_first,
-                             drop_rate=dropout_rate,
-                             activation_dense="relu",
-                             kernel_initialize=kernel_initialize,
-                             kernel_regularize=kernel_regularize,
-                             kernel_constraint=kernel_constraint,
-                             spatial=spatial,
-                             mc_inference=mc_inference
-                             )
+        x = dense_drop_block(
+            inputs=x,
+            n_layers=dense_layers,
+            dense_units=dense_units,
+            dropout=dropout,
+            drop_first=dropout_first,
+            drop_rate=dropout_rate,
+            activation_dense="relu",
+            kernel_initialize=kernel_initialize,
+            kernel_regularize=kernel_regularize,
+            kernel_constraint=kernel_constraint,
+            spatial=spatial,
+            mc_inference=mc_inference,
+        )
 
         outputs = Dense(units=num_classes, activation=classifier_activation)(x)
     else:
@@ -132,7 +135,7 @@ def vgg_block(
     num_channels: int,
     kernel_initialize: Union[Initializer, str],
     kernel_regularize: Union[Regularizer, float, str],
-    kernel_constraint: Union[Constraint, int]
+    kernel_constraint: Union[Constraint, int],
 ) -> tf.Tensor:
     """Adds a VGG block to the model.
 
@@ -158,10 +161,14 @@ def vgg_block(
 
     x = input_tensor
     for _ in range(num_convs):
-        x = Conv2D(filters=num_channels, kernel_size=(3, 3), padding="same",
-                   kernel_initializer=kernel_initialize,
-                   kernel_regularizer=kernel_regularize,
-                   kernel_constraint=kernel_constraint)(x)
+        x = Conv2D(
+            filters=num_channels,
+            kernel_size=(3, 3),
+            padding="same",
+            kernel_initializer=kernel_initialize,
+            kernel_regularizer=kernel_regularize,
+            kernel_constraint=kernel_constraint,
+        )(x)
         x = ReLU()(x)
     x = MaxPool2D(pool_size=(2, 2), strides=(2, 2))(x)
     return x

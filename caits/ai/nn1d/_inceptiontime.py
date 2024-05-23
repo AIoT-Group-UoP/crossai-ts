@@ -1,18 +1,29 @@
-from typing import Union, Callable
+from typing import Callable, Optional, Tuple, Union
+
 import tensorflow as tf
-from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Dense, Flatten, Input, Conv1D
-from tensorflow.keras.layers import GlobalAveragePooling1D, BatchNormalization
-from tensorflow.keras.layers import Concatenate, Add, Activation, MaxPooling1D
-from tensorflow.keras.regularizers import l2
 from tensorflow.keras.constraints import MaxNorm
+from tensorflow.keras.layers import (
+    Activation,
+    Add,
+    BatchNormalization,
+    Concatenate,
+    Conv1D,
+    Dense,
+    Flatten,
+    GlobalAveragePooling1D,
+    Input,
+    MaxPooling1D,
+)
+from tensorflow.keras.models import Model
+from tensorflow.keras.regularizers import l2
+
 from .._layers_dropout import dropout_layer_1d
 
 
 # Implementation of InceptionTime NN model based on:
 # - https://arxiv.org/pdf/1909.04939
 def InceptionTime(
-    input_shape: tuple,
+    input_shape: Tuple[int, ...],
     include_top: bool = True,
     num_classes: int = 1,
     classifier_activation: Union[str, Callable] = "softmax",
@@ -22,8 +33,8 @@ def InceptionTime(
     depth: int = 6,
     kernel_size: int = 41,
     bottleneck_size: int = 32,
-    drp_low: float = 0.,
-    drp_high: float = 0.,
+    drp_low: float = 0.0,
+    drp_high: float = 0.0,
     kernel_initialize: Union[str, Callable] = "he_uniform",
     kernel_regularize: Union[str, float] = 4e-5,
     kernel_constraint: int = 3,
@@ -84,27 +95,26 @@ def InceptionTime(
     # define the input of the network
     input_layer = Input(shape=input_shape, name="input_layer")
 
-    x = dropout_layer_1d(inputs=input_layer, drp_rate=drp_low,
-                         spatial=spatial, mc_inference=mc_inference)
+    x = dropout_layer_1d(inputs=input_layer, drp_rate=drp_low, spatial=spatial, mc_inference=mc_inference)
 
-    x_incept = inception_block(inputs=x,
-                               use_bottleneck=use_bottleneck,
-                               bottleneck_size=bottleneck_size,
-                               use_residual=use_residual,
-                               activation=classifier_activation,
-                               depth=depth,
-                               nb_filters=nb_filters,
-                               kernel_size=kernel_size,
-                               kernel_initialize=kernel_initialize,
-                               kernel_regularize=kernel_regularize,
-                               kernel_constraint=kernel_constraint
-                               )
+    x_incept = inception_block(
+        inputs=x,
+        use_bottleneck=use_bottleneck,
+        bottleneck_size=bottleneck_size,
+        use_residual=use_residual,
+        activation=classifier_activation,
+        depth=depth,
+        nb_filters=nb_filters,
+        kernel_size=kernel_size,
+        kernel_initialize=kernel_initialize,
+        kernel_regularize=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+    )
 
     x = GlobalAveragePooling1D()(x_incept)
 
     # Dropout
-    x = dropout_layer_1d(inputs=x, drp_rate=drp_high, spatial=spatial,
-                         mc_inference=mc_inference)
+    x = dropout_layer_1d(inputs=x, drp_rate=drp_high, spatial=spatial, mc_inference=mc_inference)
 
     if include_top is True:
         # flatten
@@ -125,12 +135,12 @@ def inception_block(
     use_bottleneck: bool = True,
     bottleneck_size: int = 1,
     use_residual: bool = True,
-    activation: str = "softmax",
+    activation: Union[str, Callable] = "softmax",
     nb_filters: int = 32,
     kernel_size: int = 41,
-    kernel_initialize: str = "he_uniform",
-    kernel_regularize: float = None,
-    kernel_constraint: int = None
+    kernel_initialize: Union[str, Callable] = "he_uniform",
+    kernel_regularize: Union[str, float, None] = None,
+    kernel_constraint: Optional[int] = None,
 ) -> tf.Tensor:
     """Creates an Inception Block.
 
@@ -155,24 +165,28 @@ def inception_block(
     inputs_res = inputs
 
     for d in range(depth):
-
-        x = inception_module(inputs=x, use_bottleneck=use_bottleneck,
-                             bottleneck_size=bottleneck_size,
-                             activation=activation, nb_filters=nb_filters,
-                             kernel_size=kernel_size,
-                             kernel_initialize=kernel_initialize,
-                             kernel_regularize=kernel_regularize,
-                             kernel_constraint=kernel_constraint)
+        x = inception_module(
+            inputs=x,
+            use_bottleneck=use_bottleneck,
+            bottleneck_size=bottleneck_size,
+            activation=activation,
+            nb_filters=nb_filters,
+            kernel_size=kernel_size,
+            kernel_initialize=kernel_initialize,
+            kernel_regularize=kernel_regularize,
+            kernel_constraint=kernel_constraint,
+        )
 
         if use_residual and d % 3 == 2:
-            residual_conv = Conv1D(filters=128,
-                                   kernel_size=1,
-                                   padding="same",
-                                   use_bias=False,
-                                   kernel_initializer=kernel_initialize,
-                                   kernel_regularizer=kernel_regularize,
-                                   kernel_constraint=kernel_constraint
-                                   )(inputs_res)
+            residual_conv = Conv1D(
+                filters=128,
+                kernel_size=1,
+                padding="same",
+                use_bias=False,
+                kernel_initializer=kernel_initialize,
+                kernel_regularizer=kernel_regularize,
+                kernel_constraint=kernel_constraint,
+            )(inputs_res)
 
             shortcut_y = BatchNormalization()(residual_conv)
             res_out = Add()([shortcut_y, x])
@@ -186,13 +200,13 @@ def inception_module(
     inputs: tf.Tensor,
     use_bottleneck: bool = True,
     bottleneck_size: int = 32,
-    activation: str = "softmax",
+    activation: Union[str, Callable] = "softmax",
     nb_filters: int = 64,
     kernel_size: int = 41,
-    kernel_initialize: str = "he_uniform",
-    kernel_regularize: float = None,
-    kernel_constraint: int = None,
-    stride: int = 1
+    kernel_initialize: Union[str, Callable] = "he_uniform",
+    kernel_regularize: Union[str, float, None] = None,
+    kernel_constraint: Optional[int] = None,
+    stride: int = 1,
 ) -> tf.Tensor:
     """Creates an Inception Module.
 
@@ -212,44 +226,53 @@ def inception_module(
         x_post: Input tensor passed through the inception module.
     """
     if use_bottleneck and nb_filters > 1:
-        x = Conv1D(filters=bottleneck_size, kernel_size=1,
-                   padding="same", activation="linear", use_bias=False,
-                   kernel_initializer=kernel_initialize,
-                   kernel_regularizer=kernel_regularize,
-                   kernel_constraint=kernel_constraint
-                   )(inputs)
+        x = Conv1D(
+            filters=bottleneck_size,
+            kernel_size=1,
+            padding="same",
+            activation="linear",
+            use_bias=False,
+            kernel_initializer=kernel_initialize,
+            kernel_regularizer=kernel_regularize,
+            kernel_constraint=kernel_constraint,
+        )(inputs)
     else:
         x = inputs
 
     # kernel_size_s = [3, 5, 8, 11, 17]
-    kernel_size_s = [kernel_size // (2 ** i) for i in range(3)]
+    kernel_size_s = [kernel_size // (2**i) for i in range(3)]
     print("kernel size list: ", kernel_size_s)
 
     conv_list = []
     for i in range(len(kernel_size_s)):
         print(f"Inception filters: {nb_filters} - kernel: {kernel_size_s[i]}")
-        conv = Conv1D(filters=nb_filters,
-                      kernel_size=kernel_size_s[i],
-                      strides=stride,
-                      padding="same",
-                      activation=activation,
-                      use_bias=False,
-                      kernel_initializer=kernel_initialize,
-                      kernel_regularizer=kernel_regularize,
-                      kernel_constraint=kernel_constraint
-                      )(x)
+        conv = Conv1D(
+            filters=nb_filters,
+            kernel_size=kernel_size_s[i],
+            strides=stride,
+            padding="same",
+            activation=activation,
+            use_bias=False,
+            kernel_initializer=kernel_initialize,
+            kernel_regularizer=kernel_regularize,
+            kernel_constraint=kernel_constraint,
+        )(x)
 
         conv_list.append(conv)
 
     x2 = MaxPooling1D(pool_size=3, strides=stride, padding="same")(inputs)
 
     # pass via a Conv1D to match the shapes
-    last_conv = Conv1D(filters=nb_filters, kernel_size=1,
-                       padding="same", activation=activation, use_bias=False,
-                       kernel_initializer=kernel_initialize,
-                       kernel_regularizer=kernel_regularize,
-                       kernel_constraint=kernel_constraint
-                       )(x2)
+    last_conv = Conv1D(
+        filters=nb_filters,
+        kernel_size=1,
+        padding="same",
+        activation=activation,
+        use_bias=False,
+        kernel_initializer=kernel_initialize,
+        kernel_regularizer=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+    )(x2)
 
     conv_list.append(last_conv)
 

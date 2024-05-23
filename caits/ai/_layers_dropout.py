@@ -1,7 +1,7 @@
-from typing import Union, List, Callable
+from typing import Callable, List, Optional, Union
+
 from tensorflow import Tensor
-from tensorflow.keras.layers import Dropout, SpatialDropout1D, SpatialDropout2D
-from tensorflow.keras.layers import Layer, Dense
+from tensorflow.keras.layers import Dense, Dropout, Layer, SpatialDropout1D, SpatialDropout2D
 
 
 class MCDropout(Dropout):
@@ -20,6 +20,7 @@ class MCDropout(Dropout):
     Returns:
         A Dropout layer with the specified rate and additional arguments.
     """
+
     def __init__(self, rate, **kwargs):
         super().__init__(rate, **kwargs)
 
@@ -52,6 +53,7 @@ class MCSpatialDropout1D(SpatialDropout1D):
         A SpatialDropout1D layer with the specified rate and additional
             arguments.
     """
+
     def __init__(self, rate, **kwargs):
         super().__init__(rate, **kwargs)
 
@@ -84,6 +86,7 @@ class MCSpatialDropout2D(SpatialDropout2D):
         A SpatialDropout2D layer with the specified rate and additional
             arguments.
     """
+
     def __init__(self, rate, **kwargs):
         super().__init__(rate, **kwargs)
 
@@ -103,7 +106,7 @@ def dropout_layer_1d(
     inputs: Tensor,
     drp_rate: float = 0.1,
     spatial: bool = False,
-    mc_inference: Union[bool, None] = None
+    mc_inference: Optional[bool] = None,
 ) -> Layer:
     """Creates a Dropout layer suitable for a 1D model, with options for
     standard or spatial dropout.
@@ -138,7 +141,7 @@ def dropout_layer_2d(
     inputs: Tensor,
     drp_rate: float = 0.1,
     spatial: bool = False,
-    mc_inference: Union[bool, None] = None
+    mc_inference: Optional[bool] = None,
 ) -> Layer:
     """Creates a Dropout layer suitable for a 2D model, with options for
     standard or spatial dropout.
@@ -178,11 +181,11 @@ def dense_drop_block(
     drop_rate: List[float],
     drop_first: bool = False,
     activation_dense: Union[str, Callable] = "relu",
-    kernel_initialize: Union[str, None] = None,
-    kernel_regularize: Union[str, None] = None,
-    kernel_constraint: Union[str, None] = None,
+    kernel_initialize: Optional[Union[Callable, str]] = None,
+    kernel_regularize: Optional[Union[str, float]] = None,
+    kernel_constraint: Optional[int] = None,
     spatial: bool = False,
-    mc_inference: Union[bool, None] = None
+    mc_inference: Optional[bool] = None,
 ) -> Layer:
     """Creates a block of dense and dropout layers for a neural network.
 
@@ -217,19 +220,17 @@ def dense_drop_block(
     x = inputs
     for d in range(0, n_layers):
         if dropout and drop_first:
-            x = dropout_layer_1d(inputs=x,
-                                 drp_rate=drop_rate[d],
-                                 spatial=spatial,
-                                 mc_inference=mc_inference)
+            x = dropout_layer_1d(inputs=x, drp_rate=drop_rate[d], spatial=spatial, mc_inference=mc_inference)
 
-        x = Dense(units=dense_units[d],
-                  kernel_initializer=kernel_initialize,
-                  kernel_regularizer=kernel_regularize,
-                  kernel_constraint=kernel_constraint,
-                  activation=activation_dense)(x)
+        x = Dense(
+            units=dense_units[d],
+            kernel_initializer=kernel_initialize,
+            kernel_regularizer=kernel_regularize,
+            kernel_constraint=kernel_constraint,
+            activation=activation_dense,
+        )(x)
 
         if dropout and not drop_first:
-            x = dropout_layer_1d(x, drp_rate=drop_rate[d], spatial=spatial,
-                                 mc_inference=mc_inference)
+            x = dropout_layer_1d(x, drp_rate=drop_rate[d], spatial=spatial, mc_inference=mc_inference)
 
     return x

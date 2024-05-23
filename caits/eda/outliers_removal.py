@@ -1,13 +1,11 @@
-from typing import Optional, List, Union, Tuple
+from typing import List, Optional, Tuple, Union
+
 import numpy as np
 import pandas as pd
 from scipy import stats
 
 
-def _remove_outliers_z_score(
-    df: pd.DataFrame,
-    threshold: int = 3
-) -> pd.DataFrame:
+def _remove_outliers_z_score(df: pd.DataFrame, threshold: float = 3) -> pd.DataFrame:
     """Removes outliers from a DataFrame based on Z-scores.
 
     This function calculates the Z-scores of each column and of each value in
@@ -28,11 +26,7 @@ def _remove_outliers_z_score(
     return df[indices_to_keep]
 
 
-def _remove_outliers_iqr(
-    df: pd.DataFrame,
-    lower_quantile: float = 0.25,
-    upper_quantile: float = 0.75
-) -> pd.DataFrame:
+def _remove_outliers_iqr(df: pd.DataFrame, lower_quantile: float = 0.25, upper_quantile: float = 0.75) -> pd.DataFrame:
     """Removes outliers from a DataFrame based on the Interquartile Range (IQR)
         method.
 
@@ -55,8 +49,8 @@ def _remove_outliers_iqr(
     Q1 = df.quantile(lower_quantile)
     Q3 = df.quantile(upper_quantile)
     IQR = Q3 - Q1
-    lower_limit = (Q1 - 1.5 * IQR)
-    upper_limit = (Q3 + 1.5 * IQR)
+    lower_limit = Q1 - 1.5 * IQR
+    upper_limit = Q3 + 1.5 * IQR
     condition = ((df >= lower_limit) & (df <= upper_limit)).all(axis=1)
     return df[condition]
 
@@ -64,12 +58,12 @@ def _remove_outliers_iqr(
 def filter_outliers(
     df: pd.DataFrame,
     target_column: str,
-    outlier_method: str = 'z_score',
+    outlier_method: str = "z_score",
     threshold: float = 3,
     lower_quantile: float = 0.25,
     upper_quantile: float = 0.75,
     exclude_columns: Optional[List[str]] = None,
-    return_removed_indices: bool = False
+    return_removed_indices: bool = False,
 ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, List[int]]]:
     """Filters out outliers from a DataFrame, class by class and feature by
     feature, using the specified outlier removal method.
@@ -106,7 +100,7 @@ def filter_outliers(
     if exclude_columns:
         if target_column in exclude_columns:
             raise ValueError("Cannot Drop Target value.")
-        df_copy = df_copy.drop(exclude_columns, axis=1, errors='ignore')
+        df_copy = df_copy.drop(exclude_columns, axis=1, errors="ignore")
 
     dfs_no_outliers = []
     removed_indices = []
@@ -114,19 +108,15 @@ def filter_outliers(
     for target_value in df_copy[target_column].unique():
         class_df = df_copy[df_copy[target_column] == target_value]
 
-        if outlier_method == 'z_score':
-            filtered_df = _remove_outliers_z_score(
-                class_df.drop([target_column], axis=1), threshold
-            )
-        elif outlier_method == 'iqr':
-            filtered_df = _remove_outliers_iqr(
-                class_df.drop([target_column], axis=1),
-                lower_quantile,
-                upper_quantile
-            )
+        if outlier_method == "z_score":
+            filtered_df = _remove_outliers_z_score(class_df.drop([target_column], axis=1), threshold)
+        elif outlier_method == "iqr":
+            filtered_df = _remove_outliers_iqr(class_df.drop([target_column], axis=1), lower_quantile, upper_quantile)
         else:
-            raise ValueError("Invalid outlier removal method. \
-                             Use 'z_score' or 'iqr'.")
+            raise ValueError(
+                "Invalid outlier removal method. \
+                             Use 'z_score' or 'iqr'."
+            )
 
         filtered_class_df = class_df.loc[filtered_df.index]
 

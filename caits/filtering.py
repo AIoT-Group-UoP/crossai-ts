@@ -1,13 +1,11 @@
-from typing import Union, List
+from typing import List, Union
+
 import numpy as np
-from scipy.signal import medfilt
-from scipy.ndimage import median_filter, gaussian_filter
+from scipy.ndimage import gaussian_filter, median_filter
+from scipy.signal import butter, filtfilt, medfilt, sosfilt, sosfilt_zi, sosfiltfilt
 
 
-def filter_median_simple(
-        array: np.ndarray,
-        kernel_size: int = None
-) -> np.ndarray:
+def filter_median_simple(array: np.ndarray, kernel_size: int = None) -> np.ndarray:
     """Performs a median filter on an N-dimensional array.
 
     Args:
@@ -26,14 +24,7 @@ def filter_median_simple(
     return filtered_signal
 
 
-def filter_median_gen(
-        array,
-        window_size,
-        output=None,
-        mode="reflect",
-        cval=0.0,
-        origin=0
-) -> np.ndarray:
+def filter_median_gen(array, window_size, output=None, mode="reflect", cval=0.0, origin=0) -> np.ndarray:
     """Calculates a multidimensional median filter. This is more general
         function than median_simple, and thus, has a more efficient
         implementation of a median filter and therefore runs much faster.
@@ -59,25 +50,21 @@ def filter_median_gen(
         >>> signal = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9])
         >>> filtered_signal = filter_median_gen(array, window_size=3)
     """
-    filtered_signal = median_filter(array, size=window_size, output=output,
-                                    mode=mode, cval=cval, origin=origin)
+    filtered_signal = median_filter(array, size=window_size, output=output, mode=mode, cval=cval, origin=origin)
     return filtered_signal
 
 
-from scipy.signal import butter, filtfilt, sosfilt, sosfiltfilt, sosfilt_zi
-
-
 def filter_butterworth(
-        array: np.ndarray,
-        fs: float,
-        filter_type: str = 'lowpass',
-        cutoff_freq: Union[float, tuple] = None,
-        order: int = 5,
-        analog: bool = False,
-        method: str = 'filtfilt',
-        zi_enable: bool = False,
-        axis: int = 0,
-        **kwargs
+    array: np.ndarray,
+    fs: float,
+    filter_type: str = "lowpass",
+    cutoff_freq: Union[float, tuple, None] = None,
+    order: int = 5,
+    analog: bool = False,
+    method: str = "filtfilt",
+    zi_enable: bool = False,
+    axis: int = 0,
+    **kwargs,
 ) -> np.ndarray:
     """Applies a Butterworth filter to a signal.
 
@@ -121,26 +108,24 @@ def filter_butterworth(
         array_like: Filtered signal.
     """
     # Check if filter type is valid
-    if filter_type not in ['lowpass', 'highpass', 'bandpass', 'bandstop']:
-        raise ValueError("Invalid filter type provided. Please choose from "
-                         "'lowpass', 'highpass', 'bandpass', or 'bandstop'.")
+    if filter_type not in ["lowpass", "highpass", "bandpass", "bandstop"]:
+        raise ValueError(
+            "Invalid filter type provided. Please choose from " "'lowpass', 'highpass', 'bandpass', or 'bandstop'."
+        )
 
     nyquist_freq = 0.5 * fs
     # Normalize cutoff frequency(-ies)
     if isinstance(cutoff_freq, tuple):
-        normalized_cutoff_freq = (cutoff_freq[0] / nyquist_freq,
-                                  cutoff_freq[1] / nyquist_freq)
+        normalized_cutoff_freq = (cutoff_freq[0] / nyquist_freq, cutoff_freq[1] / nyquist_freq)
     else:
         normalized_cutoff_freq = cutoff_freq / nyquist_freq
 
     # Create Butterworth filter coefficients
     if method == "filtfilt":
-        b, a = butter(order, normalized_cutoff_freq, btype=filter_type,
-                      analog=analog, output="ba")
+        b, a = butter(order, normalized_cutoff_freq, btype=filter_type, analog=analog, output="ba")
         return filtfilt(b, a, array, axis=axis, **kwargs)
     elif method == "sosfilt" or method == "sosfiltfilt":
-        sos = butter(order, normalized_cutoff_freq, btype=filter_type,
-                     analog=False, output="sos")
+        sos = butter(order, normalized_cutoff_freq, btype=filter_type, analog=False, output="sos")
         if method == "sosfilt":
             if zi_enable:
                 tmp = sosfilt_zi(sos)
@@ -158,21 +143,19 @@ def filter_butterworth(
         elif method == "sosfiltfilt":
             return sosfiltfilt(sos, array, axis=axis, **kwargs)
         else:
-            raise ValueError("Invalid method provided. Please choose from "
-                             "'sosfilt' or 'sosfiltfilt'.")
+            raise ValueError("Invalid method provided. Please choose from " "'sosfilt' or 'sosfiltfilt'.")
     else:
-        raise ValueError("Invalid method provided. Please choose from "
-                         "'filtfilt', 'sosfilt', or 'sosfiltfilt'.")
+        raise ValueError("Invalid method provided. Please choose from " "'filtfilt', 'sosfilt', or 'sosfiltfilt'.")
 
 
 def filter_gaussian(
-        array: np.ndarray,
-        sigma: Union[float, List[float]] = 1,
-        order: Union[int, List[int]] = 0,
-        output=None,
-        mode='reflect',
-        cval=0.0,
-        truncate=4.0
+    array: np.ndarray,
+    sigma: Union[float, List[float]] = 1,
+    order: Union[int, List[int]] = 0,
+    output=None,
+    mode="reflect",
+    cval=0.0,
+    truncate=4.0,
 ) -> np.ndarray:
     """Applies a Gaussian filter to a signal using SciPy.
 
@@ -200,5 +183,4 @@ def filter_gaussian(
         >>> signal = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9])
         >>> filtered_signal = filter_gaussian(signal, sigma=1)
     """
-    return gaussian_filter(array, sigma=sigma, order=order, output=output,
-                           mode=mode, cval=cval, truncate=truncate)
+    return gaussian_filter(array, sigma=sigma, order=order, output=output, mode=mode, cval=cval, truncate=truncate)
