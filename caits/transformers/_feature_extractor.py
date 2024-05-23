@@ -27,6 +27,10 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
                     params = extractor.get("params", {})
                     feature = func(col_data.values.flatten(), **params)
 
+                    # Convert scalar features to np.float64
+                    if np.isscalar(feature):
+                        feature = np.float64(feature)
+
                     # Flatten 2D arrays with a single column
                     column_vector_cond = feature.ndim == 2 and feature.shape[1] == 1
                     if column_vector_cond:
