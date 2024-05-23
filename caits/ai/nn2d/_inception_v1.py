@@ -1,11 +1,21 @@
-from typing import Union, Callable, List, Optional
+from typing import Callable, List, Optional, Tuple, Union
+
 import tensorflow as tf
 from tensorflow.keras import Input, Model
-from tensorflow.keras.layers import Conv2D, Dense, AveragePooling2D, \
-    GlobalAveragePooling2D, MaxPool2D, Flatten, concatenate, Dropout
-from tensorflow.keras.initializers import Initializer, GlorotUniform, Constant
-from tensorflow.keras.regularizers import l2
 from tensorflow.keras.constraints import MaxNorm
+from tensorflow.keras.initializers import Constant, GlorotUniform, Initializer
+from tensorflow.keras.layers import (
+    AveragePooling2D,
+    Conv2D,
+    Dense,
+    Dropout,
+    Flatten,
+    GlobalAveragePooling2D,
+    MaxPool2D,
+    concatenate,
+)
+from tensorflow.keras.regularizers import l2
+
 from caits.ai import dense_drop_block
 
 
@@ -14,7 +24,7 @@ from caits.ai import dense_drop_block
 # InceptionV2-3: https://arxiv.org/pdf/1512.00567v3.pdf
 # InceptionV4-ResNet: https://arxiv.org/pdf/1602.07261.pdf
 def InceptionV1(
-    input_shape: tuple,
+    input_shape: Tuple[int, ...],
     include_top: bool = True,
     num_classes: int = 1,
     classifier_activation: Union[str, Callable] = "softmax",
@@ -79,59 +89,67 @@ def InceptionV1(
     # Create the input vector
     input_layer = Input(shape=input_shape, name="input_layer")
 
-    x = Conv2D(64, (7, 7), padding="same", strides=(2, 2), activation="relu",
-               name="conv_1_7x7/2", kernel_initializer=kernel_initialize,
-               bias_initializer=bias_initialize)(input_layer)#
-    x = MaxPool2D((3, 3), padding="same", strides=(2, 2),
-                  name="max_pool_1_3x3/2")(x)
-    x = Conv2D(64, (1, 1), padding="same", strides=(1, 1), activation="relu",
-               name="conv_2a_3x3/1")(x)
-    x = Conv2D(192, (3, 3), padding="same", strides=(1, 1), activation="relu",
-               name="conv_2b_3x3/1")(x)
-    x = MaxPool2D((3, 3), padding="same", strides=(2, 2),
-                  name="max_pool_2_3x3/2")(x)
+    x = Conv2D(
+        64,
+        (7, 7),
+        padding="same",
+        strides=(2, 2),
+        activation="relu",
+        name="conv_1_7x7/2",
+        kernel_initializer=kernel_initialize,
+        bias_initializer=bias_initialize,
+    )(input_layer)  #
+    x = MaxPool2D((3, 3), padding="same", strides=(2, 2), name="max_pool_1_3x3/2")(x)
+    x = Conv2D(64, (1, 1), padding="same", strides=(1, 1), activation="relu", name="conv_2a_3x3/1")(x)
+    x = Conv2D(192, (3, 3), padding="same", strides=(1, 1), activation="relu", name="conv_2b_3x3/1")(x)
+    x = MaxPool2D((3, 3), padding="same", strides=(2, 2), name="max_pool_2_3x3/2")(x)
 
-    x = inception_module(x,
-                         filters_1x1=64,
-                         filters_3x3_reduce=96,
-                         filters_3x3=128,
-                         filters_5x5_reduce=16,
-                         filters_5x5=32,
-                         filters_pool_proj=32,
-                         kernel_initialize=kernel_initialize,
-                         kernel_regularize=kernel_regularize,
-                         kernel_constraint=kernel_constraint,
-                         bias_initialize=bias_initialize,
-                         name="inception_3a")
+    x = inception_module(
+        x,
+        filters_1x1=64,
+        filters_3x3_reduce=96,
+        filters_3x3=128,
+        filters_5x5_reduce=16,
+        filters_5x5=32,
+        filters_pool_proj=32,
+        kernel_initialize=kernel_initialize,
+        kernel_regularize=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+        bias_initialize=bias_initialize,
+        name="inception_3a",
+    )
 
-    x = inception_module(x,
-                         filters_1x1=128,
-                         filters_3x3_reduce=128,
-                         filters_3x3=192,
-                         filters_5x5_reduce=32,
-                         filters_5x5=96,
-                         filters_pool_proj=64,
-                         kernel_initialize=kernel_initialize,
-                         kernel_regularize=kernel_regularize,
-                         kernel_constraint=kernel_constraint,
-                         bias_initialize=bias_initialize,
-                         name="inception_3b")
+    x = inception_module(
+        x,
+        filters_1x1=128,
+        filters_3x3_reduce=128,
+        filters_3x3=192,
+        filters_5x5_reduce=32,
+        filters_5x5=96,
+        filters_pool_proj=64,
+        kernel_initialize=kernel_initialize,
+        kernel_regularize=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+        bias_initialize=bias_initialize,
+        name="inception_3b",
+    )
 
-    x = MaxPool2D((3, 3), padding="same", strides=(2, 2),
-                  name="max_pool_3_3x3/2")(x)
+    x = MaxPool2D((3, 3), padding="same", strides=(2, 2), name="max_pool_3_3x3/2")(x)
 
-    x = inception_module(x,
-                         filters_1x1=192,
-                         filters_3x3_reduce=96,
-                         filters_3x3=208,
-                         filters_5x5_reduce=16,
-                         filters_5x5=48,
-                         filters_pool_proj=64,
-                         kernel_initialize=kernel_initialize,
-                         kernel_regularize=kernel_regularize,
-                         kernel_constraint=kernel_constraint,
-                         bias_initialize=bias_initialize,
-                         name="inception_4a")
+    x = inception_module(
+        x,
+        filters_1x1=192,
+        filters_3x3_reduce=96,
+        filters_3x3=208,
+        filters_5x5_reduce=16,
+        filters_5x5=48,
+        filters_pool_proj=64,
+        kernel_initialize=kernel_initialize,
+        kernel_regularize=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+        bias_initialize=bias_initialize,
+        name="inception_4a",
+    )
 
     x1 = AveragePooling2D((5, 5), strides=3)(x)
     x1 = Conv2D(128, (1, 1), padding="same", activation="relu")(x1)
@@ -140,44 +158,50 @@ def InceptionV1(
     x1 = Dropout(0.7)(x1)
     x1 = Dense(10, activation="softmax", name="auxilliary_output_1")(x1)
 
-    x = inception_module(x,
-                         filters_1x1=160,
-                         filters_3x3_reduce=112,
-                         filters_3x3=224,
-                         filters_5x5_reduce=24,
-                         filters_5x5=64,
-                         filters_pool_proj=64,
-                         kernel_initialize=kernel_initialize,
-                         kernel_regularize=kernel_regularize,
-                         kernel_constraint=kernel_constraint,
-                         bias_initialize=bias_initialize,
-                         name="inception_4b")
+    x = inception_module(
+        x,
+        filters_1x1=160,
+        filters_3x3_reduce=112,
+        filters_3x3=224,
+        filters_5x5_reduce=24,
+        filters_5x5=64,
+        filters_pool_proj=64,
+        kernel_initialize=kernel_initialize,
+        kernel_regularize=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+        bias_initialize=bias_initialize,
+        name="inception_4b",
+    )
 
-    x = inception_module(x,
-                         filters_1x1=128,
-                         filters_3x3_reduce=128,
-                         filters_3x3=256,
-                         filters_5x5_reduce=24,
-                         filters_5x5=64,
-                         filters_pool_proj=64,
-                         kernel_initialize=kernel_initialize,
-                         kernel_regularize=kernel_regularize,
-                         kernel_constraint=kernel_constraint,
-                         bias_initialize=bias_initialize,
-                         name="inception_4c")
+    x = inception_module(
+        x,
+        filters_1x1=128,
+        filters_3x3_reduce=128,
+        filters_3x3=256,
+        filters_5x5_reduce=24,
+        filters_5x5=64,
+        filters_pool_proj=64,
+        kernel_initialize=kernel_initialize,
+        kernel_regularize=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+        bias_initialize=bias_initialize,
+        name="inception_4c",
+    )
 
-    x = inception_module(x,
-                         filters_1x1=112,
-                         filters_3x3_reduce=144,
-                         filters_3x3=288,
-                         filters_5x5_reduce=32,
-                         filters_5x5=64,
-                         filters_pool_proj=64,
-                         kernel_initialize=kernel_initialize,
-                         kernel_regularize=kernel_regularize,
-                         kernel_constraint=kernel_constraint,
-                         bias_initialize=bias_initialize,
-                         name="inception_4d")
+    x = inception_module(
+        x,
+        filters_1x1=112,
+        filters_3x3_reduce=144,
+        filters_3x3=288,
+        filters_5x5_reduce=32,
+        filters_5x5=64,
+        filters_pool_proj=64,
+        kernel_initialize=kernel_initialize,
+        kernel_regularize=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+        bias_initialize=bias_initialize,
+        name="inception_4d",
+    )
 
     x2 = AveragePooling2D((5, 5), strides=3)(x)
     x2 = Conv2D(128, (1, 1), padding="same", activation="relu")(x2)
@@ -186,70 +210,74 @@ def InceptionV1(
     x2 = Dropout(0.7)(x2)
     x2 = Dense(10, activation="softmax", name="auxilliary_output_2")(x2)
 
-    x = inception_module(x,
-                         filters_1x1=256,
-                         filters_3x3_reduce=160,
-                         filters_3x3=320,
-                         filters_5x5_reduce=32,
-                         filters_5x5=128,
-                         filters_pool_proj=128,
-                         kernel_initialize=kernel_initialize,
-                         kernel_regularize=kernel_regularize,
-                         kernel_constraint=kernel_constraint,
-                         bias_initialize=bias_initialize,
-                         name="inception_4e")
+    x = inception_module(
+        x,
+        filters_1x1=256,
+        filters_3x3_reduce=160,
+        filters_3x3=320,
+        filters_5x5_reduce=32,
+        filters_5x5=128,
+        filters_pool_proj=128,
+        kernel_initialize=kernel_initialize,
+        kernel_regularize=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+        bias_initialize=bias_initialize,
+        name="inception_4e",
+    )
 
-    x = MaxPool2D((3, 3), padding="same", strides=(2, 2),
-                  name="max_pool_4_3x3/2")(x)
+    x = MaxPool2D((3, 3), padding="same", strides=(2, 2), name="max_pool_4_3x3/2")(x)
 
-    x = inception_module(x,
-                         filters_1x1=256,
-                         filters_3x3_reduce=160,
-                         filters_3x3=320,
-                         filters_5x5_reduce=32,
-                         filters_5x5=128,
-                         filters_pool_proj=128,
-                         kernel_initialize=kernel_initialize,
-                         kernel_regularize=kernel_regularize,
-                         kernel_constraint=kernel_constraint,
-                         bias_initialize=bias_initialize,
-                         name="inception_5a")
+    x = inception_module(
+        x,
+        filters_1x1=256,
+        filters_3x3_reduce=160,
+        filters_3x3=320,
+        filters_5x5_reduce=32,
+        filters_5x5=128,
+        filters_pool_proj=128,
+        kernel_initialize=kernel_initialize,
+        kernel_regularize=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+        bias_initialize=bias_initialize,
+        name="inception_5a",
+    )
 
-    x = inception_module(x,
-                         filters_1x1=384,
-                         filters_3x3_reduce=192,
-                         filters_3x3=384,
-                         filters_5x5_reduce=48,
-                         filters_5x5=128,
-                         filters_pool_proj=128,
-                         kernel_initialize=kernel_initialize,
-                         kernel_regularize=kernel_regularize,
-                         kernel_constraint=kernel_constraint,
-                         bias_initialize=bias_initialize,
-                         name="inception_5b")
+    x = inception_module(
+        x,
+        filters_1x1=384,
+        filters_3x3_reduce=192,
+        filters_3x3=384,
+        filters_5x5_reduce=48,
+        filters_5x5=128,
+        filters_pool_proj=128,
+        kernel_initialize=kernel_initialize,
+        kernel_regularize=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+        bias_initialize=bias_initialize,
+        name="inception_5b",
+    )
 
     if include_top:
-
         x = GlobalAveragePooling2D(name="avg_pool_5_3x3/1")(x)
 
         # apply multiple sequential dense/dropout layers
-        x = dense_drop_block(inputs=x,
-                             n_layers=dense_layers,
-                             dense_units=dense_units,
-                             dropout=dropout,
-                             drop_first=dropout_first,
-                             drop_rate=dropout_rate,
-                             activation_dense="relu",
-                             kernel_initialize=kernel_initialize,
-                             kernel_regularize=kernel_regularize,
-                             kernel_constraint=kernel_constraint,
-                             spatial=spatial,
-                             mc_inference=mc_inference
-                             )
+        x = dense_drop_block(
+            inputs=x,
+            n_layers=dense_layers,
+            dense_units=dense_units,
+            dropout=dropout,
+            drop_first=dropout_first,
+            drop_rate=dropout_rate,
+            activation_dense="relu",
+            kernel_initialize=kernel_initialize,
+            kernel_regularize=kernel_regularize,
+            kernel_constraint=kernel_constraint,
+            spatial=spatial,
+            mc_inference=mc_inference,
+        )
 
         # Fully connected output layer (classification)
-        x = Dense(num_classes, activation=classifier_activation,
-                  name="output")(x)
+        x = Dense(num_classes, activation=classifier_activation, name="output")(x)
 
     model = Model(input_layer, [x, x1, x2], name="Inception_v1")
 
@@ -268,7 +296,7 @@ def inception_module(
     kernel_regularize: Union[float, str, None] = None,
     kernel_constraint: Union[int, None] = None,
     bias_initialize: Union[Initializer, None] = None,
-    name: Optional[str] = None
+    name: Optional[str] = None,
 ) -> tf.Tensor:
     """Creates an inception module that combines 1x1, 3x3, 5x5 convolutions,
         and max pooling.
@@ -293,51 +321,73 @@ def inception_module(
             branches.
     """
 
-    conv_1x1 = Conv2D(filters_1x1, (1, 1), padding="same",
-                      activation="relu",
-                      kernel_initializer=kernel_initialize,
-                      kernel_regularizer=kernel_regularize,
-                      kernel_constraint=kernel_constraint,
-                      bias_initializer=bias_initialize)(x)
+    conv_1x1 = Conv2D(
+        filters_1x1,
+        (1, 1),
+        padding="same",
+        activation="relu",
+        kernel_initializer=kernel_initialize,
+        kernel_regularizer=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+        bias_initializer=bias_initialize,
+    )(x)
 
-    conv_3x3 = Conv2D(filters_3x3_reduce, (1, 1), padding="same",
-                      activation="relu",
-                      kernel_initializer=kernel_initialize,
-                      kernel_regularizer=kernel_regularize,
-                      kernel_constraint=kernel_constraint,
-                      bias_initializer=bias_initialize)(x)
+    conv_3x3 = Conv2D(
+        filters_3x3_reduce,
+        (1, 1),
+        padding="same",
+        activation="relu",
+        kernel_initializer=kernel_initialize,
+        kernel_regularizer=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+        bias_initializer=bias_initialize,
+    )(x)
 
-    conv_3x3 = Conv2D(filters_3x3, (3, 3), padding="same",
-                      activation="relu",
-                      kernel_initializer=kernel_initialize,
-                      kernel_regularizer=kernel_regularize,
-                      kernel_constraint=kernel_constraint,
-                      bias_initializer=bias_initialize)(conv_3x3)
+    conv_3x3 = Conv2D(
+        filters_3x3,
+        (3, 3),
+        padding="same",
+        activation="relu",
+        kernel_initializer=kernel_initialize,
+        kernel_regularizer=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+        bias_initializer=bias_initialize,
+    )(conv_3x3)
 
-    conv_5x5 = Conv2D(filters_5x5_reduce, (1, 1), padding="same",
-                      activation="relu",
-                      kernel_initializer=kernel_initialize,
-                      kernel_regularizer=kernel_regularize,
-                      kernel_constraint=kernel_constraint,
-                      bias_initializer=bias_initialize)(x)
+    conv_5x5 = Conv2D(
+        filters_5x5_reduce,
+        (1, 1),
+        padding="same",
+        activation="relu",
+        kernel_initializer=kernel_initialize,
+        kernel_regularizer=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+        bias_initializer=bias_initialize,
+    )(x)
 
-    conv_5x5 = Conv2D(filters_5x5, (5, 5), padding="same",
-                      activation="relu",
-                      kernel_initializer=kernel_initialize,
-                      kernel_regularizer=kernel_regularize,
-                      kernel_constraint=kernel_constraint,
-                      bias_initializer=bias_initialize)(conv_5x5)
+    conv_5x5 = Conv2D(
+        filters_5x5,
+        (5, 5),
+        padding="same",
+        activation="relu",
+        kernel_initializer=kernel_initialize,
+        kernel_regularizer=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+        bias_initializer=bias_initialize,
+    )(conv_5x5)
 
     pool_proj = MaxPool2D((3, 3), strides=(1, 1), padding="same")(x)
-    pool_proj = Conv2D(filters_pool_proj, (1, 1), padding="same",
-                       activation="relu",
-                       kernel_initializer=kernel_initialize,
-                       kernel_regularizer=kernel_regularize,
-                       kernel_constraint=kernel_constraint,
-                       bias_initializer=bias_initialize)(pool_proj)
+    pool_proj = Conv2D(
+        filters_pool_proj,
+        (1, 1),
+        padding="same",
+        activation="relu",
+        kernel_initializer=kernel_initialize,
+        kernel_regularizer=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+        bias_initializer=bias_initialize,
+    )(pool_proj)
 
-    output = concatenate([conv_1x1, conv_3x3, conv_5x5, pool_proj],
-                         axis=3,
-                         name=name)
+    output = concatenate([conv_1x1, conv_3x3, conv_5x5, pool_proj], axis=3, name=name)
 
     return output

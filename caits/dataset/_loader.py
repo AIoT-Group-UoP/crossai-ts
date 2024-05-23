@@ -1,11 +1,12 @@
-from typing import Optional
 import os
+from typing import List, Optional
+
 from caits.loading import audio_loader, csv_loader
+
 from ._dataset import Dataset
 
 
 class DataLoader:
-
     @staticmethod
     def _get_file_types(path: str) -> set:
         formats = set()
@@ -19,16 +20,12 @@ class DataLoader:
                     _, ext = os.path.splitext(filename)
                     if ext:  # Ensure there is an extension
                         # Remove the dot and convert to lower case
-                        formats.add(ext.lstrip('.').lower())
+                        formats.add(ext.lstrip(".").lower())
 
         return formats
 
     @classmethod
-    def load_from(
-            cls,
-            path: str,
-            classes: Optional[list[str]] = None
-    ) -> Dataset:
+    def load_from(cls, path: str, classes: Optional[List[str]] = None) -> Dataset:
         # check dataset's dir types
         formats = cls._get_file_types(path)
 
@@ -41,15 +38,10 @@ class DataLoader:
                 dict_data = csv_loader(path, classes=classes)
             else:
                 # No loader implemented for this file format
-                raise NotImplementedError(f"Loading for the {_format} format \
-                                           is not implemented.")
+                raise NotImplementedError(f"Loading for the {_format} format is not implemented.")
 
             # Return loaded data using Dataset Object
-            return Dataset(
-                X=dict_data["X"],
-                y=dict_data["y"],
-                id=dict_data["id"]
-            )
+            return Dataset(X=dict_data["X"], y=dict_data["y"], id=dict_data["id"])
 
         else:
             # Dataset contains mixed file formats

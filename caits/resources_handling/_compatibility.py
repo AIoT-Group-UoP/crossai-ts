@@ -16,6 +16,7 @@ def python_compatibility() -> None:
 
     """
     import sys
+
     assert sys.version_info >= (3, 10)
     print(">> Python is compatible.")
 
@@ -27,6 +28,7 @@ def sklearn_compatibility() -> None:
 
     """
     import sklearn
+
     assert sklearn.__version__ >= "1.4.0"
     print(">> scikit-learn is compatible.")
 
@@ -38,15 +40,15 @@ def tf_compatibility() -> None:
 
     """
     import tensorflow as tf
+
     assert tf.__version__ == "2.14"
     print(">> TensorFlow is compatible.")
 
-    if not tf.config.list_physical_devices('GPU'):
-        print("No GPU is detected. LSTMs and CNNs can be very "
-              "slow without a GPU. A GPU usage is recommended.")
+    if not tf.config.list_physical_devices("GPU"):
+        print("No GPU is detected. LSTMs and CNNs can be very " "slow without a GPU. A GPU usage is recommended.")
     else:
         print(">> GPU usage is detected:")
-        gpus = tf.config.list_physical_devices('GPU')
+        gpus = tf.config.list_physical_devices("GPU")
         gpu_count = 0
         for gpu in gpus:
             print(">> * GPU {}: {}".format(gpu_count, gpu))

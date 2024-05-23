@@ -1,18 +1,19 @@
-from typing import Union, List, Callable
+from typing import Callable, List, Optional, Tuple, Union
+
 import tensorflow as tf
-from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, Dense, ReLU
-from tensorflow.keras.layers import Add, Flatten, BatchNormalization
-from tensorflow.keras.regularizers import Regularizer, l2
 from tensorflow.keras.constraints import Constraint, MaxNorm
 from tensorflow.keras.initializers import Initializer
-from .._layers_dropout import dense_drop_block
+from tensorflow.keras.layers import Add, BatchNormalization, Conv2D, Dense, Flatten, Input, MaxPooling2D, ReLU
+from tensorflow.keras.models import Model
+from tensorflow.keras.regularizers import Regularizer, l2
+
+from caits.ai import dense_drop_block
 
 
 # This architecture is based on ResNet 34 (2015)
 # Paper: https://arxiv.org/pdf/1512.03385.pdf
 def ResNet34(
-    input_shape: tuple,
+    input_shape: Tuple[int, ...],
     include_top: bool = True,
     num_classes: int = 1,
     classifier_activation: Union[str, Callable] = "softmax",
@@ -25,7 +26,7 @@ def ResNet34(
     dropout_first: bool = False,
     dropout_rate: List[float] = [0.5, 0.5],
     spatial: bool = False,
-    mc_inference: Union[bool, None] = None
+    mc_inference: Optional[bool] = None,
 ) -> tf.keras.Model:
     """Constructs a ResNet34 model suitable for image classification tasks.
 
@@ -75,37 +76,40 @@ def ResNet34(
     input_layer = Input(shape=input_shape, name="input_layer")
 
     # The Stem Convolution Group
-    x = stem(inputs=input_layer,
-             kernel_initialize=kernel_initialize,
-             kernel_regularize=kernel_regularize,
-             kernel_constraint=kernel_constraint
-             )
+    x = stem(
+        inputs=input_layer,
+        kernel_initialize=kernel_initialize,
+        kernel_regularize=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+    )
 
     # The learner
-    x = learner(x=x,
-                kernel_initialize=kernel_initialize,
-                kernel_regularize=kernel_regularize,
-                kernel_constraint=kernel_constraint
-                )
+    x = learner(
+        x=x,
+        kernel_initialize=kernel_initialize,
+        kernel_regularize=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+    )
 
     if include_top:
         # flatten
         x = Flatten()(x)
 
         # apply multiple sequential dense/dropout layers
-        x = dense_drop_block(inputs=x,
-                             n_layers=dense_layers,
-                             dense_units=dense_units,
-                             dropout=dropout,
-                             drop_first=dropout_first,
-                             drop_rate=dropout_rate,
-                             activation_dense="relu",
-                             kernel_initialize=kernel_initialize,
-                             kernel_regularize=kernel_regularize,
-                             kernel_constraint=kernel_constraint,
-                             spatial=spatial,
-                             mc_inference=mc_inference
-                             )
+        x = dense_drop_block(
+            inputs=x,
+            n_layers=dense_layers,
+            dense_units=dense_units,
+            dropout=dropout,
+            drop_first=dropout_first,
+            drop_rate=dropout_rate,
+            activation_dense="relu",
+            kernel_initialize=kernel_initialize,
+            kernel_regularize=kernel_regularize,
+            kernel_constraint=kernel_constraint,
+            spatial=spatial,
+            mc_inference=mc_inference,
+        )
 
         # Fully connected output layer (classification)
         outputs = Dense(num_classes, activation=classifier_activation)(x)
@@ -120,7 +124,7 @@ def stem(
     inputs: tf.Tensor,
     kernel_initialize: Union[Initializer, str] = "he_normal",
     kernel_regularize: Union[Regularizer, float, None] = 1e-3,
-    kernel_constraint: Union[Constraint, int, None] = 3
+    kernel_constraint: Union[Constraint, int, None] = 3,
 ) -> tf.Tensor:
     """Constructs the stem group for a convolutional neural network.
 
@@ -144,11 +148,15 @@ def stem(
     """
     # First Convolutional layer, where pooled
     # feature maps will be reduced by 75%
-    x = Conv2D(64, (7, 7), strides=(2, 2), padding="same",
-               kernel_initializer=kernel_initialize,
-               kernel_regularizer=kernel_regularize,
-               kernel_constraint=kernel_constraint
-               )(inputs)
+    x = Conv2D(
+        64,
+        (7, 7),
+        strides=(2, 2),
+        padding="same",
+        kernel_initializer=kernel_initialize,
+        kernel_regularizer=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+    )(inputs)
     x = BatchNormalization()(x)
     x = ReLU()(x)
     x = MaxPooling2D((3, 3), strides=(2, 2), padding="same")(x)
@@ -159,7 +167,7 @@ def learner(
     x: tf.Tensor,
     kernel_initialize: Union[Initializer, str] = "he_normal",
     kernel_regularize: Union[Regularizer, float, None] = 1e-3,
-    kernel_constraint: Union[Constraint, int, None] = 3
+    kernel_constraint: Union[Constraint, int, None] = 3,
 ) -> tf.Tensor:
     """Constructs the main learning structure (learner) of a ResNet-like
         architecture.
@@ -182,20 +190,16 @@ def learner(
         Output tensor after applying all residual groups forming the learner.
     """
     # First Residual Block Group of 64 filters
-    x = residual_group(x, 64, 3, True, kernel_initialize, kernel_regularize,
-                       kernel_constraint)
+    x = residual_group(x, 64, 3, True, kernel_initialize, kernel_regularize, kernel_constraint)
 
     # Second Residual Block Group of 128 filters
-    x = residual_group(x, 128, 3, True, kernel_initialize, kernel_regularize,
-                       kernel_constraint)
+    x = residual_group(x, 128, 3, True, kernel_initialize, kernel_regularize, kernel_constraint)
 
     # Third Residual Block Group of 256 filters
-    x = residual_group(x, 256, 5, True, kernel_initialize, kernel_regularize,
-                       kernel_constraint)
+    x = residual_group(x, 256, 5, True, kernel_initialize, kernel_regularize, kernel_constraint)
 
     # Fourth Residual Block Group of 512 filters
-    x = residual_group(x, 512, 2, False, kernel_initialize, kernel_regularize,
-                       kernel_constraint)
+    x = residual_group(x, 512, 2, False, kernel_initialize, kernel_regularize, kernel_constraint)
     return x
 
 
@@ -206,7 +210,7 @@ def residual_group(
     conv: bool = True,
     kernel_initialize: Union[Initializer, str] = "he_normal",
     kernel_regularize: Union[Regularizer, float, None] = 1e-3,
-    kernel_constraint: Union[Constraint, int, None] = 3
+    kernel_constraint: Union[Constraint, int, None] = 3,
 ) -> tf.Tensor:
     """Constructs a group of residual blocks within a ResNet architecture.
 
@@ -233,14 +237,12 @@ def residual_group(
     """
 
     for _ in range(n_blocks):
-        x = residual_block(x, n_filters, kernel_initialize, kernel_regularize,
-                           kernel_constraint)
+        x = residual_block(x, n_filters, kernel_initialize, kernel_regularize, kernel_constraint)
 
     # Double the size of filters and reduce feature maps by 75% (strides=2, 2)
     # to fit the next Residual Group
     if conv:
-        x = conv_block(x, n_filters * 2, kernel_initialize, kernel_regularize,
-                       kernel_constraint)
+        x = conv_block(x, n_filters * 2, kernel_initialize, kernel_regularize, kernel_constraint)
     return x
 
 
@@ -249,7 +251,7 @@ def residual_block(
     n_filters: int,
     kernel_initialize: Union[Initializer, str],
     kernel_regularize: Union[Regularizer, float, None],
-    kernel_constraint: Union[Constraint, int, None]
+    kernel_constraint: Union[Constraint, int, None],
 ) -> tf.Tensor:
     """Constructs a residual block with two convolutional layers.
 
@@ -276,18 +278,28 @@ def residual_block(
     shortcut = x
 
     # First Layer
-    x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same",
-               kernel_initializer=kernel_initialize,
-               kernel_regularizer=kernel_regularize,
-               kernel_constraint=kernel_constraint)(x)
+    x = Conv2D(
+        n_filters,
+        (3, 3),
+        strides=(1, 1),
+        padding="same",
+        kernel_initializer=kernel_initialize,
+        kernel_regularizer=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+    )(x)
     x = BatchNormalization()(x)  # axis = -1 = 3
     x = ReLU()(x)
 
     # Second Layer
-    x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same",
-               kernel_initializer=kernel_initialize,
-               kernel_regularizer=kernel_regularize,
-               kernel_constraint=kernel_constraint)(x)
+    x = Conv2D(
+        n_filters,
+        (3, 3),
+        strides=(1, 1),
+        padding="same",
+        kernel_initializer=kernel_initialize,
+        kernel_regularizer=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+    )(x)
     x = BatchNormalization()(x)
 
     # Add residue
@@ -301,7 +313,7 @@ def conv_block(
     n_filters: int,
     kernel_initialize: Union[Initializer, str],
     kernel_regularize: Union[Regularizer, float, None],
-    kernel_constraint: Union[Constraint, int, None]
+    kernel_constraint: Union[Constraint, int, None],
 ) -> tf.Tensor:
     """Constructs a block of convolutions without pooling.
 
@@ -323,17 +335,27 @@ def conv_block(
         Output tensor after applying a series of convolutions, batch
             normalization, and ReLU activation.
     """
-    x = Conv2D(n_filters, (3, 3), strides=(2, 2), padding="same",
-               kernel_initializer=kernel_initialize,
-               kernel_regularizer=kernel_regularize,
-               kernel_constraint=kernel_constraint)(x)
+    x = Conv2D(
+        n_filters,
+        (3, 3),
+        strides=(2, 2),
+        padding="same",
+        kernel_initializer=kernel_initialize,
+        kernel_regularizer=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+    )(x)
     x = BatchNormalization()(x)
     x = ReLU()(x)
 
-    x = Conv2D(n_filters, (3, 3), strides=(2, 2), padding="same",
-               kernel_initializer=kernel_initialize,
-               kernel_regularizer=kernel_regularize,
-               kernel_constraint=kernel_constraint)(x)
+    x = Conv2D(
+        n_filters,
+        (3, 3),
+        strides=(2, 2),
+        padding="same",
+        kernel_initializer=kernel_initialize,
+        kernel_regularizer=kernel_regularize,
+        kernel_constraint=kernel_constraint,
+    )(x)
     x = BatchNormalization()(x)
     x = ReLU()(x)
 

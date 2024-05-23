@@ -1,4 +1,5 @@
 from sklearn.base import BaseEstimator, TransformerMixin
+
 from caits.dataset import Dataset
 
 
@@ -38,9 +39,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         transformed_X = []
         for df in X.X:
             # Apply the function column-wise
-            transformed_df = df.apply(
-                lambda col: self.func(col.values, **self.func_kwargs)
-            )
+            transformed_df = df.apply(lambda col: self.func(col.values, **self.func_kwargs))
             transformed_X.append(transformed_df)
 
         # Return a new CAI object with the transformed data
