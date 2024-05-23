@@ -1,15 +1,16 @@
-import pandas as pd
-from typing import Union
+from typing import Literal, Union
+
 import boto3
+import pandas as pd
 
 
 def s3_csv_loader(
-        bucket: str,
-        prefix: str,
-        endpoint_url: str,
-        header: Union[None, int, str] = "infer",
-        channels: Union[list, None] = None,
-        export: str = "dict"
+    bucket: str,
+    prefix: str,
+    endpoint_url: str,
+    header: Union[None, int, str] = "infer",
+    channels: Union[list, None] = None,
+    export: Literal["df", "dict"] = "dict",
 ) -> Union[pd.DataFrame, dict]:
     """Loads CSV files from a directory into a DataFrame.
 
@@ -49,14 +50,6 @@ def s3_csv_loader(
                         print(f"Error loading file {file_path}: {e}")
 
     if export == "df":
-        return pd.DataFrame({
-            "X": all_features,
-            "y": all_y,
-            "id": all_id
-        })
+        return pd.DataFrame({"X": all_features, "y": all_y, "id": all_id})
     elif export == "dict":
-        return {
-            "X": all_features,
-            "y": all_y,
-            "id": all_id
-       }
+        return {"X": all_features, "y": all_y, "id": all_id}

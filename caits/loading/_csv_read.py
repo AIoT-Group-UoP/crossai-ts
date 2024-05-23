@@ -1,17 +1,18 @@
-import os
-import pandas as pd
 import glob
+import os
+from typing import Dict, List, Literal, Optional, Union
+
+import pandas as pd
 from tqdm import tqdm
-from typing import Union, List, Optional
 
 
 def csv_loader(
-        dataset_path: str,
-        header: Union[None, int, str] = "infer",
-        channels: Union[List[str], None] = None,
-        export: str = "dict",
-        classes: Optional[List[str]] = None
-) -> Union[pd.DataFrame, dict]:
+    dataset_path: str,
+    header: Union[None, int, str] = "infer",
+    channels: Union[List[str], None] = None,
+    export: Literal["df", "dict"] = "dict",
+    classes: Optional[List[str]] = None,
+) -> Union[pd.DataFrame, Dict[str, List]]:
     """Loads CSV files from a directory into a DataFrame or dictionary.
 
     Args:
@@ -43,9 +44,9 @@ def csv_loader(
             try:
                 # Load the CSV file, specifying header
                 # and column names if provided
-                read_csv_kwargs = {'header': header}
+                read_csv_kwargs = {"header": header}
                 if channels is not None:
-                    read_csv_kwargs['usecols'] = channels
+                    read_csv_kwargs["usecols"] = channels
 
                 df = pd.read_csv(file_path, **read_csv_kwargs)
 
@@ -58,14 +59,6 @@ def csv_loader(
     # Export the loaded data as a DataFrame or
     # dictionary based on the 'export' argument
     if export == "df":
-        return pd.DataFrame({
-            "X": all_features,
-            "y": all_y,
-            "id": all_id
-        })
+        return pd.DataFrame({"X": all_features, "y": all_y, "id": all_id})
     elif export == "dict":
-        return {
-            "X": all_features,
-            "y": all_y,
-            "id": all_id
-        }
+        return {"X": all_features, "y": all_y, "id": all_id}

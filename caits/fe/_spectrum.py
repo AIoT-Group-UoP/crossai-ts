@@ -1,24 +1,21 @@
 # The functionalities in this implementation are basically derived from
 # librosa v0.10.1:
 # https://github.com/librosa/librosa/blob/main/librosa/core/spectrum.py
+import warnings
+from typing import Any, Callable, Optional, Tuple, Union
+
 import numpy as np
 import scipy
-import warnings
-from typing import Any, Tuple, Optional, Union, Callable
 from numpy import fft
 from numpy.typing import ArrayLike, DTypeLike
 
-from .core_spectrum import expand_to
-from .core_spectrum import __overlap_add
-from caits.core._core_window import pad_center
-from caits.core._core_window import frame, get_window, tiny, window_sumsquare
+from caits.core._core_checks import dtype_c2r, dtype_r2c, is_positive_int, valid_audio
 from caits.core._core_fix import fix_length
-from caits.core._core_checks import (is_positive_int, valid_audio, dtype_r2c,
-                                     dtype_c2r)
-from caits.core._core_typing import (_WindowSpec, _PadModeSTFT,
-                                     _ScalarOrSequence, _ComplexLike_co)
-from .core_spectrum._utils import mel_filter
+from caits.core._core_typing import _ComplexLike_co, _PadModeSTFT, _ScalarOrSequence, _WindowSpec
+from caits.core._core_window import frame, get_window, pad_center, tiny, window_sumsquare
 
+from .core_spectrum import __overlap_add, expand_to
+from .core_spectrum._utils import mel_filter
 
 # Constrain STFT block sizes to 256 KB
 MAX_MEM_BLOCK = 2**8 * 2**10
@@ -91,14 +88,10 @@ def stft(
             # >>> my_pad_func = functools.partial(pad_func, foo=x, bar=y)
             # >>> librosa.stft(..., pad_mode=my_pad_func)
 
-            raise ValueError(
-                f"pad_mode='{pad_mode}' is not supported by librosa.stft"
-            )
+            raise ValueError(f"pad_mode='{pad_mode}' is not supported by librosa.stft")
 
         if n_fft > y.shape[-1]:
-            warnings.warn(
-                f"n_fft={n_fft} is too large for input signal of length={y.shape[-1]}"
-            )
+            warnings.warn(f"n_fft={n_fft} is too large for input signal of length={y.shape[-1]}")
 
         # Set up the padding array to be empty, and we'll fix the target dimension later
         padding = [(0, 0) for _ in range(y.ndim)]
@@ -140,12 +133,8 @@ def stft(
             # Determine if we have any frames that will fit inside the tail pad
             if tail_k * hop_length - n_fft // 2 + n_fft <= y.shape[-1] + n_fft // 2:
                 padding[-1] = (0, n_fft // 2)
-                y_post = np.pad(
-                    y[..., (tail_k) * hop_length - n_fft // 2 :], padding, mode=pad_mode
-                )
-                y_frames_post = frame(
-                    y_post, frame_length=n_fft, hop_length=hop_length
-                )
+                y_post = np.pad(y[..., (tail_k) * hop_length - n_fft // 2 :], padding, mode=pad_mode)
+                y_frames_post = frame(y_post, frame_length=n_fft, hop_length=hop_length)
                 # How many extra frames do we have from the tail?
                 extra += y_frames_post.shape[-1]
             else:
@@ -159,8 +148,7 @@ def stft(
     else:
         if n_fft > y.shape[-1]:
             raise ValueError(
-                f"n_fft={n_fft} is too large for uncentered analysis of input "
-                f"signal of length={y.shape[-1]}"
+                f"n_fft={n_fft} is too large for uncentered analysis of input " f"signal of length={y.shape[-1]}"
             )
 
         # "Middle" of the signal starts at sample 0
@@ -186,13 +174,9 @@ def stft(
     if out is None:
         stft_matrix = np.zeros(shape, dtype=dtype, order="F")
     elif not (np.allclose(out.shape[:-1], shape[:-1]) and out.shape[-1] >= shape[-1]):
-        raise ValueError(
-            f"Shape mismatch for provided output array out.shape={out.shape} "
-            f"and target shape={shape}"
-        )
+        raise ValueError(f"Shape mismatch for provided output array out.shape={out.shape} " f"and target shape={shape}")
     elif not np.iscomplexobj(out):
-        raise ValueError(f"output with dtype={out.dtype} is not of complex "
-                         f"type")
+        raise ValueError(f"output with dtype={out.dtype} is not of complex " f"type")
     else:
         if np.allclose(shape, out.shape):
             stft_matrix = out
@@ -202,27 +186,21 @@ def stft(
     # Fill in the warm-up
     if center and extra > 0:
         off_start = y_frames_pre.shape[-1]
-        stft_matrix[..., :off_start] = fft.rfft(fft_window * y_frames_pre,
-                                                axis=-2)
+        stft_matrix[..., :off_start] = fft.rfft(fft_window * y_frames_pre, axis=-2)
 
         off_end = y_frames_post.shape[-1]
         if off_end > 0:
-            stft_matrix[..., -off_end:] = fft.rfft(fft_window * y_frames_post,
-                                                   axis=-2)
+            stft_matrix[..., -off_end:] = fft.rfft(fft_window * y_frames_post, axis=-2)
     else:
         off_start = 0
 
-    n_columns = int(
-        MAX_MEM_BLOCK // (np.prod(y_frames.shape[:-1]) * y_frames.itemsize)
-    )
+    n_columns = int(MAX_MEM_BLOCK // (np.prod(y_frames.shape[:-1]) * y_frames.itemsize))
     n_columns = max(n_columns, 1)
 
     for bl_s in range(0, y_frames.shape[-1], n_columns):
         bl_t = min(bl_s + n_columns, y_frames.shape[-1])
 
-        stft_matrix[..., bl_s + off_start : bl_t + off_start] = fft.rfft(
-            fft_window * y_frames[..., bl_s:bl_t], axis=-2
-        )
+        stft_matrix[..., bl_s + off_start : bl_t + off_start] = fft.rfft(fft_window * y_frames[..., bl_s:bl_t], axis=-2)
     return stft_matrix
 
 
@@ -285,10 +263,7 @@ def istft(
     if out is None:
         y = np.zeros(shape, dtype=dtype)
     elif not np.allclose(out.shape, shape):
-        raise ValueError(
-            f"Shape mismatch for provided output array "
-            f"out.shape={out.shape} != {shape}"
-        )
+        raise ValueError(f"Shape mismatch for provided output array " f"out.shape={out.shape} != {shape}")
     else:
         y = out
         # Since we'll be doing overlap-add here, this needs to be initialized to zero.
@@ -325,9 +300,7 @@ def istft(
         start_frame = 0
         offset = 0
 
-    n_columns = int(
-        MAX_MEM_BLOCK // (np.prod(stft_matrix.shape[:-1]) * stft_matrix.itemsize)
-    )
+    n_columns = int(MAX_MEM_BLOCK // (np.prod(stft_matrix.shape[:-1]) * stft_matrix.itemsize))
     n_columns = max(n_columns, 1)
 
     frame = 0
@@ -367,18 +340,17 @@ def istft(
 
 
 def spectrogram(
-        *,
-        y: Optional[np.ndarray] = None,
-        S: Optional[np.ndarray] = None,
-        n_fft: Optional[int] = 2048,
-        hop_length: Optional[int] = 512,
-        power: float = 1,
-        win_length: Optional[int] = None,
-        window: _WindowSpec = "hann",
-        center: bool = True,
-        pad_mode: _PadModeSTFT = "constant",
+    *,
+    y: Optional[np.ndarray] = None,
+    S: Optional[np.ndarray] = None,
+    n_fft: Optional[int] = 2048,
+    hop_length: Optional[int] = 512,
+    power: float = 1,
+    win_length: Optional[int] = None,
+    window: _WindowSpec = "hann",
+    center: bool = True,
+    pad_mode: _PadModeSTFT = "constant",
 ) -> Tuple[np.ndarray, int]:
-
     if S is not None:
         # Infer n_fft from spectrogram shape, but only if it mismatches
         if n_fft is None or n_fft // 2 + 1 != S.shape[-2]:
@@ -386,25 +358,22 @@ def spectrogram(
     else:
         # Otherwise, compute a magnitude spectrogram from input
         if n_fft is None:
-            raise ValueError(
-                f"Unable to compute spectrogram with n_fft={n_fft}")
+            raise ValueError(f"Unable to compute spectrogram with n_fft={n_fft}")
         if y is None:
-            raise ValueError(
-                "Input signal must be provided to compute a spectrogram"
-            )
+            raise ValueError("Input signal must be provided to compute a spectrogram")
         S = (
-                np.abs(
-                    stft(
-                        y,
-                        n_fft=n_fft,
-                        hop_length=hop_length,
-                        win_length=win_length,
-                        center=center,
-                        window=window,
-                        pad_mode=pad_mode,
-                    )
+            np.abs(
+                stft(
+                    y,
+                    n_fft=n_fft,
+                    hop_length=hop_length,
+                    win_length=win_length,
+                    center=center,
+                    window=window,
+                    pad_mode=pad_mode,
                 )
-                ** power
+            )
+            ** power
         )
 
     return S, n_fft
@@ -421,9 +390,7 @@ def mfcc_stats(
     export: str = "array",
     **kwargs: Any,
 ) -> Union[np.ndarray, dict]:
-
-    mfcc_arr = mfcc(y=y, sr=sr, S=S, n_mfcc=n_mfcc,
-                    dct_type=dct_type, norm=norm, lifter=lifter, **kwargs)
+    mfcc_arr = mfcc(y=y, sr=sr, S=S, n_mfcc=n_mfcc, dct_type=dct_type, norm=norm, lifter=lifter, **kwargs)
     delta_arr = delta(mfcc_arr)
 
     mfcc_mean = np.mean(mfcc_arr, axis=1)
@@ -432,9 +399,7 @@ def mfcc_stats(
     delta2_mean = np.mean(delta(mfcc_arr, order=2), axis=1)
 
     if export == "array":
-        return np.concatenate([mfcc_mean, mfcc_std, delta_mean,
-                               delta2_mean],
-                              axis=1)
+        return np.concatenate([mfcc_mean, mfcc_std, delta_mean, delta2_mean], axis=1)
     elif export == "dict":
         return {
             "mfcc_mean": mfcc_mean,
@@ -455,14 +420,10 @@ def delta(
     mode: str = "interp",
     **kwargs: Any,
 ) -> np.ndarray:
-
     data = np.atleast_1d(data)
 
     if mode == "interp" and width > data.shape[axis]:
-        raise ValueError(
-            f"when mode='interp', width={width} "
-            f"cannot exceed data.shape[axis]={data.shape[axis]}"
-        )
+        raise ValueError(f"when mode='interp', width={width} " f"cannot exceed data.shape[axis]={data.shape[axis]}")
 
     if width < 3 or np.mod(width, 2) != 1:
         raise ValueError("width must be an odd integer >= 3")
@@ -472,9 +433,7 @@ def delta(
 
     kwargs.pop("deriv", None)
     kwargs.setdefault("polyorder", order)
-    result: np.ndarray = scipy.signal.savgol_filter(
-        data, width, deriv=order, axis=axis, mode=mode, **kwargs
-    )
+    result: np.ndarray = scipy.signal.savgol_filter(data, width, deriv=order, axis=axis, mode=mode, **kwargs)
     return result
 
 
@@ -493,9 +452,7 @@ def mfcc(
         # differences between channels
         S = power_to_db(melspectrogram(y=y, sr=sr, **kwargs))
 
-    M: np.ndarray = scipy.fftpack.dct(S, axis=-2, type=dct_type, norm=norm)[
-        ..., :n_mfcc, :
-    ]
+    M: np.ndarray = scipy.fftpack.dct(S, axis=-2, type=dct_type, norm=norm)[..., :n_mfcc, :]
 
     if lifter > 0:
         # shape lifter for broadcasting
@@ -510,12 +467,7 @@ def mfcc(
         raise ValueError(f"MFCC lifter={lifter} must be a non-negative number")
 
 
-def mean_mfcc(
-    y: np.ndarray,
-    sr: int = 22050,
-    n_mfcc: int = 20,
-    **kwargs: Any
-) -> np.ndarray:
+def mean_mfcc(y: np.ndarray, sr: int = 22050, n_mfcc: int = 20, **kwargs: Any) -> np.ndarray:
     """Calculates the mean of each MFCC coefficient over time.
 
     Args:
@@ -532,18 +484,18 @@ def mean_mfcc(
 
 
 def melspectrogram(
-        *,
-        y: Optional[np.ndarray] = None,
-        sr: float = 22050,
-        S: Optional[np.ndarray] = None,
-        n_fft: int = 2048,
-        hop_length: int = 512,
-        win_length: Optional[int] = None,
-        window: _WindowSpec = "hann",
-        center: bool = True,
-        pad_mode: _PadModeSTFT = "constant",
-        power: float = 2.0,
-        **kwargs: Any,
+    *,
+    y: Optional[np.ndarray] = None,
+    sr: float = 22050,
+    S: Optional[np.ndarray] = None,
+    n_fft: int = 2048,
+    hop_length: int = 512,
+    win_length: Optional[int] = None,
+    window: _WindowSpec = "hann",
+    center: bool = True,
+    pad_mode: _PadModeSTFT = "constant",
+    power: float = 2.0,
+    **kwargs: Any,
 ) -> np.ndarray:
     S, n_fft = spectrogram(
         y=y,
@@ -560,18 +512,17 @@ def melspectrogram(
     # Build a Mel filter
     mel_basis = mel_filter(sr=sr, n_fft=n_fft, **kwargs)
 
-    melspec: np.ndarray = np.einsum("...ft,mf->...mt", S, mel_basis,
-                                    optimize=True)
+    melspec: np.ndarray = np.einsum("...ft,mf->...mt", S, mel_basis, optimize=True)
     return melspec
 
 
 def power_to_db(
-        S: _ScalarOrSequence[_ComplexLike_co],
-        *,
-        ref: Union[float, Callable] = 1.0,
-        amin: float = 1e-10,
-        top_db: Optional[float] = 80.0,
-) -> Union[np.floating[Any], np.ndarray]:
+    S: _ScalarOrSequence[_ComplexLike_co],
+    *,
+    ref: Union[float, Callable] = 1.0,
+    amin: float = 1e-10,
+    top_db: Optional[float] = 80.0,
+) -> np.ndarray:
     # The functionality in this implementation are basically derived from
     # librosa v0.10.1:
     # https://github.com/librosa/librosa/blob/main/librosa/core/spectrum.py
@@ -609,11 +560,7 @@ def power_to_db(
     return log_spec
 
 
-def db_to_power(
-    S_db: np.ndarray,
-    *,
-    ref: float = 1.0
-) -> np.ndarray:
+def db_to_power(S_db: np.ndarray, *, ref: float = 1.0) -> np.ndarray:
     # The functionality in this implementation is basically derived from
     # librosa v0.10.1:
     # https://github.com/librosa/librosa/blob/main/librosa/core/spectrum.py
@@ -664,11 +611,7 @@ def amplitude_to_db(
     return power_to_db(power, ref=ref_value**2, amin=amin**2, top_db=top_db)
 
 
-def db_to_amplitude(
-    S_db: np.ndarray,
-    *,
-    ref: float = 1.0
-) -> np.ndarray:
+def db_to_amplitude(S_db: np.ndarray, *, ref: float = 1.0) -> np.ndarray:
     """Convert a dB-scaled spectrogram to an amplitude spectrogram.
 
     This effectively inverts `amplitude_to_db`::

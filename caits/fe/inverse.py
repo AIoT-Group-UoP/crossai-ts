@@ -1,13 +1,16 @@
 import warnings
-import numpy as np
 from typing import Any, Optional, Union
+
+import numpy as np
 from numpy.typing import DTypeLike
-from caits.core._core_typing import _WindowSpec, _PadModeSTFT
-from .core_spectrum._utils import nnls, mel_filter
-from caits.core._core_window import tiny
-from .core_spectrum._phase import phasor
-from ._spectrum import istft, stft
+
 from caits.core._core_checks import dtype_r2c
+from caits.core._core_typing import _PadModeSTFT, _WindowSpec
+from caits.core._core_window import tiny
+
+from ._spectrum import istft, stft
+from .core_spectrum._phase import phasor
+from .core_spectrum._utils import mel_filter, nnls
 
 
 def mel_to_stft(
@@ -20,45 +23,43 @@ def mel_to_stft(
 ) -> np.ndarray:
     """Approximate STFT magnitude from a Mel power spectrogram.
 
-    Args:
-        M: The spectrogram as produced by `fe.melspectrogram`.
-        sr: The sampling rate of the underlying signal.
-        n_fft: The number of FFT components in the resulting STFT.
-        power: Exponent for the magnitude melspectrogram.
-        **kwargs: Additional keyword arguments for Mel filter bank parameters
-        fmin: Lowest frequency (in Hz)
-        fmax: Highest frequency (in Hz). If `None`, use ``fmax = sr / 2.0``
-        htk: Use HTK formula instead of Slaney
-        norm: If 'slaney', divide the triangular mel weights by the width of
-            the mel band (area normalization).
-            If numeric, use `librosa.util.normalize` to normalize each filter
-            by to unit l_p norm. See `librosa.util.normalize` for a full
-            description of supported norm values (including `+-np.inf`).
-            Otherwise, leave all linear_spectrogram = mel_to_stft(
-    feat_extr_2d_dataset.X[0].values, sr=SAMPLE_RATE, n_fft=2048, power=2
-)
+        Args:
+            M: The spectrogram as produced by `fe.melspectrogram`.
+            sr: The sampling rate of the underlying signal.
+            n_fft: The number of FFT components in the resulting STFT.
+            power: Exponent for the magnitude melspectrogram.
+            **kwargs: Additional keyword arguments for Mel filter bank parameters
+            fmin: Lowest frequency (in Hz)
+            fmax: Highest frequency (in Hz). If `None`, use ``fmax = sr / 2.0``
+            htk: Use HTK formula instead of Slaney
+            norm: If 'slaney', divide the triangular mel weights by the width of
+                the mel band (area normalization).
+                If numeric, use `librosa.util.normalize` to normalize each filter
+                by to unit l_p norm. See `librosa.util.normalize` for a full
+                description of supported norm values (including `+-np.inf`).
+                Otherwise, leave all linear_spectrogram = mel_to_stft(
+        feat_extr_2d_dataset.X[0].values, sr=SAMPLE_RATE, n_fft=2048, power=2
+    )
 
-y = griffinlim(
-    linear_spectrogram, n_fft=2048, hop_length=512, win_length=None,
-    window='hann',
-    momentum=.99,
-    center=True,
-    pad_mode='reflect',
-    n_iter=32
-)
+    y = griffinlim(
+        linear_spectrogram, n_fft=2048, hop_length=512, win_length=None,
+        window='hann',
+        momentum=.99,
+        center=True,
+        pad_mode='reflect',
+        n_iter=32
+    )
 
-ipd.Audio(y, rate=SAMPLE_RATE)the triangles aiming for a peak value of 1.0
-        dtype : np.dtype
-            The data type of the output basis.
-            By default, uses 32-bit (single-precision) floating point.
+    ipd.Audio(y, rate=SAMPLE_RATE)the triangles aiming for a peak value of 1.0
+            dtype : np.dtype
+                The data type of the output basis.
+                By default, uses 32-bit (single-precision) floating point.
 
-    Returns
-        S: An approximate linear magnitude spectrogram
+        Returns
+            S: An approximate linear magnitude spectrogram
     """
     # Construct a mel basis with dtype matching the input data
-    mel_basis = mel_filter(
-        sr=sr, n_fft=n_fft, n_mels=M.shape[-2], dtype=M.dtype, **kwargs
-    )
+    mel_basis = mel_filter(sr=sr, n_fft=n_fft, n_mels=M.shape[-2], dtype=M.dtype, **kwargs)
 
     # Find the non-negative least squares solution, and apply
     # the inverse exponent.
@@ -81,9 +82,7 @@ def griffinlim(
     pad_mode: _PadModeSTFT = "constant",
     momentum: float = 0.99,
     init: Optional[str] = "random",
-    random_state: Optional[
-        Union[int, np.random.RandomState, np.random.Generator]
-    ] = None,
+    random_state: Optional[Union[int, np.random.RandomState, np.random.Generator]] = None,
 ) -> np.ndarray:
     """Approximate magnitude spectrogram inversion using the "fast" Griffin-Lim
     algorithm.
@@ -192,8 +191,7 @@ def griffinlim(
 
     if momentum > 1:
         warnings.warn(
-            f"Griffin-Lim with momentum={momentum} > 1 can be unstable. "
-            "Proceed with caution!",
+            f"Griffin-Lim with momentum={momentum} > 1 can be unstable. " "Proceed with caution!",
             stacklevel=2,
         )
     elif momentum < 0:
@@ -270,8 +268,8 @@ def griffinlim(
         length=length,
         out=inverse,
     )
-    
-    
+
+
 def mel_to_audio(
     M: np.ndarray,
     *,

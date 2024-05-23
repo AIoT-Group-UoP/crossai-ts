@@ -1,4 +1,5 @@
 from sklearn.base import BaseEstimator, TransformerMixin
+
 from caits.dataset import Dataset
 
 
@@ -17,12 +18,8 @@ class LE(BaseEstimator, TransformerMixin):
             self: Returns the instance itself.
         """
         unique_classes = sorted(set(X.y))
-        self.class_to_index = {
-            label: index for index, label in enumerate(unique_classes)
-        }
-        self.index_to_class = {
-            index: label for label, index in self.class_to_index.items()
-        }
+        self.class_to_index = {label: index for index, label in enumerate(unique_classes)}
+        self.index_to_class = {index: label for label, index in self.class_to_index.items()}
         return self
 
     def transform(self, X: Dataset) -> Dataset:

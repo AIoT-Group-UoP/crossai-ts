@@ -1,7 +1,9 @@
-from typing import Union, Callable
+from typing import Callable, List, Optional, Union
+
 import tensorflow as tf
-from tensorflow.keras.layers import Input, Bidirectional, LSTM, Dense
+from tensorflow.keras.layers import LSTM, Bidirectional, Dense, Input
 from tensorflow.keras.models import Model
+
 from caits.ai import dropout_layer_1d
 
 
@@ -13,11 +15,11 @@ def BiLSTM_Time(
     num_classes: int = 1,
     classifier_activation: Union[str, Callable] = "softmax",
     n_layers: int = 3,
-    lstm_units: list = [32, 32, 32],
-    dense_units: list = [128],
-    drp_rate: float = 0.,
+    lstm_units: List[int] = [32, 32, 32],
+    dense_units: List[int] = [128],
+    drp_rate: float = 0.0,
     spatial: bool = False,
-    mc_inference: Union[bool, None] = None
+    mc_inference: Union[bool, None] = None,
 ) -> tf.keras.Model:
     """Constructs a deep neural network using bidirectional LSTM.
 
@@ -50,10 +52,8 @@ def BiLSTM_Time(
 
     input_layer = Input(shape=input_shape, name="input_layer")
 
-    x = Bidirectional(LSTM(units=lstm_units[0], activation="tanh",
-                           return_sequences=True))(input_layer)
-    x = dropout_layer_1d(x, drp_rate, spatial=spatial,
-                         mc_inference=mc_inference)
+    x = Bidirectional(LSTM(units=lstm_units[0], activation="tanh", return_sequences=True))(input_layer)
+    x = dropout_layer_1d(x, drp_rate, spatial=spatial, mc_inference=mc_inference)
 
     x_block = bilstm_block(x, n_layers, lstm_units, drp_rate)
     x_dense = dense_block(x_block, n_layers, dense_units)
@@ -73,7 +73,7 @@ def bilstm_block(
     n_layers: int,
     lstm_units: list,
     drp_rate: float,
-    mc_inference: bool = None
+    mc_inference: Optional[bool] = None,
 ) -> tf.Tensor:
     """Constructs a bidirectional LSTM (BiLSTM) block.
 
@@ -90,23 +90,17 @@ def bilstm_block(
     """
 
     x = inputs
-    for i in range(1, n_layers-1):
-        x = Bidirectional(LSTM(units=lstm_units[i], return_sequences=True,
-                               activation="tanh"))(x)
+    for i in range(1, n_layers - 1):
+        x = Bidirectional(LSTM(units=lstm_units[i], return_sequences=True, activation="tanh"))(x)
         x = dropout_layer_1d(x, drp_rate, False, mc_inference)
 
-    x = Bidirectional(LSTM(units=lstm_units[-1], return_sequences=False,
-                           activation="tanh"))(x)
+    x = Bidirectional(LSTM(units=lstm_units[-1], return_sequences=False, activation="tanh"))(x)
     x = dropout_layer_1d(x, drp_rate, False, mc_inference)
 
     return x
 
 
-def dense_block(
-    inputs: tf.Tensor,
-    n_layers: int,
-    dense_units: list
-) -> tf.Tensor:
+def dense_block(inputs: tf.Tensor, n_layers: int, dense_units: List[int]) -> tf.Tensor:
     """Builds a block of dense layers.
 
     Args:

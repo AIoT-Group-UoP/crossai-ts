@@ -1,47 +1,55 @@
-from typing import Union, Optional
+from typing import Any, Dict, List, Optional, Union
+
 import numpy as np
 from numpy import array
-from tensorflow.keras import Model
 from sklearn.base import BaseEstimator
 from sklearn.pipeline import Pipeline
-from caits.dataset import Dataset
-from caits.performance.utils import generate_pred_probas, interpolate_probas, \
-        get_gt_events_from_dict
-from caits.performance.metrics import prediction_statistics
-from caits.visualization import plot_prediction_probas, \
-    plot_interpolated_probas
-from caits.performance.detection import get_non_overlap_probas, \
-    apply_duration_threshold, apply_probability_threshold, \
-        get_continuous_events, classify_events
-from caits.filtering import filter_butterworth
-from caits.performance.metrics import detection_ratio, reliability, erer
-from caits.visualization import plot_signal
+from tensorflow.keras import Model
 
+from caits.dataset import Dataset
+from caits.filtering import filter_butterworth
+from caits.performance.detection import (
+    apply_duration_threshold,
+    apply_probability_threshold,
+    classify_events,
+    get_continuous_events,
+    get_non_overlap_probas,
+)
+from caits.performance.metrics import detection_ratio, erer, prediction_statistics, reliability
+from caits.performance.utils import generate_pred_probas, get_gt_events_from_dict, interpolate_probas
+from caits.visualization import plot_interpolated_probas, plot_prediction_probas, plot_signal
 
 _OPTIONS = [
-    "transformed_data", "prediction_probas", "trust_metrics",
-    "non_overlapping_probas", "interpolated_probas", "smoothed_probas",
-    "thresholded_probas", "predicted_events", "ICSD", "figures"
+    "transformed_data",
+    "prediction_probas",
+    "trust_metrics",
+    "non_overlapping_probas",
+    "interpolated_probas",
+    "smoothed_probas",
+    "thresholded_probas",
+    "predicted_events",
+    "ICSD",
+    "figures",
 ]
 
 
 def robustness_analysis(
-        model: Union[BaseEstimator, Model],
-        input_data: np.ndarray,
-        class_names: list[str],
-        sample_rate: int,
-        ws: float,
-        perc_overlap: float,
-        ground_truths: list[tuple],
-        cutoff: float,
-        repeats: int = 5,
-        metrics: str = "all",
-        prob_th: float = 0.7,
-        duration_th: float = 1.,
-        iou_th: float = 0.5,
-        figsize=(14, 6),
-        options_to_include: Optional[list[str]] = None,
-) -> dict:
+    model: Union[BaseEstimator, Model],
+    input_data: np.ndarray,
+    class_names: List[str],
+    sample_rate: int,
+    ws: float,
+    perc_overlap: float,
+    ground_truths: List[tuple],
+    cutoff: float,
+    repeats: int = 5,
+    metrics: str = "all",
+    prob_th: float = 0.7,
+    duration_th: float = 1.0,
+    iou_th: float = 0.5,
+    figsize=(14, 6),
+    options_to_include: Optional[List[str]] = None,
+) -> Dict[str, Any]:
     """Evaluates the model's robustness in event detection tasks using
     time-series data, providing detailed metrics and optional visualizations.
 
@@ -85,7 +93,7 @@ def robustness_analysis(
 
     # Dictionary to append any desired calculated
     # information based on `options_to_append`
-    results = {}
+    results: Dict[str, Any] = {}
     options_to_include = options_to_include or _OPTIONS
 
     if "transformed_data" in options_to_include:
@@ -107,9 +115,7 @@ def robustness_analysis(
     mean_pred_probas = pred_stats["mean_pred"]
     # print(f"Shape of mean predictions: {mean_pred_probas.shape}")
     # Create figure for probabilities plot
-    pred_probas_fig = plot_prediction_probas(
-        mean_pred_probas, sample_rate, ws, perc_overlap, class_names, figsize
-    )
+    pred_probas_fig = plot_prediction_probas(mean_pred_probas, sample_rate, ws, perc_overlap, class_names, figsize)
 
     # Bring back to shape before sliding window
     non_overlap_probas = get_non_overlap_probas(mean_pred_probas, perc_overlap)
@@ -119,52 +125,43 @@ def robustness_analysis(
         results["non_overlapping_probas"] = non_overlap_probas
 
     # Express it as a spline
-    interpolated_probas = interpolate_probas(non_overlap_probas,
-                                             sampling_rate=sample_rate,
-                                             Ws=ws, kind="cubic", clamp=True)
+    interpolated_probas = interpolate_probas(
+        non_overlap_probas, sampling_rate=sample_rate, Ws=ws, kind="cubic", clamp=True
+    )
     # print(f"Shape of interpolated probabilities: {interpolated_probas.shape}")
     # Append interpolated probabilities
     if "interpolated_probas" in options_to_include:
         results["interpolated_probas"] = interpolated_probas
 
     # Apply a low pass butterworth filter
-    smoothed_probas = array([
-        filter_butterworth(
-            array=cls_probas,
-            fs=sample_rate,
-            filter_type="lowpass",
-            cutoff_freq=cutoff,
-            order=3
-        )
-        for cls_probas in interpolated_probas.T
-    ]).T
+    smoothed_probas = array(
+        [
+            filter_butterworth(array=cls_probas, fs=sample_rate, filter_type="lowpass", cutoff_freq=cutoff, order=3)
+            for cls_probas in interpolated_probas.T
+        ]
+    ).T
 
     # Append smoothed probabilities
     if "smoothed_probas" in options_to_include:
         results["smoothed_probas"] = smoothed_probas
-    interp_smoothed_probas_fig = plot_interpolated_probas(
-        smoothed_probas, class_names, figsize
-    )
+    interp_smoothed_probas_fig = plot_interpolated_probas(smoothed_probas, class_names, figsize)
     # Apply a probability threshold to the interpolated probabilities
     # and a `at least event time` duration
     threshold_probas = apply_probability_threshold(smoothed_probas, prob_th)
-    threshold_probas = apply_duration_threshold(threshold_probas, sample_rate,
-                                                duration_th)
+    threshold_probas = apply_duration_threshold(threshold_probas, sample_rate, duration_th)
     # Append thresholded probabilities
     if "thresholded_probas" in options_to_include:
         results["thresholded_probas"] = threshold_probas
 
     # Plot the modified interpolated probabilities after thresholding
-    thresh_probas_fig = plot_interpolated_probas(
-        threshold_probas, class_names, figsize
-    )
+    thresh_probas_fig = plot_interpolated_probas(threshold_probas, class_names, figsize)
     # Append Figure Objects
     if "figures" in options_to_include:
         results["figures"] = {
             # "pilot_signal": pilot_signal,
             "pred_probas_fig": pred_probas_fig,
             "interp_probas_fig": interp_smoothed_probas_fig,
-            "thresh_probas_fig": thresh_probas_fig
+            "thresh_probas_fig": thresh_probas_fig,
         }
 
     # Extract event segments after applying the rules
@@ -172,8 +169,7 @@ def robustness_analysis(
     print(f"Predicted Events: {predicted_events}")
     print(f"Ground truth Events: {ground_truths}")
 
-    insertions, corrects, substitutions, deletions = \
-        classify_events(predicted_events, ground_truths, IoU_th=iou_th)
+    insertions, corrects, substitutions, deletions = classify_events(predicted_events, ground_truths, IoU_th=iou_th)
 
     # Append classified Events
     if "ICSD" in options_to_include:
@@ -191,29 +187,26 @@ def robustness_analysis(
 
 
 def robustness_analysis_many(
-        model: Union[BaseEstimator, Model],
-        X: list[np.ndarray],
-        events: dict,
-        class_names: list[str],
-        sample_rate: int,
-        ws: float,
-        perc_overlap: float,
-        cutoff: float,
-        repeats: int = 5,
-        metrics: str = "all",
-        prob_th: float = 0.7,
-        duration_th: float = 1.,
-        iou_th: float = 0.5,
-        options_to_include: Optional[list[str]] = None,
-        figsize: tuple = (14, 6),
-) -> dict:
-
-    results = {}
+    model: Union[BaseEstimator, Model],
+    X: List[np.ndarray],
+    events: dict,
+    class_names: List[str],
+    sample_rate: int,
+    ws: float,
+    perc_overlap: float,
+    cutoff: float,
+    repeats: int = 5,
+    metrics: str = "all",
+    prob_th: float = 0.7,
+    duration_th: float = 1.0,
+    iou_th: float = 0.5,
+    options_to_include: Optional[List[str]] = None,
+    figsize: tuple = (14, 6),
+) -> Dict[str, Dict[str, Any]]:
+    results: Dict[str, Dict[str, Any]] = {}
 
     # Extracts ground truths for whole pilot dataset
-    ground_truths_dict = get_gt_events_from_dict(
-        events, class_names, sample_rate
-    )
+    ground_truths_dict = get_gt_events_from_dict(events, class_names, sample_rate)
 
     for i, (filename, gt_events) in enumerate(ground_truths_dict.items()):
         # Get instance
@@ -234,7 +227,7 @@ def robustness_analysis_many(
             duration_th=duration_th,
             iou_th=iou_th,
             options_to_include=options_to_include,
-            figsize=figsize
+            figsize=figsize,
         )
 
         results[filename] = ts_instance_results
@@ -243,36 +236,33 @@ def robustness_analysis_many(
 
 
 def robustness_analysis_batch(
-        pipeline: Pipeline,
-        model: Union[BaseEstimator, Model],
-        dataset: Dataset,
-        events: dict,
-        class_names: list[str],
-        sample_rate: int,
-        ws: float,
-        perc_overlap: float,
-        cutoff: float,
-        repeats: int = 5,
-        metrics: str = "all",
-        prob_th: float = 0.7,
-        duration_th: float = 1.,
-        iou_th: float = 0.5,
-        options_to_include: Optional[list[str]] = None,
-        figsize: tuple = (14, 6),
-) -> dict:
-
-    results = {}
+    pipeline: Pipeline,
+    model: Union[BaseEstimator, Model],
+    dataset: Dataset,
+    events: Dict[Any, Any],
+    class_names: List[str],
+    sample_rate: int,
+    ws: float,
+    perc_overlap: float,
+    cutoff: float,
+    repeats: int = 5,
+    metrics: str = "all",
+    prob_th: float = 0.7,
+    duration_th: float = 1.0,
+    iou_th: float = 0.5,
+    options_to_include: Optional[List[str]] = None,
+    figsize: tuple = (14, 6),
+) -> Dict[str, Dict[str, Any]]:
+    results: Dict[str, Dict[str, Any]] = {}
     options_to_include = options_to_include or _OPTIONS
 
     # Extracts ground truths for whole pilot dataset
-    ground_truths_dict = get_gt_events_from_dict(
-        events, class_names, sample_rate
-    )
+    ground_truths_dict = get_gt_events_from_dict(events, class_names, sample_rate)
 
     for i, (filename, gt_events) in enumerate(ground_truths_dict.items()):
         # Take advantage of slicing dunder to return the object
         # if single index used, it will return a tuple
-        dataset_instance = dataset[i:i+1]
+        dataset_instance = dataset[i : i + 1]
 
         # define the label name for the instance
         label = dataset_instance.y[0]
@@ -284,9 +274,12 @@ def robustness_analysis_batch(
             # Since `dataset_instance` is the raw time series instance
             # we can plot it and store it for logging purposes
             pilot_signal = plot_signal(
-                dataset_instance.X[0].values.flatten(), sr=sample_rate,
-                name="Pilot Signal", mode="samples", channels=label,
-                figsize=figsize
+                dataset_instance.X[0].values.flatten(),
+                sr=sample_rate,
+                name="Pilot Signal",
+                mode="samples",
+                channels=label,
+                figsize=figsize,
             )  # TODO: Modify function to control the x axis mode (samples vs time)
 
             results.setdefault(filename, {}).setdefault("figures", {})["pilot_signal"] = pilot_signal
@@ -310,7 +303,7 @@ def robustness_analysis_batch(
             duration_th=duration_th,
             iou_th=iou_th,
             options_to_include=options_to_include,
-            figsize=figsize
+            figsize=figsize,
         )
 
         results[filename] = instance_results

@@ -1,6 +1,8 @@
-from sklearn.base import BaseEstimator, TransformerMixin
-from pandas import DataFrame
 from typing import Dict
+
+from pandas import DataFrame
+from sklearn.base import BaseEstimator, TransformerMixin
+
 from caits.dataset import Dataset
 
 
@@ -17,9 +19,11 @@ class FeatureExtractor2D(BaseEstimator, TransformerMixin):
         for df in X.X:
             # Ensure the DataFrame has only one column
             if df.shape[1] != 1:
-                raise ValueError(f"2D Extractor does not support multi-channel signals yet. \
-                                 Expected single-channel signals.")
-            
+                raise ValueError(
+                    "2D Extractor does not support multi-channel signals yet. \
+                                 Expected single-channel signals."
+                )
+
             func = self.feature_extractor["func"]
             params = self.feature_extractor.get("params", {})
 
@@ -29,7 +33,7 @@ class FeatureExtractor2D(BaseEstimator, TransformerMixin):
             # Ensure feature is a 2D array
             if feature.ndim != 2:
                 raise ValueError("Expected a 2D array.")
-            
+
             # Store the 2D numpy array as a DataFrame
             transformed_X.append(DataFrame(feature))
 

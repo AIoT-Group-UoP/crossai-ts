@@ -1,14 +1,12 @@
+from typing import Dict, Union
+
 import numpy as np
 import scipy
-from scipy.stats import kurtosis, moment, skew
 from scipy.signal import butter, filtfilt, find_peaks
-from typing import Union
+from scipy.stats import kurtosis, moment, skew
 
 
-def std_value(
-        array: np.ndarray,
-        axis: int = 0
-) -> float:
+def std_value(array: np.ndarray, axis: int = 0) -> float:
     """Computes the standard deviation of an audio signal.
 
     Args:
@@ -22,10 +20,7 @@ def std_value(
     return np.std(array, axis=axis)
 
 
-def variance_value(
-        array: np.ndarray,
-        axis: int = 0
-) -> float:
+def variance_value(array: np.ndarray, axis: int = 0) -> float:
     """Computes the variance of an audio signal.
 
     Args:
@@ -39,10 +34,7 @@ def variance_value(
     return np.var(array, axis=axis)
 
 
-def mean_value(
-        array: np.ndarray,
-        axis: int = 0
-) -> float:
+def mean_value(array: np.ndarray, axis: int = 0) -> float:
     """Computes the mean of an audio signal.
 
     Args:
@@ -56,10 +48,7 @@ def mean_value(
     return np.mean(array, axis=axis)
 
 
-def median_value(
-        array: np.ndarray,
-        axis: int = 0
-) -> float:
+def median_value(array: np.ndarray, axis: int = 0) -> float:
     """Computes the median of an audio signal.
 
     Args:
@@ -73,10 +62,7 @@ def median_value(
     return np.median(array, axis=axis)
 
 
-def max_value(
-        array: np.ndarray,
-        axis: int = 0
-) -> float:
+def max_value(array: np.ndarray, axis: int = 0) -> float:
     """Computes the maximum value of an audio signal.
 
     Args:
@@ -90,10 +76,7 @@ def max_value(
     return np.max(array, axis=axis)
 
 
-def min_value(
-        array: np.ndarray,
-        axis: int = 0
-) -> float:
+def min_value(array: np.ndarray, axis: int = 0) -> float:
     """Computes the minimum value of a signal.
 
     Args:
@@ -164,13 +147,10 @@ def zcr_value(array: np.ndarray) -> float:
     Returns:
         float: The zero crossing rate of the signal.
     """
-    return np.sum(np.multiply(array[0:-1], array[1:]) < 0) / (len(array) - 1)
+    return float(np.sum(np.multiply(array[0:-1], array[1:]) < 0) / (len(array) - 1))
 
 
-def dominant_frequency(
-    array: np.ndarray,
-    fs: int
-) -> float:
+def dominant_frequency(array: np.ndarray, fs: int) -> float:
     """Computes the dominant frequency of a signal.
 
     Args:
@@ -187,10 +167,7 @@ def dominant_frequency(
     return freqs[np.argmax(psd)]
 
 
-def central_moments(
-    array: np.ndarray,
-    export: str = "array"
-) -> Union[np.ndarray, dict]:
+def central_moments(array: np.ndarray, export: str = "array") -> Union[np.ndarray, Dict[str, float]]:
     """
     Calculate the 0th, 1st, 2nd, 3rd, and 4th central moments of an array using
     scipy.
@@ -222,22 +199,12 @@ def central_moments(
     if export == "array":
         return np.array([moment0, moment1, moment2, moment3, moment4])
     elif export == "dict":
-        return {
-            "moment0": moment0,
-            "moment1": moment1,
-            "moment2": moment2,
-            "moment3": moment3,
-            "moment4": moment4
-        }
+        return {"moment0": moment0, "moment1": moment1, "moment2": moment2, "moment3": moment3, "moment4": moment4}
     else:
         raise ValueError(f"Unsupported export={export}")
 
 
-def signal_length(
-        array: np.ndarray,
-        fs: int,
-        time_mode: str = "time"
-) -> float:
+def signal_length(array: np.ndarray, fs: int, time_mode: str = "time") -> float:
     """Computes the length of a signal in seconds.
 
     Args:
@@ -283,9 +250,7 @@ def average_power(array: np.ndarray) -> float:
     return np.sum(np.square(array)) / len(array)
 
 
-def crest_factor(
-    array: np.ndarray
-) -> float:
+def crest_factor(array: np.ndarray) -> float:
     """Computes the crest factor of the signal
 
     Args:
@@ -360,13 +325,7 @@ def envelope_energy_peak_detection(
         raise ValueError(f"Unsupported export={export}")
 
 
-def signal_stats(
-        arr: np.ndarray,
-        name: str,
-        axis: int = 0,
-        fs: int = 44100,
-        time_mode: str = "time"
-) -> dict:
+def signal_stats(arr: np.ndarray, name: str, axis: int = 0, fs: int = 44100, time_mode: str = "time") -> dict:
     """Computes the basic statistical information of signal.
 
     Args:
@@ -383,7 +342,6 @@ def signal_stats(
     """
 
     return {
-
         f"{name}_max": max_value(arr, axis=axis),
         f"{name}_min": min_value(arr, axis=axis),
         f"{name}_mean": mean_value(arr, axis=axis),
@@ -394,7 +352,7 @@ def signal_stats(
         f"{name}_skewness": sample_skewness(arr),
         f"{name}_rms": rms_value(arr),
         f"{name}_zcr": zcr_value(arr),
-        f"{name}_dominant_frequency": dominant_frequency(arr),
+        f"{name}_dominant_frequency": dominant_frequency(arr, fs),
         f"{name}_crest_factor": crest_factor(arr),
-        f"{name}_signal_length": signal_length(arr, fs=fs, time_mode=time_mode)
+        f"{name}_signal_length": signal_length(arr, fs=fs, time_mode=time_mode),
     }

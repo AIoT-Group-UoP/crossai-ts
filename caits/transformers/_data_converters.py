@@ -1,9 +1,11 @@
-from sklearn.base import BaseEstimator, TransformerMixin
-from pandas import DataFrame
 from datetime import datetime
-from typing import Optional, List, Any
-from caits.dataset import Dataset
+from typing import Any, List, Optional
+
 from numpy import ndarray
+from pandas import DataFrame
+from sklearn.base import BaseEstimator, TransformerMixin
+
+from caits.dataset import Dataset
 
 
 class ArrayToDataset(BaseEstimator, TransformerMixin):
@@ -59,15 +61,15 @@ class ArrayToDataset(BaseEstimator, TransformerMixin):
 
         # Create and return the Dataset object
         return Dataset(X=X_dfs, y=list(y), id=self.ids)
-    
+
 
 class DatasetToArray(BaseEstimator, TransformerMixin):
     def __init__(self, flatten=False):
         """Initializes the DatasetToArray transformer.
 
         Args:
-            flatten (bool): If True, the output array will be flattened 
-                            (window_size * channels). Otherwise (default), 
+            flatten (bool): If True, the output array will be flattened
+                            (window_size * channels). Otherwise (default),
                             it will be a 3D array.
         """
         self.flatten = flatten

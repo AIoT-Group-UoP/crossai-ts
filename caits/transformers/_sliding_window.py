@@ -1,6 +1,7 @@
 from sklearn.base import BaseEstimator, TransformerMixin
-from caits.windowing import sliding_window_df
+
 from caits.dataset import Dataset
+from caits.windowing import sliding_window_df
 
 
 class SlidingWindow(BaseEstimator, TransformerMixin):
@@ -39,8 +40,7 @@ class SlidingWindow(BaseEstimator, TransformerMixin):
         new_id = []
 
         for df, label, id_ in X:
-            windowed_dfs = sliding_window_df(df, self.window_size,
-                                             self.overlap)
+            windowed_dfs = sliding_window_df(df, self.window_size, self.overlap)
             transformed_X.extend(windowed_dfs)
             new_y.extend([label] * len(windowed_dfs))
             new_id.extend([id_] * len(windowed_dfs))

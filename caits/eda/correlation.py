@@ -1,12 +1,10 @@
 from typing import List
+
 import numpy as np
 import pandas as pd
 
 
-def get_high_corr_features(
-    df: pd.DataFrame,
-    threshold: float = 0.75
-) -> List[str]:
+def get_high_corr_features(df: pd.DataFrame, threshold: float = 0.75) -> List[str]:
     """Selects features from a DataFrame that have a high correlation with each
     other, based on a specified correlation threshold. It excludes perfect
     self-correlations (correlation of a feature with itself).
@@ -26,14 +24,9 @@ def get_high_corr_features(
     corr_matrix_abs = df.corr().abs()
 
     # Select upper triangle of correlation matrix
-    upper = corr_matrix_abs.where(
-        np.triu(
-            np.ones(corr_matrix_abs.shape), k=1
-            ).astype(bool)
-        )
+    upper = corr_matrix_abs.where(np.triu(np.ones(corr_matrix_abs.shape), k=1).astype(bool))
 
     # Find features with correlation greater than `low`
-    high_corr_features = [column for column in upper.columns
-                          if any(upper[column] >= threshold)]
+    high_corr_features = [column for column in upper.columns if any(upper[column] >= threshold)]
 
     return high_corr_features
