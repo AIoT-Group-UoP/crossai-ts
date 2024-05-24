@@ -13,8 +13,7 @@ from ._spectral import (
     spectral_spread,
     spectral_std,
     spectral_values,
-    underlying_spectral,
-    zcr_mean,
+    underlying_spectral
 )
 from ._spectrum import (
     amplitude_to_db,
