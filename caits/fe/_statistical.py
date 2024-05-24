@@ -1,9 +1,12 @@
-from typing import Dict, Union
+from typing import Dict, Union, Any
 
 import numpy as np
 import scipy
 from scipy.signal import butter, filtfilt, find_peaks
 from scipy.stats import kurtosis, moment, skew
+
+from caits.properties import rolling_rms
+from caits.fe import mfcc
 
 
 def std_value(array: np.ndarray, axis: int = 0) -> float:
@@ -136,6 +139,69 @@ def rms_value(array: np.ndarray) -> float:
         float: The RMS Power of the signal.
     """
     return np.sqrt(np.mean(np.square(array)))
+
+
+def rms_max(
+    signal: np.ndarray,
+    frame_length: int,
+    hop_length: int,
+    **kwargs: Any
+) -> float:
+    """Computes the maximum of the Root Mean Square (RMS) values of a signal.
+
+    Args:
+        signal: The input signal.
+        frame_length: The length of the frame in samples.
+        hop_length: The number of samples to advance between frames (overlap).
+        **kwargs: Additional keyword arguments passed to `rolling_rms`.
+
+    Returns:
+        float: The maximum RMS value.
+    """
+    rms_values = rolling_rms(signal, frame_length, hop_length, **kwargs)
+    return np.max(rms_values)
+
+
+def rms_min(
+    signal: np.ndarray,
+    frame_length: int,
+    hop_length: int,
+    **kwargs: Any
+) -> float:
+    """Computes the minimum of the Root Mean Square (RMS) values of a signal.
+
+    Args:
+        signal: The input signal.
+        frame_length: The length of the frame in samples.
+        hop_length: The number of samples to advance between frames (overlap).
+        **kwargs: Additional keyword arguments passed to `rolling_rms`.
+
+    Returns:
+        float: The minimum RMS value.
+    """
+    rms_values = rolling_rms(signal, frame_length, hop_length, **kwargs)
+    return np.min(rms_values)
+
+
+def rms_mean(
+    signal: np.ndarray,
+    frame_length: int,
+    hop_length: int,
+    **kwargs: Any
+) -> float:
+    """Computes the mean of the Root Mean Square (RMS) values of a signal.
+
+    Args:
+        signal: The input signal.
+        frame_length: The length of the frame in samples.
+        hop_length: The number of samples to advance between frames (overlap).
+        **kwargs: Additional keyword arguments passed to `rolling_rms`.
+
+    Returns:
+        float: The mean RMS value.
+    """
+    rms_values = rolling_rms(signal, frame_length, hop_length, **kwargs)
+    return np.mean(rms_values)
 
 
 def zcr_value(array: np.ndarray) -> float:
@@ -323,6 +389,27 @@ def envelope_energy_peak_detection(
         return dict(zip(names, n_peaks))
     else:
         raise ValueError(f"Unsupported export={export}")
+
+
+def mfcc_mean(
+    y: np.ndarray,
+    sr: int = 22050,
+    n_mfcc: int = 20,
+    **kwargs: Any
+) -> np.ndarray:
+    """Calculates the mean of each MFCC coefficient over time.
+
+    Args:
+        y: Audio time series.
+        sr: Sampling rate of y. Default: 22050 Hz.
+        n_mfcc: Number of MFCCs to return. Default: 20.
+        **kwargs: Additional keyword arguments passed to `mfcc`.
+
+    Returns:
+        np.ndarray: Mean MFCC values (n_mfcc,).
+    """
+    mfcc_features = mfcc(y, sr=sr, n_mfcc=n_mfcc, **kwargs)
+    return np.mean(mfcc_features, axis=1)
 
 
 def signal_stats(arr: np.ndarray, name: str, axis: int = 0, fs: int = 44100, time_mode: str = "time") -> dict:
