@@ -5,7 +5,7 @@ import scipy
 from scipy.signal import butter, filtfilt, find_peaks
 from scipy.stats import kurtosis, moment, skew
 
-from caits.properties import rolling_rms
+from caits.properties import rolling_rms, rolling_zcr
 from caits.fe import mfcc
 
 
@@ -147,7 +147,8 @@ def rms_max(
     hop_length: int,
     **kwargs: Any
 ) -> float:
-    """Computes the maximum of the Root Mean Square (RMS) values of a signal.
+    """Computes the maximum of the rolling Root Mean Square (RMS) values of a
+    signal.
 
     Args:
         signal: The input signal.
@@ -162,34 +163,14 @@ def rms_max(
     return np.max(rms_values)
 
 
-def rms_min(
-    signal: np.ndarray,
-    frame_length: int,
-    hop_length: int,
-    **kwargs: Any
-) -> float:
-    """Computes the minimum of the Root Mean Square (RMS) values of a signal.
-
-    Args:
-        signal: The input signal.
-        frame_length: The length of the frame in samples.
-        hop_length: The number of samples to advance between frames (overlap).
-        **kwargs: Additional keyword arguments passed to `rolling_rms`.
-
-    Returns:
-        float: The minimum RMS value.
-    """
-    rms_values = rolling_rms(signal, frame_length, hop_length, **kwargs)
-    return np.min(rms_values)
-
-
 def rms_mean(
     signal: np.ndarray,
     frame_length: int,
     hop_length: int,
     **kwargs: Any
 ) -> float:
-    """Computes the mean of the Root Mean Square (RMS) values of a signal.
+    """Computes the mean of the rolling Root Mean Square (RMS) values of a
+    signal.
 
     Args:
         signal: The input signal.
@@ -204,6 +185,28 @@ def rms_mean(
     return np.mean(rms_values)
 
 
+def rms_min(
+    signal: np.ndarray,
+    frame_length: int,
+    hop_length: int,
+    **kwargs: Any
+) -> float:
+    """Computes the minimum of the rolling Root Mean Square (RMS) values of a
+    signal.
+
+    Args:
+        signal: The input signal.
+        frame_length: The length of the frame in samples.
+        hop_length: The number of samples to advance between frames (overlap).
+        **kwargs: Additional keyword arguments passed to `rolling_rms`.
+
+    Returns:
+        float: The minimum RMS value.
+    """
+    rms_values = rolling_rms(signal, frame_length, hop_length, **kwargs)
+    return np.min(rms_values)
+
+
 def zcr_value(array: np.ndarray) -> float:
     """Computes the zero crossing rate of a signal.
 
@@ -214,6 +217,73 @@ def zcr_value(array: np.ndarray) -> float:
         float: The zero crossing rate of the signal.
     """
     return float(np.sum(np.multiply(array[0:-1], array[1:]) < 0) / (len(array) - 1))
+
+
+def zcr_max(
+    signal: np.ndarray,
+    frame_length: int,
+    hop_length: int,
+    **kwargs: Any
+) -> float:
+    """Computes the maximum value of the rolling zero crossing rate of a
+    signal.
+
+    Args:
+        signal: The input signal as a numpy.ndarray.
+        frame_length: The length of the frame in samples.
+        hop_length: The number of samples to advance between frames (overlap).
+        **kwargs: Additional keyword arguments passed to `rolling_zcr`.
+
+    Returns:
+        float: The maximum of the rolling RMS of the input signal.
+    """
+    zcr_values = rolling_zcr(signal, frame_length, hop_length, **kwargs)
+
+    return np.max(zcr_values)
+
+
+def zcr_mean(
+    signal: np.ndarray,
+    frame_length: int,
+    hop_length: int,
+    **kwargs: Any
+) -> float:
+    """Computes the mean value of the rolling zero crossing rate of a signal.
+
+    Args:
+        signal: The input signal as a numpy.ndarray.
+        frame_length: The length of the frame in samples.
+        hop_length: The number of samples to advance between frames (overlap).
+        **kwargs: Additional keyword arguments passed to `rolling_zcr`.
+
+    Returns:
+        float: The mean of the rolling RMS of the input signal.
+    """
+    zcr_values = rolling_zcr(signal, frame_length, hop_length, **kwargs)
+
+    return np.mean(zcr_values)
+
+
+def zcr_min(
+        signal: np.ndarray,
+        frame_length: int,
+        hop_length: int,
+        **kwargs: Any
+) -> float:
+    """Computes the minimum of the rolling zero crossing rate of a signal.
+
+    Args:
+        signal: The input signal as a numpy.ndarray.
+        frame_length: The length of the frame in samples.
+        hop_length: The number of samples to advance between frames (overlap).
+        **kwargs: Additional keyword arguments passed to `rolling_zcr`.
+
+    Returns:
+        float: The minimum of the rolling RMS of the input signal.
+    """
+    zcr_values = rolling_zcr(signal, frame_length, hop_length, **kwargs)
+
+    return np.min(zcr_values)
 
 
 def dominant_frequency(array: np.ndarray, fs: int) -> float:
