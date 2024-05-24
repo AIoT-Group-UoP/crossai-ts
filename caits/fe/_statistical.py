@@ -303,7 +303,10 @@ def dominant_frequency(array: np.ndarray, fs: int) -> float:
     return freqs[np.argmax(psd)]
 
 
-def central_moments(array: np.ndarray, export: str = "array") -> Union[np.ndarray, Dict[str, float]]:
+def central_moments(
+    array: np.ndarray,
+    export: str = "array"
+) -> Union[np.ndarray, Dict[str, float]]:
     """
     Calculate the 0th, 1st, 2nd, 3rd, and 4th central moments of an array using
     scipy.
@@ -335,12 +338,22 @@ def central_moments(array: np.ndarray, export: str = "array") -> Union[np.ndarra
     if export == "array":
         return np.array([moment0, moment1, moment2, moment3, moment4])
     elif export == "dict":
-        return {"moment0": moment0, "moment1": moment1, "moment2": moment2, "moment3": moment3, "moment4": moment4}
+        return {
+            "moment0": moment0,
+            "moment1": moment1,
+            "moment2": moment2,
+            "moment3": moment3,
+            "moment4": moment4
+        }
     else:
         raise ValueError(f"Unsupported export={export}")
 
 
-def signal_length(array: np.ndarray, fs: int, time_mode: str = "time") -> float:
+def signal_length(
+    array: np.ndarray,
+    fs: int,
+    time_mode: str = "time"
+) -> float:
     """Computes the length of a signal in seconds.
 
     Args:
@@ -482,7 +495,13 @@ def mfcc_mean(
     return np.mean(mfcc_features, axis=1)
 
 
-def signal_stats(arr: np.ndarray, name: str, axis: int = 0, fs: int = 44100, time_mode: str = "time") -> dict:
+def signal_stats(
+    arr: np.ndarray,
+    name: str,
+    axis: int = 0,
+    fs: int = 44100,
+    time_mode: str = "time"
+) -> dict:
     """Computes the basic statistical information of signal.
 
     Args:
