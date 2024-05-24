@@ -1,9 +1,12 @@
-from typing import Dict, Union
+from typing import Dict, Union, Any
 
 import numpy as np
 import scipy
 from scipy.signal import butter, filtfilt, find_peaks
 from scipy.stats import kurtosis, moment, skew
+
+from caits.properties import rolling_rms, rolling_zcr
+from caits.fe import mfcc
 
 
 def std_value(array: np.ndarray, axis: int = 0) -> float:
@@ -138,6 +141,72 @@ def rms_value(array: np.ndarray) -> float:
     return np.sqrt(np.mean(np.square(array)))
 
 
+def rms_max(
+    signal: np.ndarray,
+    frame_length: int,
+    hop_length: int,
+    **kwargs: Any
+) -> float:
+    """Computes the maximum of the rolling Root Mean Square (RMS) values of a
+    signal.
+
+    Args:
+        signal: The input signal.
+        frame_length: The length of the frame in samples.
+        hop_length: The number of samples to advance between frames (overlap).
+        **kwargs: Additional keyword arguments passed to `rolling_rms`.
+
+    Returns:
+        float: The maximum RMS value.
+    """
+    rms_values = rolling_rms(signal, frame_length, hop_length, **kwargs)
+    return np.max(rms_values)
+
+
+def rms_mean(
+    signal: np.ndarray,
+    frame_length: int,
+    hop_length: int,
+    **kwargs: Any
+) -> float:
+    """Computes the mean of the rolling Root Mean Square (RMS) values of a
+    signal.
+
+    Args:
+        signal: The input signal.
+        frame_length: The length of the frame in samples.
+        hop_length: The number of samples to advance between frames (overlap).
+        **kwargs: Additional keyword arguments passed to `rolling_rms`.
+
+    Returns:
+        float: The mean RMS value.
+    """
+    rms_values = rolling_rms(signal, frame_length, hop_length, **kwargs)
+    return np.mean(rms_values)
+
+
+def rms_min(
+    signal: np.ndarray,
+    frame_length: int,
+    hop_length: int,
+    **kwargs: Any
+) -> float:
+    """Computes the minimum of the rolling Root Mean Square (RMS) values of a
+    signal.
+
+    Args:
+        signal: The input signal.
+        frame_length: The length of the frame in samples.
+        hop_length: The number of samples to advance between frames (overlap).
+        **kwargs: Additional keyword arguments passed to `rolling_rms`.
+
+    Returns:
+        float: The minimum RMS value.
+    """
+    rms_values = rolling_rms(signal, frame_length, hop_length, **kwargs)
+    return np.min(rms_values)
+
+
 def zcr_value(array: np.ndarray) -> float:
     """Computes the zero crossing rate of a signal.
 
@@ -148,6 +217,73 @@ def zcr_value(array: np.ndarray) -> float:
         float: The zero crossing rate of the signal.
     """
     return float(np.sum(np.multiply(array[0:-1], array[1:]) < 0) / (len(array) - 1))
+
+
+def zcr_max(
+    signal: np.ndarray,
+    frame_length: int,
+    hop_length: int,
+    **kwargs: Any
+) -> float:
+    """Computes the maximum value of the rolling zero crossing rate of a
+    signal.
+
+    Args:
+        signal: The input signal as a numpy.ndarray.
+        frame_length: The length of the frame in samples.
+        hop_length: The number of samples to advance between frames (overlap).
+        **kwargs: Additional keyword arguments passed to `rolling_zcr`.
+
+    Returns:
+        float: The maximum of the rolling RMS of the input signal.
+    """
+    zcr_values = rolling_zcr(signal, frame_length, hop_length, **kwargs)
+
+    return np.max(zcr_values)
+
+
+def zcr_mean(
+    signal: np.ndarray,
+    frame_length: int,
+    hop_length: int,
+    **kwargs: Any
+) -> float:
+    """Computes the mean value of the rolling zero crossing rate of a signal.
+
+    Args:
+        signal: The input signal as a numpy.ndarray.
+        frame_length: The length of the frame in samples.
+        hop_length: The number of samples to advance between frames (overlap).
+        **kwargs: Additional keyword arguments passed to `rolling_zcr`.
+
+    Returns:
+        float: The mean of the rolling RMS of the input signal.
+    """
+    zcr_values = rolling_zcr(signal, frame_length, hop_length, **kwargs)
+
+    return np.mean(zcr_values)
+
+
+def zcr_min(
+        signal: np.ndarray,
+        frame_length: int,
+        hop_length: int,
+        **kwargs: Any
+) -> float:
+    """Computes the minimum of the rolling zero crossing rate of a signal.
+
+    Args:
+        signal: The input signal as a numpy.ndarray.
+        frame_length: The length of the frame in samples.
+        hop_length: The number of samples to advance between frames (overlap).
+        **kwargs: Additional keyword arguments passed to `rolling_zcr`.
+
+    Returns:
+        float: The minimum of the rolling RMS of the input signal.
+    """
+    zcr_values = rolling_zcr(signal, frame_length, hop_length, **kwargs)
+
+    return np.min(zcr_values)
 
 
 def dominant_frequency(array: np.ndarray, fs: int) -> float:
@@ -167,7 +303,10 @@ def dominant_frequency(array: np.ndarray, fs: int) -> float:
     return freqs[np.argmax(psd)]
 
 
-def central_moments(array: np.ndarray, export: str = "array") -> Union[np.ndarray, Dict[str, float]]:
+def central_moments(
+    array: np.ndarray,
+    export: str = "array"
+) -> Union[np.ndarray, Dict[str, float]]:
     """
     Calculate the 0th, 1st, 2nd, 3rd, and 4th central moments of an array using
     scipy.
@@ -199,12 +338,22 @@ def central_moments(array: np.ndarray, export: str = "array") -> Union[np.ndarra
     if export == "array":
         return np.array([moment0, moment1, moment2, moment3, moment4])
     elif export == "dict":
-        return {"moment0": moment0, "moment1": moment1, "moment2": moment2, "moment3": moment3, "moment4": moment4}
+        return {
+            "moment0": moment0,
+            "moment1": moment1,
+            "moment2": moment2,
+            "moment3": moment3,
+            "moment4": moment4
+        }
     else:
         raise ValueError(f"Unsupported export={export}")
 
 
-def signal_length(array: np.ndarray, fs: int, time_mode: str = "time") -> float:
+def signal_length(
+    array: np.ndarray,
+    fs: int,
+    time_mode: str = "time"
+) -> float:
     """Computes the length of a signal in seconds.
 
     Args:
@@ -325,7 +474,34 @@ def envelope_energy_peak_detection(
         raise ValueError(f"Unsupported export={export}")
 
 
-def signal_stats(arr: np.ndarray, name: str, axis: int = 0, fs: int = 44100, time_mode: str = "time") -> dict:
+def mfcc_mean(
+    y: np.ndarray,
+    sr: int = 22050,
+    n_mfcc: int = 20,
+    **kwargs: Any
+) -> np.ndarray:
+    """Calculates the mean of each MFCC coefficient over time.
+
+    Args:
+        y: Audio time series.
+        sr: Sampling rate of y. Default: 22050 Hz.
+        n_mfcc: Number of MFCCs to return. Default: 20.
+        **kwargs: Additional keyword arguments passed to `mfcc`.
+
+    Returns:
+        np.ndarray: Mean MFCC values (n_mfcc,).
+    """
+    mfcc_features = mfcc(y, sr=sr, n_mfcc=n_mfcc, **kwargs)
+    return np.mean(mfcc_features, axis=1)
+
+
+def signal_stats(
+    arr: np.ndarray,
+    name: str,
+    axis: int = 0,
+    fs: int = 44100,
+    time_mode: str = "time"
+) -> dict:
     """Computes the basic statistical information of signal.
 
     Args:
