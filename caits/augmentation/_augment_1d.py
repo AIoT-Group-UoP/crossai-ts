@@ -2,11 +2,11 @@ from typing import Any, List, Optional, Tuple, Union
 
 import numpy as np
 
-from caits.core._core_checks import is_positive_int
-from caits.core._core_fix import fix_length
-from caits.core._core_resample import resample
-from caits.fe._spectrum import istft, stft
-from caits.fe.core_spectrum import phase_vocoder
+from ..core._core_checks import is_positive_int
+from ..core._core_fix import fix_length
+from ..core._core_resample import resample
+from ..fe._spectrum import istft, stft
+from ..fe.core_spectrum import phase_vocoder
 
 
 def add_white_noise(array: np.ndarray, noise_factor: float) -> np.ndarray:

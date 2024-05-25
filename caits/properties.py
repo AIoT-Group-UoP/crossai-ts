@@ -3,7 +3,7 @@ from typing import Any, Optional
 import numpy as np
 from scipy.signal import hilbert
 
-from caits.windowing import frame_signal
+from .windowing import frame_signal
 
 
 def amplitude_envelope_hbt(signal: np.ndarray, N: Optional[int] = None, axis: Optional[int] = -1) -> np.ndarray:

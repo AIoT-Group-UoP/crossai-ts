@@ -4,9 +4,9 @@ from typing import Any, Optional, Union
 import numpy as np
 from numpy.typing import DTypeLike
 
-from caits.core._core_checks import dtype_r2c
-from caits.core._core_typing import _PadModeSTFT, _WindowSpec
-from caits.core._core_window import tiny
+from ..core._core_checks import dtype_r2c
+from ..core._core_typing import _PadModeSTFT, _WindowSpec
+from ..core._core_window import tiny
 
 from ._spectrum import istft, stft
 from .core_spectrum._phase import phasor

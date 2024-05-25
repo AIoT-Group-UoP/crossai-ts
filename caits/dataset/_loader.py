@@ -1,7 +1,7 @@
 import os
 from typing import List, Optional
 
-from caits.loading import audio_loader, csv_loader
+from ..loading import audio_loader, csv_loader
 
 from ._dataset import Dataset
 

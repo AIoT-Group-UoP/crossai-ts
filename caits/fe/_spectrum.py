@@ -9,10 +9,10 @@ import scipy
 from numpy import fft
 from numpy.typing import ArrayLike, DTypeLike
 
-from caits.core._core_checks import dtype_c2r, dtype_r2c, is_positive_int, valid_audio
-from caits.core._core_fix import fix_length
-from caits.core._core_typing import _ComplexLike_co, _PadModeSTFT, _ScalarOrSequence, _WindowSpec
-from caits.core._core_window import frame, get_window, pad_center, tiny, window_sumsquare
+from ..core._core_checks import dtype_c2r, dtype_r2c, is_positive_int, valid_audio
+from ..core._core_fix import fix_length
+from ..core._core_typing import _ComplexLike_co, _PadModeSTFT, _ScalarOrSequence, _WindowSpec
+from ..core._core_window import frame, get_window, pad_center, tiny, window_sumsquare
 
 from .core_spectrum import __overlap_add, expand_to
 from .core_spectrum._utils import mel_filter

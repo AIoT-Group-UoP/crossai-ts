@@ -5,8 +5,8 @@ import scipy
 from scipy.signal import butter, filtfilt, find_peaks
 from scipy.stats import kurtosis, moment, skew
 
-from caits.properties import rolling_rms, rolling_zcr
-from caits.fe import mfcc
+from ..properties import rolling_rms, rolling_zcr
+from ._spectrum import mfcc
 
 
 def std_value(array: np.ndarray, axis: int = 0) -> float:

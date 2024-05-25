@@ -6,18 +6,18 @@ from sklearn.base import BaseEstimator
 from sklearn.pipeline import Pipeline
 from tensorflow.keras import Model
 
-from caits.dataset import Dataset
-from caits.filtering import filter_butterworth
-from caits.performance.detection import (
+from ..dataset import Dataset
+from ..filtering import filter_butterworth
+from .detection import (
     apply_duration_threshold,
     apply_probability_threshold,
     classify_events,
     get_continuous_events,
     get_non_overlap_probas,
 )
-from caits.performance.metrics import detection_ratio, erer, prediction_statistics, reliability
-from caits.performance.utils import generate_pred_probas, get_gt_events_from_dict, interpolate_probas
-from caits.visualization import plot_interpolated_probas, plot_prediction_probas, plot_signal
+from .metrics import detection_ratio, erer, prediction_statistics, reliability
+from .utils import generate_pred_probas, get_gt_events_from_dict, interpolate_probas
+from ..visualization import plot_interpolated_probas, plot_prediction_probas, plot_signal
 
 _OPTIONS = [
     "transformed_data",
