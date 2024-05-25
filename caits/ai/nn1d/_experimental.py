@@ -4,7 +4,7 @@ import tensorflow as tf
 from tensorflow.keras.layers import Conv1D, Dense, Flatten, GlobalAveragePooling1D, Input, MaxPooling1D
 from tensorflow.keras.models import Model
 
-from caits.ai import dropout_layer_1d
+from .._layers_dropout import dropout_layer_1d
 
 
 def CNN1D(

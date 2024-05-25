@@ -1,6 +1,6 @@
 from sklearn.base import BaseEstimator, TransformerMixin
 
-from caits.dataset import Dataset
+from ..dataset import Dataset
 
 
 class LE(BaseEstimator, TransformerMixin):

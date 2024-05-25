@@ -9,7 +9,7 @@ import soundfile as sf
 from scipy.io import wavfile
 from tqdm import tqdm
 
-from caits.preprocessing import resample_2d
+from ..preprocessing import resample_2d
 
 
 def wav_loader(

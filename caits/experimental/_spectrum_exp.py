@@ -4,7 +4,7 @@ import numpy as np
 import scipy
 from scipy.signal import stft
 
-from caits.core._core_window import get_window
+from ..core._core_window import get_window
 
 
 def pre(array: np.ndarray, fs: int) -> float:

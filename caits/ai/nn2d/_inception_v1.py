@@ -16,7 +16,7 @@ from tensorflow.keras.layers import (
 )
 from tensorflow.keras.regularizers import l2
 
-from caits.ai import dense_drop_block
+from .._layers_dropout import dense_drop_block
 
 
 # Implementation of InceptionV1 NN model based on:

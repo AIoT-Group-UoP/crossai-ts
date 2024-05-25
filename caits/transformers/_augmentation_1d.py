@@ -3,7 +3,7 @@ from typing import Callable, Dict, List
 from sklearn.base import BaseEstimator, TransformerMixin
 from typing_extensions import TypedDict
 
-from caits.dataset import Dataset
+from ..dataset import Dataset
 
 
 class Augmentation(TypedDict):

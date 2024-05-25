@@ -2,7 +2,7 @@ from typing import List, Tuple
 
 import numpy as np
 
-from caits.performance.metrics import intersection_over_union
+from .metrics import intersection_over_union
 
 
 def get_non_overlap_probas(probabilities: np.ndarray, overlap_percentage: float) -> np.ndarray:

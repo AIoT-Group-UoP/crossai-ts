@@ -5,7 +5,7 @@ from numpy import ndarray
 from pandas import DataFrame
 from sklearn.base import BaseEstimator, TransformerMixin
 
-from caits.dataset import Dataset
+from ..dataset import Dataset
 
 
 class ArrayToDataset(BaseEstimator, TransformerMixin):
