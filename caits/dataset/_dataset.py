@@ -71,7 +71,7 @@ class Dataset:
 
         # Handle dtype inference
         if dtype is None:
-            dtypes = [df.dtypes[0] for df in self.X]
+            dtypes = [df.dtypes.iloc[0] for df in self.X]
             if len(set(dtypes)) > 1:
                 raise ValueError("Inconsistent dtypes across DataFrames.")
             dtype = dtypes[0]
