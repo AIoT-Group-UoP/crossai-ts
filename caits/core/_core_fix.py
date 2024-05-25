@@ -6,7 +6,13 @@ from typing import Any
 import numpy as np
 
 
-def fix_length(data: np.ndarray, *, size: int, axis: int = -1, **kwargs: Any) -> np.ndarray:
+def fix_length(
+    data: np.ndarray,
+    *,
+    size: int,
+    axis: int = -1,
+    **kwargs: Any
+) -> np.ndarray:
     kwargs.setdefault("mode", "constant")
 
     n = data.shape[axis]

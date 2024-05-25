@@ -31,7 +31,11 @@ def is_positive_int(x: float) -> bool:
     return isinstance(x, (int, np.integer)) and (x > 0)
 
 
-def valid_audio(y: np.ndarray, *, mono: Union[bool, Deprecated] = Deprecated()) -> bool:
+def valid_audio(
+    y: np.ndarray,
+    *,
+    mono: Union[bool, Deprecated] = Deprecated()
+) -> bool:
     if not isinstance(y, np.ndarray):
         raise ValueError("Audio data must be of type numpy.ndarray")
 
@@ -53,7 +57,11 @@ def valid_audio(y: np.ndarray, *, mono: Union[bool, Deprecated] = Deprecated()) 
     return True
 
 
-def dtype_r2c(d: DTypeLike, *, default: Optional[type] = np.complex64) -> DTypeLike:
+def dtype_r2c(
+    d: DTypeLike,
+    *,
+    default: Optional[type] = np.complex64
+) -> DTypeLike:
     mapping: Dict[DTypeLike, type] = {
         np.dtype(np.float32): np.complex64,
         np.dtype(np.float64): np.complex128,
@@ -70,7 +78,11 @@ def dtype_r2c(d: DTypeLike, *, default: Optional[type] = np.complex64) -> DTypeL
     return np.dtype(mapping.get(dt, default))
 
 
-def dtype_c2r(d: DTypeLike, *, default: Optional[type] = np.float32) -> DTypeLike:
+def dtype_c2r(
+    d: DTypeLike,
+    *,
+    default: Optional[type] = np.float32
+) -> DTypeLike:
     mapping: Dict[DTypeLike, type] = {
         np.dtype(np.complex64): np.float32,
         np.dtype(np.complex128): np.float64,
