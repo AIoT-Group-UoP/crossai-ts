@@ -66,11 +66,24 @@ class Dataset:
 
         return Dataset(self.X + other.X, self.y + other.y, self._id + other._id)
 
-    def to_numpy(self, dtype=np.float32):
-        """Converts data to NumPy arrays."""
-        X_np = np.array(self.X, dtype=dtype)
+    def to_numpy(self, dtype=None):
+        """Converts data to NumPy arrays, ensuring X_np has shape (k, n, m)."""
+
+        # Handle dtype inference
+        if dtype is None:
+            dtypes = [df.dtypes[0] for df in self.X]
+            if len(set(dtypes)) > 1:
+                raise ValueError("Inconsistent dtypes across DataFrames.")
+            dtype = dtypes[0]
+
+        # Convert to list of 2D arrays
+        X_arrays = [df.to_numpy(dtype=dtype) for df in self.X]
+
+        # Create the arrays
+        X_np = np.stack(X_arrays)  # Shape: (k, n, m)
         y_np = np.array(self.y)
         id_np = np.array(self._id)
+
         return X_np, y_np, id_np
 
     def to_dict(self):
