@@ -9,7 +9,10 @@ from ..fe._spectrum import istft, stft
 from ..fe.core_spectrum import phase_vocoder
 
 
-def add_white_noise(array: np.ndarray, noise_factor: float) -> np.ndarray:
+def add_white_noise(
+    array: np.ndarray,
+    noise_factor: float
+) -> np.ndarray:
     """Adds white noise to a signal.
 
     Args:
@@ -23,7 +26,11 @@ def add_white_noise(array: np.ndarray, noise_factor: float) -> np.ndarray:
     return array + noise_factor * noise
 
 
-def random_gain(array: np.ndarray, min_factor: float = 0.1, max_factor: float = 0.12) -> np.ndarray:
+def random_gain(
+    array: np.ndarray,
+    min_factor: float = 0.1,
+    max_factor: float = 0.12
+) -> np.ndarray:
     """Applies random gain to a signal.
 
     Args:
@@ -221,7 +228,9 @@ def crop_ts(
     """
     from tsaug import Crop
 
-    arr = Crop(size=size, resize=resize, repeats=repeats, prob=prob, seed=seed).augment(array)
+    arr = Crop(size=size, resize=resize, repeats=repeats, prob=prob,
+               seed=seed
+               ).augment(array)
 
     if repeats > 1 and array.ndim > 1:
         length = array.shape[0]
@@ -343,9 +352,9 @@ def dropout_ts(
     """
     from tsaug import Dropout
 
-    arr = Dropout(p=p, size=size, fill=fill, per_channel=per_channel, repeats=repeats, prob=prob, seed=seed).augment(
-        array
-    )
+    arr = Dropout(p=p, size=size, fill=fill, per_channel=per_channel,
+                  repeats=repeats, prob=prob, seed=seed
+                  ).augment(array)
 
     if repeats > 1 and array.ndim > 1:
         length = array.shape[0]
@@ -398,7 +407,9 @@ def pool_ts(
     """
     from tsaug import Pool
 
-    arr = Pool(kind=kind, size=size, per_channel=per_channel, repeats=repeats, prob=prob, seed=seed).augment(array)
+    arr = Pool(kind=kind, size=size, per_channel=per_channel, repeats=repeats,
+               prob=prob, seed=seed
+               ).augment(array)
 
     if repeats > 1 and array.ndim > 1:
         length = array.shape[0]
@@ -453,9 +464,9 @@ def quantize_ts(
     """
     from tsaug import Quantize
 
-    arr = Quantize(n_levels=n_levels, how=how, per_channel=per_channel, repeats=repeats, prob=prob, seed=seed).augment(
-        array
-    )
+    arr = Quantize(n_levels=n_levels, how=how, per_channel=per_channel,
+                   repeats=repeats, prob=prob, seed=seed
+                   ).augment(array)
 
     if repeats > 1 and array.ndim > 1:
         length = array.shape[0]
@@ -496,7 +507,8 @@ def resize_ts(
     """
     from tsaug import Resize
 
-    arr = Resize(size=size, repeats=repeats, prob=prob, seed=seed).augment(array)
+    arr = Resize(size=size, repeats=repeats, prob=prob, seed=seed
+                 ).augment(array)
 
     if repeats > 1 and array.ndim > 1:
         length = array.shape[0]
@@ -582,7 +594,8 @@ def time_warp_ts(
     from tsaug import TimeWarp
 
     arr = TimeWarp(
-        n_speed_change=n_speed_change, max_speed_ratio=max_speed_ratio, repeats=repeats, prob=prob, seed=seed
+        n_speed_change=n_speed_change, max_speed_ratio=max_speed_ratio,
+        repeats=repeats, prob=prob, seed=seed
     ).augment(array)
 
     if repeats > 1 and array.ndim > 1:
@@ -595,7 +608,11 @@ def time_warp_ts(
         return arr
 
 
-def arr_splitter(array: np.ndarray, instance_samples_length: int, repeats: int = None) -> np.ndarray:
+def arr_splitter(
+    array: np.ndarray,
+    instance_samples_length: int,
+    repeats: int = None
+) -> np.ndarray:
     """Unpacks the array into a list of arrays that occurred from
      the augmentation process, and stacks them together in the form
      of a 3D array (instances, samples, axes)
@@ -618,7 +635,10 @@ def arr_splitter(array: np.ndarray, instance_samples_length: int, repeats: int =
     return np.stack(arrays_list)
 
 
-def return_listed_augmentations(array: np.ndarray, repeats: int) -> list:
+def return_listed_augmentations(
+    array: np.ndarray,
+    repeats: int
+) -> list:
     """Returns the augmented time series data in a list.
 
     Args:
@@ -639,7 +659,12 @@ def return_listed_augmentations(array: np.ndarray, repeats: int) -> list:
     return augmented_data
 
 
-def time_stretch_ts(y: np.ndarray, *, rate: float, **kwargs: Any) -> np.ndarray:
+def time_stretch_ts(
+    y: np.ndarray,
+    *,
+    rate: float,
+    **kwargs: Any
+) -> np.ndarray:
     # The functionality in this implementation are basically derived from
     # librosa v0.10.1:
     # https://github.com/librosa/librosa/blob/main/librosa/effects.py
@@ -662,7 +687,8 @@ def time_stretch_ts(y: np.ndarray, *, rate: float, **kwargs: Any) -> np.ndarray:
     len_stretch = int(round(y.shape[-1] / rate))
 
     # Invert the STFT
-    y_stretch = istft(stft_stretch, dtype=y.dtype, length=len_stretch, **kwargs)
+    y_stretch = istft(stft_stretch, dtype=y.dtype, length=len_stretch,
+                      **kwargs)
 
     return y_stretch
 
@@ -682,7 +708,8 @@ def pitch_shift_ts(
     # https://github.com/librosa/librosa/blob/main/librosa/effects.py
 
     if not is_positive_int(bins_per_octave):
-        raise ValueError(f"bins_per_octave={bins_per_octave} must be a positive integer.")
+        raise ValueError(f"bins_per_octave={bins_per_octave} must be a "
+                         f"positive integer.")
 
     rate = 2.0 ** (-float(n_steps) / bins_per_octave)
 

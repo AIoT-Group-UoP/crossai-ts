@@ -75,7 +75,13 @@ def window_sumsquare(
     return x
 
 
-def pad_center(data: np.ndarray, *, size: int, axis: int = -1, **kwargs: Any) -> np.ndarray:
+def pad_center(
+    data: np.ndarray,
+    *,
+    size: int,
+    axis: int = -1,
+    **kwargs: Any
+) -> np.ndarray:
     kwargs.setdefault("mode", "constant")
 
     n = data.shape[axis]
@@ -86,7 +92,8 @@ def pad_center(data: np.ndarray, *, size: int, axis: int = -1, **kwargs: Any) ->
     lengths[axis] = (lpad, int(size - n - lpad))
 
     if lpad < 0:
-        raise ValueError(f"Target size ({size:d}) must be at least input size ({n:d})")
+        raise ValueError(f"Target size ({size:d}) must be at least input "
+                         f"size ({n:d})")
 
     return np.pad(data, lengths, **kwargs)
 
@@ -119,7 +126,8 @@ def __window_ss_fill(x, win_sq, n_frames, hop_length):  # pragma: no cover
     n_fft = len(win_sq)
     for i in range(n_frames):
         sample = i * hop_length
-        x[sample : min(n, sample + n_fft)] += win_sq[: max(0, min(n_fft, n - sample))]
+        x[sample : min(n, sample + n_fft)] += win_sq[: max(
+            0, min(n_fft, n - sample))]
 
 
 def normalize(
