@@ -64,15 +64,18 @@ class ArrayToDataset(BaseEstimator, TransformerMixin):
 
 
 class DatasetToArray(BaseEstimator, TransformerMixin):
-    def __init__(self, flatten=False):
+    def __init__(self, flatten=False, dtype=None):
         """Initializes the DatasetToArray transformer.
 
         Args:
             flatten (bool): If True, the output array will be flattened
                             (window_size * channels). Otherwise (default),
                             it will be a 3D array.
+            dtype (str): The data type of the output array. If None, the
+                         default NumPy data type will be used.
         """
         self.flatten = flatten
+        self.dtype = dtype
 
     def fit(self, X, y=None):
         """Fit method (no-op since nothing is learned)."""
@@ -87,7 +90,7 @@ class DatasetToArray(BaseEstimator, TransformerMixin):
         Returns:
             numpy.ndarray: Either a 2D (flattened) or 3D array.
         """
-        _X, _, _ = X.to_numpy()
+        _X, _, _ = X.to_numpy(dtype=self.dtype)
 
         if self.flatten:
             # Reshape to a 2D array by merging window and channel dimensions
