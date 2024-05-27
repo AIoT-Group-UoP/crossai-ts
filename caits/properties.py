@@ -99,10 +99,12 @@ def sma_signal(signal: np.ndarray) -> np.ndarray:
         numpy.ndarray: The SMA of the input signal.
 
     Raises:
-        ValueError: If the input signal is single-channel (1D).
+        ValueError: If the input signal has only one channel, 
+                    regardless of whether it's 1D or 2D.
     """
-    if signal.ndim == 1:
-        raise ValueError("SMA is not defined for single-channel signals.")
+
+    if signal.ndim == 1 or (signal.ndim == 2 and signal.shape[1] == 1):  
+        raise ValueError("SMA requires a signal with at least two channels.")
     else:
         return np.sum(np.abs(signal), axis=1)
 
@@ -119,10 +121,12 @@ def magnitude_signal(signal: np.ndarray) -> np.ndarray:
         numpy.ndarray: The magnitude of the input signal.
 
     Raises:
-        ValueError: If the input signal is single-channel (1D).
+        ValueError: If the input signal has only one channel, 
+                    regardless of whether it's 1D or 2D.
     """
-    if signal.ndim == 1:
-        raise ValueError("Magnitude is not defined for single-channel signals.")
+
+    if signal.ndim == 1 or (signal.ndim == 2 and signal.shape[1] == 1):  
+        raise ValueError("Magnitude requires a signal with at least two channels.")
     else:
         return np.sqrt(np.sum(signal**2, axis=1))
 
