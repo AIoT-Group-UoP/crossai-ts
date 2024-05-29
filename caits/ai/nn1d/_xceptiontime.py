@@ -1,7 +1,6 @@
 from typing import Callable, List, Optional, Tuple, Union
 
 import tensorflow as tf
-import tensorflow_addons as tfa
 from tensorflow.keras import Model
 from tensorflow.keras.constraints import MaxNorm
 from tensorflow.keras.layers import (
@@ -18,7 +17,7 @@ from tensorflow.keras.layers import (
 )
 from tensorflow.keras.regularizers import l2
 
-from .._layers_dropout import dropout_layer_1d
+from .._layers import dropout_layer_1d, AdaptiveAveragePooling1D
 
 
 # Implementation of XceptionTime NN model based on:
@@ -134,8 +133,8 @@ def XceptionTime(
     head_nf = n_filters * 32
 
     # transform the input with window size W to a fixed length
-    # of adaptive size (default 50)
-    x = tfa.layers.AdaptiveAveragePooling1D(xception_adaptive_size)(x)
+    # of adaptive size
+    x = AdaptiveAveragePooling1D(output_size=xception_adaptive_size)(x)
 
     # Dropout
     x = dropout_layer_1d(inputs=x, drp_rate=drp_mid, spatial=spatial, mc_inference=mc_inference)
@@ -176,7 +175,7 @@ def XceptionTime(
     )
 
     # convert the length of the input signal to 1 with the
-    x = tfa.layers.AdaptiveAveragePooling1D(1)(x)
+    x = AdaptiveAveragePooling1D(1)(x)
 
     # # Dropout
     x = dropout_layer_1d(inputs=x, drp_rate=drp_high, spatial=spatial, mc_inference=mc_inference)
