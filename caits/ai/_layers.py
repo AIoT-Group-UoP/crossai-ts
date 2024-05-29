@@ -1,7 +1,79 @@
-from typing import Callable, List, Optional, Union
+from typing import Callable, List, Optional, Union, Literal, Iterable
 
-from tensorflow import Tensor
+import tensorflow as tf
 from tensorflow.keras.layers import Dense, Dropout, Layer, SpatialDropout1D, SpatialDropout2D
+from tensorflow.python.keras.utils.conv_utils import normalize_tuple
+
+
+class AdaptiveAveragePooling1D(tf.keras.layers.Layer):
+    def __init__(self, output_size, data_format="channels_last", **kwargs):
+        super().__init__(**kwargs)
+        self.output_size = output_size
+        self.data_format = data_format
+
+    def call(self, inputs):
+        return _adaptive_pooling_1d(inputs, tf.reduce_mean, self.output_size, self.data_format)
+
+    def get_config(self):
+        config = {
+            "output_size": self.output_size,
+            "data_format": self.data_format,
+        }
+        base_config = super().get_config()
+        return {**base_config, **config}
+    
+
+class AdaptiveMaxPooling1D(tf.keras.layers.Layer):
+    def __init__(self, output_size, data_format="channels_last", **kwargs):
+        super().__init__(**kwargs)
+        self.output_size = output_size
+        self.data_format = data_format
+
+    def call(self, inputs):
+        return _adaptive_pooling_1d(inputs, tf.reduce_max, self.output_size, self.data_format)
+
+    def get_config(self):
+        config = {
+            "output_size": self.output_size,
+            "data_format": self.data_format,
+        }
+        base_config = super().get_config()
+        return {**base_config, **config}
+    
+
+def _adaptive_pooling_1d(
+    inputs: tf.Tensor,
+    reduce_function: Callable,
+    output_size: Union[int, Iterable[int]],
+    data_format: Literal["channels_last", "channels_first"] = "channels_last",
+) -> tf.Tensor:
+    """Internal function for adaptive pooling in 1D.
+
+    Args:
+        inputs: A 3D input tensor with shape (batch_size, steps, channels) or
+            (batch_size, channels, steps) depending on `data_format`.
+        reduce_function: The reduction function to apply to each bin.
+        output_size: The desired number of output features.
+        data_format: "channels_last" or "channels_first".
+
+    Returns:
+        A 3D tensor with shape (batch_size, output_size, channels) or
+        (batch_size, channels, output_size).
+    """
+
+    output_size = normalize_tuple(output_size, 1, "output_size")
+    bins = output_size[0]
+
+    if data_format == "channels_last":
+        split_axis, reduce_axis = 1, 2
+    else:  # "channels_first"
+        split_axis, reduce_axis = 2, 3
+
+    splits = tf.split(inputs, bins, axis=split_axis)
+    pooled_splits = tf.stack(splits, axis=split_axis)
+    out_vect = reduce_function(pooled_splits, axis=reduce_axis)
+        
+    return out_vect
 
 
 class MCDropout(Dropout):
@@ -103,7 +175,7 @@ class MCSpatialDropout2D(SpatialDropout2D):
 
 
 def dropout_layer_1d(
-    inputs: Tensor,
+    inputs: tf.Tensor,
     drp_rate: float = 0.1,
     spatial: bool = False,
     mc_inference: Optional[bool] = None,
@@ -138,7 +210,7 @@ def dropout_layer_1d(
 
 
 def dropout_layer_2d(
-    inputs: Tensor,
+    inputs: tf.Tensor,
     drp_rate: float = 0.1,
     spatial: bool = False,
     mc_inference: Optional[bool] = None,
@@ -174,7 +246,7 @@ def dropout_layer_2d(
 
 
 def dense_drop_block(
-    inputs: Tensor,
+    inputs: tf.Tensor,
     n_layers: int,
     dense_units: List[int],
     dropout: bool,
