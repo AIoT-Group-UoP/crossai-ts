@@ -37,7 +37,7 @@ def generate_pred_probas(model: Union[BaseEstimator, Model], X: TensorLike, repe
         predictions = [model.predict_proba(X) for s in range(repeats)]
     else:
         # Fallback to using predict for direct predictions
-        predictions = [model.predict(X, verbose=0) for s in range(repeats)]
+        predictions = [model(X) for s in range(repeats)]
 
     # Stack predictions along a new dimension for repeated predictions
     all_predictions = np.stack(predictions, axis=0)
