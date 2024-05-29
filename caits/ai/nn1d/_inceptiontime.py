@@ -17,7 +17,7 @@ from tensorflow.keras.layers import (
 from tensorflow.keras.models import Model
 from tensorflow.keras.regularizers import l2
 
-from .._layers_dropout import dropout_layer_1d
+from .._layers import dropout_layer_1d
 
 
 # Implementation of InceptionTime NN model based on:
