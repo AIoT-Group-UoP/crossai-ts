@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, Literal
 
 import numpy as np
 from numpy import array
@@ -11,13 +11,12 @@ from ..filtering import filter_butterworth
 from .detection import (
     apply_duration_threshold,
     apply_probability_threshold,
-    classify_events,
     get_continuous_events,
-    get_non_overlap_probas,
+    classify_events,
 )
 from .metrics import detection_ratio, erer, prediction_statistics, reliability
-from .utils import generate_pred_probas, get_gt_events_from_dict, interpolate_probas
-from ..visualization import plot_interpolated_probas, plot_prediction_probas, plot_signal
+from .utils import generate_probabilities, get_gt_events_from_dict, interpolate_probas
+from ..visualization import plot_prediction_probas, plot_signal
 
 _OPTIONS = [
     "transformed_data",
@@ -36,10 +35,11 @@ _OPTIONS = [
 def robustness_analysis(
     model: Union[BaseEstimator, Model],
     input_data: np.ndarray,
+    original_length: int, 
     class_names: List[str],
-    sample_rate: int,
+    sr: int,
     ws: float,
-    perc_overlap: float,
+    overlap_percentage: float,
     ground_truths: List[tuple],
     cutoff: float,
     repeats: int = 5,
@@ -48,6 +48,7 @@ def robustness_analysis(
     duration_th: float = 1.0,
     iou_th: float = 0.5,
     figsize=(14, 6),
+    x_axis: Optional[Literal["time", "samples"]] = "time",
     options_to_include: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """Evaluates the model's robustness in event detection tasks using
@@ -60,11 +61,12 @@ def robustness_analysis(
                     Must be at least 2-dimensional. Each instance should
                     represent the window while the second dimension should
                     represent the features.
+        original_length: The original length of the input data before sliding window
         class_names: List of unique class names corresponding to the model's
                      outputs.
-        sample_rate: Sampling rate of the input data.
+        sr: Sampling rate of the input data.
         ws: Window size for segmenting the data.
-        perc_overlap: Percentage of overlap between consecutive data segments.
+        overlap_percentage: Percentage of overlap between consecutive data segments.
         ground_truths: Ground truth events for comparison with model
                        predictions.
         cutoff: Cut-off frequency for the low-pass filter applied to the data.
@@ -76,6 +78,7 @@ def robustness_analysis(
         iou_th: Intersection over Union threshold for event accuracy
                 classification.
         figsize: Figure size for any generated plots.
+        x_axis: Specifies the x-axis mode for the generated plots.
         append_options: Additional result components to include in the output.
 
         Options include: "transformed_data", "prediction_probas", "figures",
@@ -100,7 +103,7 @@ def robustness_analysis(
         results["transformed_data"] = input_data
 
     # Generate prediction probabilities of the model
-    prediction_probas = generate_pred_probas(model, input_data, repeats)
+    prediction_probas = generate_probabilities(model, input_data, repeats)
     # Append prediction probabilities
     if "prediction_probas" in options_to_include:
         results["prediction_probas"] = prediction_probas
@@ -112,23 +115,29 @@ def robustness_analysis(
         results["pred_stats"] = pred_stats
 
     # Get mean predicitons
-    mean_pred_probas = pred_stats["mean_pred"]
-    # print(f"Shape of mean predictions: {mean_pred_probas.shape}")
-    # Create figure for probabilities plot
-    pred_probas_fig = plot_prediction_probas(mean_pred_probas, sample_rate, ws, perc_overlap, class_names, figsize)
+    mean_probas = pred_stats["mean_pred"]
 
-    # Bring back to shape before sliding window
-    non_overlap_probas = get_non_overlap_probas(mean_pred_probas, perc_overlap)
-    # print(f"Shape of non-overlapping predictions: {non_overlap_probas.shape}")
-    # Append non-overlapping probabilities
-    if "non_overlapping_probas" in options_to_include:
-        results["non_overlapping_probas"] = non_overlap_probas
+    # Create figure for probabilities plot
+    pred_probas_fig = plot_prediction_probas(
+        probabilities=mean_probas,
+        sr=sr, ws=ws, 
+        overlap_percentage=overlap_percentage,
+        class_names=class_names,
+        figsize=figsize,
+        mode=x_axis,
+        events=ground_truths
+    )
 
     # Express it as a spline
     interpolated_probas = interpolate_probas(
-        non_overlap_probas, sampling_rate=sample_rate, Ws=ws, kind="cubic", clamp=True
+        probabilities=mean_probas,
+        n_points=original_length,
+        with_overlaps=False,
+        overlap_percentage=overlap_percentage,
+        kind="cubic",
+        clamp=True
     )
-    # print(f"Shape of interpolated probabilities: {interpolated_probas.shape}")
+
     # Append interpolated probabilities
     if "interpolated_probas" in options_to_include:
         results["interpolated_probas"] = interpolated_probas
@@ -136,7 +145,7 @@ def robustness_analysis(
     # Apply a low pass butterworth filter
     smoothed_probas = array(
         [
-            filter_butterworth(array=cls_probas, fs=sample_rate, filter_type="lowpass", cutoff_freq=cutoff, order=3)
+            filter_butterworth(array=cls_probas, fs=sr, filter_type="lowpass", cutoff_freq=cutoff, order=3)
             for cls_probas in interpolated_probas.T
         ]
     ).T
@@ -144,17 +153,45 @@ def robustness_analysis(
     # Append smoothed probabilities
     if "smoothed_probas" in options_to_include:
         results["smoothed_probas"] = smoothed_probas
-    interp_smoothed_probas_fig = plot_interpolated_probas(smoothed_probas, class_names, figsize)
+
+    interp_smoothed_probas_fig = plot_signal(
+        smoothed_probas,
+        sr=sr,
+        title=f"Interpolated Prediction Probabilities",
+        mode=x_axis,
+        channels=class_names,
+        figsize=figsize,
+        events=ground_truths,
+        class_names=class_names
+    )
+
     # Apply a probability threshold to the interpolated probabilities
     # and a `at least event time` duration
-    threshold_probas = apply_probability_threshold(smoothed_probas, prob_th)
-    threshold_probas = apply_duration_threshold(threshold_probas, sample_rate, duration_th)
+    threshold_probas = apply_probability_threshold(interpolated_probs=smoothed_probas, threshold=prob_th)
+    potential_events = get_continuous_events(probabilities=threshold_probas)
+
+    threshold_probas, predicted_events = apply_duration_threshold(
+        interpolated_probs=threshold_probas, 
+        potential_events=potential_events, 
+        sr=sr, 
+        duration_threshold=duration_th
+    )
     # Append thresholded probabilities
     if "thresholded_probas" in options_to_include:
         results["thresholded_probas"] = threshold_probas
 
     # Plot the modified interpolated probabilities after thresholding
-    thresh_probas_fig = plot_interpolated_probas(threshold_probas, class_names, figsize)
+    thresh_probas_fig = plot_signal(
+        threshold_probas,
+        sr=sr,
+        title=f"Thresholded Interpolated Prediction Probabilities",
+        mode=x_axis,
+        channels=class_names,
+        figsize=figsize,
+        events=ground_truths,
+        class_names=class_names
+    )
+
     # Append Figure Objects
     if "figures" in options_to_include:
         results["figures"] = {
@@ -165,11 +202,13 @@ def robustness_analysis(
         }
 
     # Extract event segments after applying the rules
-    predicted_events = get_continuous_events(threshold_probas)
+    # predicted_events = get_continuous_events(threshold_probas)
     print(f"Predicted Events: {predicted_events}")
     print(f"Ground truth Events: {ground_truths}")
 
-    insertions, corrects, substitutions, deletions = classify_events(predicted_events, ground_truths, IoU_th=iou_th)
+    insertions, corrects, substitutions, deletions = classify_events(
+        predicted_events, ground_truths, IoU_th=iou_th
+    )
 
     # Append classified Events
     if "ICSD" in options_to_include:
