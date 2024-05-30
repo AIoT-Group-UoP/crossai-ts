@@ -7,60 +7,78 @@ from matplotlib.figure import Figure as Fig
 import seaborn as sns
 
 
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
 def plot_prediction_probas(
     probabilities: np.ndarray,
-    sampling_rate: int,
-    Ws: float,
+    sr: int,
+    ws: float,
     overlap_percentage: float,
     class_names: Optional[List[str]] = None,
     figsize: Tuple[int, int] = (14, 6),
-) -> Fig:
-    """Plots prediction probabilities as small horizontal lines, adjusting
-    for window overlap. Only non-overlapping parts of the window segments
-    are plotting for visualization purposes and time-matching of the original
-    time series length and the visualized one.
+    mode: str = "samples",  
+    events: Optional[List[Tuple[float, float, int]]] = None,
+    title: Optional[str] = "Prediction Probabilities Across Windows",
+) -> plt.Figure:
+    """Plots prediction probabilities as horizontal lines with optional event highlighting.
 
     Args:
-        predictions: Prediction probabilities, shape (n_instances, n_classes).
-        sampling_rate: Sampling rate of the time series.
-        Ws: Window size in seconds.
+        probabilities: Prediction probabilities, shape (n_instances, n_classes).
+        sr: Sampling rate of the time series.
+        ws: Window size in seconds.
         overlap_percentage: Overlap percentage between windows (0 to 1).
         class_names: A list of class names for labeling purposes.
                      If not provided, classes will be labeled numerically.
-        figzise: Figure size in inches.
+        figsize: Figure size in inches.
+        mode: Plot mode - "samples" or "time". Defaults to "samples".
+        events: List of event tuples (start, end, class). Start and end are in
+                samples. If mode="time" and sr is provided, they will be converted to time units.
 
     Returns:
         The matplotlib Figure object.
     """
-    # Convert window size from seconds to samples
-    Ws_samples = int(Ws * sampling_rate)
 
-    # Calculate the step size based on the overlap
-    OP_step = int(Ws_samples * (1 - overlap_percentage))
+    ws_samples = int(ws * sr)
+    OP_step = int(ws_samples * (1 - overlap_percentage))
 
     # Colors for each class
     colors = plt.cm.jet(np.linspace(0, 1, probabilities.shape[1]))
 
     fig, ax = plt.subplots(figsize=figsize)
 
-    # Iterate through each class
-    # and plot
+    # Plot probabilities
     for i, class_probs in enumerate(probabilities.T):
         label = class_names[i] if class_names is not None else f"Class {i + 1}"
         for j, prob in enumerate(class_probs):
-            start_idx = j * OP_step
-            end_idx = start_idx + OP_step
-
+            start_idx = j * OP_step / sr if mode == "time" and sr is not None else j * OP_step
+            end_idx = start_idx + OP_step / sr if mode == "time" and sr is not None else start_idx + OP_step
             ax.hlines(prob, start_idx, end_idx, colors=colors[i], lw=2, label=label if j == 0 else "")
 
-    # Setting labels and title
-    ax.set_xlabel("Instances")
-    ax.set_ylabel("Probability")
-    ax.set_title("Prediction Probabilities Across Time Series Windows")
+    # Fill events (optional)
+    if events is not None:
+        unique_classes = set([event[2] for event in events])
+        palette = sns.color_palette("pastel", len(unique_classes))
+        class_colors = {cls: color for cls, color in zip(unique_classes, palette)}
 
-    # Handling legend for multiple classes
+        for start, end, cls in events:
+            class_label = class_names[cls] if class_names else f"Class {cls}"
+            if mode == "time" and sr is not None:
+                start, end = start / sr, end / sr
+            ax.axvspan(start, end, color=class_colors[cls], alpha=0.5, label=class_label)
+
+
+    # Set labels and title
+    ax.set_xlabel("Time (s)" if mode == "time" else "Samples")
+    ax.set_ylabel("Probability")
+    ax.set_title(title)
+
+    ax.grid(True)
+    
+    # Create a combined legend for both channel and event classes
     handles, labels = ax.get_legend_handles_labels()
-    by_label = dict(zip(labels, handles))  # Remove duplicate labels
+    by_label = dict(zip(labels, handles))
     ax.legend(by_label.values(), by_label.keys())
 
     return fig
@@ -160,6 +178,8 @@ def export_fig(
                           or 'both'."
         )
 
+    return
+
 
 def plot_signal(
     sig: np.ndarray,
@@ -212,11 +232,6 @@ def plot_signal(
         channels = [channels]
     elif len(channels) != num_channels:
         raise ValueError("Number of channels in 'channels' must match signal shape")
-    
-    # Color palette generation
-    unique_classes = set([event[2] for event in events]) if events else set()
-    palette = sns.color_palette("pastel", len(unique_classes))
-    class_colors = {cls: color for cls, color in zip(unique_classes, palette)}
 
     # Create x_axis based on mode and signal length
     if mode == "time" and sr is not None:
@@ -231,6 +246,12 @@ def plot_signal(
 
     # Fill event areas with class-based colors and labels
     if events:
+
+        # Color palette generation
+        unique_classes = set([event[2] for event in events]) if events else set()
+        palette = sns.color_palette("pastel", len(unique_classes))
+        class_colors = {cls: color for cls, color in zip(unique_classes, palette)}
+
         for start, end, cls in events:
             class_label = class_names[cls] if class_names else f"Class {cls}"
             # Convert to time if needed
