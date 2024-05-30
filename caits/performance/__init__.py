@@ -1,9 +1,8 @@
 from .detection import (
     apply_duration_threshold,
     apply_probability_threshold,
-    classify_events,
     get_continuous_events,
-    get_non_overlap_probas,
+    classify_events,
 )
 from .evaluation import (
     robustness_analysis,
@@ -20,7 +19,7 @@ from .metrics import (
     reliability,
 )
 from .utils import (
-    generate_pred_probas,
+    generate_probabilities,
     get_gt_events_from_dict,
     interpolate_probas,
 )
@@ -28,9 +27,8 @@ from .utils import (
 __all__ = [
     "apply_duration_threshold",
     "apply_probability_threshold",
-    "classify_events",
     "get_continuous_events",
-    "get_non_overlap_probas",
+    "classify_events",
     "robustness_analysis",
     "robustness_analysis_many",
     "robustness_analysis_batch",
@@ -41,7 +39,7 @@ __all__ = [
     "detection_ratio",
     "reliability",
     "erer",
-    "generate_pred_probas",
+    "generate_probabilities",
     "interpolate_probas",
     "get_gt_events_from_dict",
 ]
