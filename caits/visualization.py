@@ -7,10 +7,6 @@ from matplotlib.figure import Figure as Fig
 import seaborn as sns
 
 
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-
 def plot_prediction_probas(
     probabilities: np.ndarray,
     sr: int,
@@ -21,7 +17,7 @@ def plot_prediction_probas(
     mode: str = "samples",  
     events: Optional[List[Tuple[float, float, int]]] = None,
     title: Optional[str] = "Prediction Probabilities Across Windows",
-) -> plt.Figure:
+) -> Fig:
     """Plots prediction probabilities as horizontal lines with optional event highlighting.
 
     Args:
@@ -35,6 +31,7 @@ def plot_prediction_probas(
         mode: Plot mode - "samples" or "time". Defaults to "samples".
         events: List of event tuples (start, end, class). Start and end are in
                 samples. If mode="time" and sr is provided, they will be converted to time units.
+        title: Title of the plot.
 
     Returns:
         The matplotlib Figure object.
@@ -84,11 +81,12 @@ def plot_prediction_probas(
     return fig
 
 
+# This function is redundant for the moment, can be replaced by `plot_signal` function
 def plot_interpolated_probas(
     interpolated_probs: np.ndarray,
     class_names: Optional[List[str]] = None,
     figsize: Tuple[int, int] = (14, 6),
-) -> plt.Figure:
+) -> Fig:
     """Plots the interpolated prediction probabilities for each class.
 
     Args:
@@ -119,6 +117,103 @@ def plot_interpolated_probas(
     plt.legend()
 
     return fig
+
+
+def plot_signal(
+    sig: np.ndarray,
+    sr: int = 44100,
+    mode: str = "samples",
+    title: Optional[str] = "",
+    channels: Optional[Union[List[str], str]] = None,
+    figsize: Tuple[int, int] = (10, 4),
+    events: Optional[List[Tuple[int, int, int]]] = None,
+    class_names: Optional[List[str]] = None,
+    return_mode: bool = True,
+) -> Optional[Fig]:
+    """Plots a signal with optional event highlighting (with classes)
+    and returns the figure object.
+
+    Args:
+        sig: The input signal as a 2D numpy array (timesteps, channels).
+        sr: The sampling rate of the signal. Defaults to 44100.
+        mode: Plot mode - "samples" or "time". Defaults to "samples".
+        name: Name of the signal. Defaults to "Signal".
+        channels: Channel names, applicable for multichannel signals
+                    or a single label.
+        figsize: Figure size in inches. Defaults to (10, 4).
+        events: List of event tuples (start, end, class). Start and end are in
+                samples. If mode="time" and sr is provided, they will be converted to time units.
+        class_names: List of class names corresponding to the class indices in events.
+        return_mode: Whether to return the plot in the function. Defaults to True.
+
+    Returns:
+        plt.Figure: The figure object containing the plot.
+    """
+
+    # Ensure sig is at least 1D
+    if sig.ndim == 0:
+        raise ValueError("Input signal 'sig' must be at least 1-dimensional")
+
+    # Convert to 2D if necessary
+    if sig.ndim == 1:
+        sig = sig.reshape(-1, 1)  # Reshape to (n, 1)
+
+    fig = plt.figure(figsize=figsize)
+    plt.title(title)
+
+    num_channels = sig.shape[1]  # Number of channels (m)
+    
+    # Handle channels and labels
+    if channels is None:
+        channels = [f"Channel {i + 1}" for i in range(num_channels)]
+    elif isinstance(channels, str):
+        channels = [channels]
+    elif len(channels) != num_channels:
+        raise ValueError("Number of channels in 'channels' must match signal shape")
+
+    # Create x_axis based on mode and signal length
+    if mode == "time" and sr is not None:
+        x_axis = np.linspace(0, sig.shape[0] / sr, num=sig.shape[0])
+    else:
+        x_axis = np.arange(sig.shape[0])
+        sr = 1  # If in sample mode or sr is not provided, treat sr as 1 for event conversion
+
+    # Plot each channel
+    for i, channel in enumerate(sig.T):  # Transpose to iterate over channels
+        plt.plot(x_axis, channel, label=channels[i])
+
+    # Fill event areas with class-based colors and labels
+    if events:
+
+        # Color palette generation
+        unique_classes = set([event[2] for event in events]) if events else set()
+        palette = sns.color_palette("pastel", len(unique_classes))
+        class_colors = {cls: color for cls, color in zip(unique_classes, palette)}
+
+        for start, end, cls in events:
+            class_label = class_names[cls] if class_names else f"Class {cls}"
+            # Convert to time if needed
+            if mode == "time" and sr is not None:
+                start, end = start / sr, end / sr
+            plt.axvspan(start, end, color=class_colors[cls], alpha=0.5, label=class_label)
+
+    plt.xlabel("Time (s)" if mode == "time" else "Samples")
+    plt.ylabel("Amplitude")
+
+    plt.grid(True)
+
+    if channels:
+        plt.legend()
+
+    # Create a combined legend for both channel and event classes
+    handles, labels = plt.gca().get_legend_handles_labels()
+    by_label = dict(zip(labels, handles))
+    plt.legend(by_label.values(), by_label.keys())
+
+    if return_mode:
+        return fig
+    
+    return
 
 
 def export_fig(
@@ -178,103 +273,6 @@ def export_fig(
                           or 'both'."
         )
 
-    return
-
-
-def plot_signal(
-    sig: np.ndarray,
-    sr: int = 44100,
-    mode: str = "samples",
-    name: str = "Signal",
-    channels: Optional[Union[List[str], str]] = None,
-    figsize: Tuple[int, int] = (10, 4),
-    events: Optional[List[Tuple[int, int, int]]] = None,
-    class_names: Optional[List[str]] = None,
-    return_mode: bool = True,
-) -> Optional[plt.Figure]:
-    """Plots a signal with optional event highlighting (with classes)
-    and returns the figure object.
-
-    Args:
-        sig: The input signal as a 2D numpy array (timesteps, channels).
-        sr: The sampling rate of the signal. Defaults to 44100.
-        mode: Plot mode - "samples" or "time". Defaults to "samples".
-        name: Name of the signal. Defaults to "Signal".
-        channels: Channel names, applicable for multichannel signals
-                    or a single label.
-        figsize: Figure size in inches. Defaults to (10, 4).
-        events: List of event tuples (start, end, class). Start and end are in
-                samples. If mode="time" and sr is provided, they will be converted to time units.
-        class_names: List of class names corresponding to the class indices in events.
-        return_mode: Whether to return the plot in the function. Defaults to True.
-
-    Returns:
-        plt.Figure: The figure object containing the plot.
-    """
-
-    # Ensure sig is at least 1D
-    if sig.ndim == 0:
-        raise ValueError("Input signal 'sig' must be at least 1-dimensional")
-
-    # Convert to 2D if necessary
-    if sig.ndim == 1:
-        sig = sig.reshape(-1, 1)  # Reshape to (n, 1)
-
-    fig = plt.figure(figsize=figsize)
-    plt.title(name)
-
-    num_channels = sig.shape[1]  # Number of channels (m)
-    
-    # Handle channels and labels
-    if channels is None:
-        channels = [f"Channel {i + 1}" for i in range(num_channels)]
-    elif isinstance(channels, str):
-        channels = [channels]
-    elif len(channels) != num_channels:
-        raise ValueError("Number of channels in 'channels' must match signal shape")
-
-    # Create x_axis based on mode and signal length
-    if mode == "time" and sr is not None:
-        x_axis = np.linspace(0, sig.shape[0] / sr, num=sig.shape[0])
-    else:
-        x_axis = np.arange(sig.shape[0])
-        sr = 1  # If in sample mode or sr is not provided, treat sr as 1 for event conversion
-
-    # Plot each channel
-    for i, channel in enumerate(sig.T):  # Transpose to iterate over channels
-        plt.plot(x_axis, channel, label=channels[i])
-
-    # Fill event areas with class-based colors and labels
-    if events:
-
-        # Color palette generation
-        unique_classes = set([event[2] for event in events]) if events else set()
-        palette = sns.color_palette("pastel", len(unique_classes))
-        class_colors = {cls: color for cls, color in zip(unique_classes, palette)}
-
-        for start, end, cls in events:
-            class_label = class_names[cls] if class_names else f"Class {cls}"
-            # Convert to time if needed
-            if mode == "time" and sr is not None:
-                start, end = start / sr, end / sr
-            plt.axvspan(start, end, color=class_colors[cls], alpha=0.5, label=class_label)
-
-    plt.xlabel("Time (s)" if mode == "time" else "Samples")
-    plt.ylabel("Amplitude")
-
-    plt.grid(True)
-
-    if channels:
-        plt.legend()
-
-    # Create a combined legend for both channel and event classes
-    handles, labels = plt.gca().get_legend_handles_labels()
-    by_label = dict(zip(labels, handles))
-    plt.legend(by_label.values(), by_label.keys())
-
-    if return_mode:
-        return fig
-    
     return
 
 
