@@ -1,14 +1,17 @@
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, Literal
 
 import numpy as np
 from scipy.interpolate import interp1d
 from sklearn.base import BaseEstimator
+import tensorflow as tf
 from tensorflow.keras import Model
 
-TensorLike = Union[np.ndarray, Any]
 
-
-def generate_pred_probas(model: Union[BaseEstimator, Model], X: TensorLike, repeats: int = 1) -> np.ndarray:
+def generate_probabilities(
+    model: Union[BaseEstimator, Model],
+    X: Union[np.ndarray, tf.Tensor],
+    repeats: int = 1
+) -> np.ndarray:
     """Executes inference using a TensorFlow or scikit-learn model on provided
     data, optionally repeating the process multiple times. This function is
     designed to accommodate models with different prediction interfaces,
@@ -47,49 +50,44 @@ def generate_pred_probas(model: Union[BaseEstimator, Model], X: TensorLike, repe
 
 def interpolate_probas(
     probabilities: np.ndarray,
-    sampling_rate: int,
-    Ws: float,
-    n_points: Optional[int] = None,
-    kind: Optional[str] = "cubic",
-    clamp: Optional[bool] = True,
+    n_points: int,
+    with_overlaps: bool = False,
+    overlap_percentage: Optional[float] = None,
+    kind: Optional[Literal["cubic", "linear"]] = "cubic",
+    clamp: bool = True,
 ) -> np.ndarray:
-    """Interpolates prediction probabilities for a smoother representation
-    over time or samples.
-
-    This function applies cubic interpolation to a matrix of class
-    probabilities associated with instances or window segments in a
-    time series, allowing for the visualization of smoothed probability
-    transitions across classes.
+    """Interpolates prediction probabilities for smoother visualization.
 
     Args:
-        probabilities: A 2D array where each row represents an
-            instance (or window) and each column a class probability.
-        sampling_rate: The sampling rate of the time series data, used to
-            scale the interpolation points in relation to the original data.
-        Ws: The window size in seconds, defining the temporal span of each
-            instance or window in the original time series.
-        n_points: The number of points for the interpolated output.
-            If None, calculated as `n_instances * sampling_rate * Ws`.
-        kind: The type of interpolation. Deafults to `linear`.
-        clamp: Flag to clamp interpolated values between range [0, 1].
-               Defaults to False.
+        probabilities: A 2D array of shape (n_instances, n_classes) containing
+                       class probabilities for each instance/window.
+        n_points: The desired number of points in the interpolated output.
+        with_overlaps: If True, performs interpolation for each channel to the 
+                       given probability matrix. If False, keeps only the instances
+                       predicted with no overlap. Defaults to False.
+        overlap_percentage: The percentage of overlap between windows, required
+                       when `with_overlaps` is True.
+        kind: The type of interpolation to use (e.g., "linear", "cubic").
+                       Defaults to "cubic".
+        clamp: Whether to clamp the interpolated values between 0 and 1.
+                       Defaults to True.
 
     Returns:
-        np.ndarray: A 2D array of shape `(n_points, n_classes)` containing the
-            interpolated probabilities for each class. This array offers a
-            continuous and smooth representation of class probabilities
-            over time.
+        A 2D array of shape (n_points, n_classes) containing the interpolated
+        probabilities for each class.
+
+    Raises:
+        ValueError: If `with_overlaps` is True and `overlap_percentage` is None.
     """
-    # Determine the shape of the input probability matrix
-    n_instances, n_classes = probabilities.shape
 
-    # Automatically calculate the number of interpolation points
-    # if not provided. Goal here is the number of points to match the
-    # original length of the time series instance
-    if n_points is None:
-        n_points = int(n_instances * sampling_rate * Ws)
+    if with_overlaps:
+        n_instances, n_classes = probabilities.shape
+    else:
+        if overlap_percentage is None:
+            raise ValueError("Overlap percentage must be provided.")
+        probabilities = _get_non_overlap_probas(probabilities, overlap_percentage)
+        n_instances, n_classes = probabilities.shape
 
-    # Initialize the output array for interpolated probabilities
     interpolated_probabilities = np.zeros((n_points, n_classes))
 
     # Prepare the original and target x-values for interpolation
@@ -112,6 +110,53 @@ def interpolate_probas(
         interpolated_probabilities[:, i] = interpolated_probs
 
     return interpolated_probabilities
+
+
+def _get_non_overlap_probas(
+    probabilities: np.ndarray,
+    overlap_percentage: float
+) -> np.ndarray:
+    """Extracts probabilities corresponding to the non-overlapping part of
+    each window (of the time series instances), based on the specified overlap
+    percentage. This function is useful in scenarios where predictions are made
+    on overlapping window segments of a time series, and there is a need to
+    distill probabilities to represent non-overlapping segments for analysis
+    or visualization.
+
+    The function reduces the input matrix by selecting every N-th row, where N
+    is determined by the overlap percentage. For example, with a 50% overlap,
+    every second row is selected, effectively halving the dataset to represent
+    only the non-overlapping segments.
+
+    Args:
+        probabilities: A 2D numpy array of prediction probabilities, where each
+                       row represents an instance (or window) and each column
+                       represents a class probability.
+        overlap_percentage: The percentage of overlap between consecutive
+                            windows, expressed as a decimal between 0 and 1.
+                            For instance, a 50% overlap is represented as 0.5.
+
+    Returns:
+        np.ndarray: A 2D numpy array containing the probabilities for
+                    non-overlapping parts of the windows. The shape of the
+                    output array is (n_non_overlap_instances, n_classes),
+                    where `n_non_overlap_instances` is less than or equal
+                    to `n_instances` from the input, depending on the overlap
+                    percentage.
+
+    Example:
+        If `probabilities` is an array with 100 rows (instances) and there is
+        a 50% overlap between windows, the function will return a new array
+        with 50 rows, each representing the probability of a class for
+        non-overlapping segments.
+    """
+    # Calculate the selection interval (step) based on the overlap percentage
+    step = int(1 / (1 - overlap_percentage))
+
+    # Select rows from the probability matrix at intervals defined by the step
+    non_overlap_probs = probabilities[::step]
+
+    return non_overlap_probs
 
 
 def get_gt_events_from_dict(
