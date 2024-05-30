@@ -27,71 +27,72 @@ def apply_probability_threshold(interpolated_probs: np.ndarray, threshold: float
 
 def apply_duration_threshold(
     interpolated_probs: np.ndarray,
-    sampling_rate: int,
+    potential_events: List[Tuple[int, int, int]],
+    sr: int,
     duration_threshold: float,
-) -> np.ndarray:
-    """Applies a duration threshold to the interpolated probabilities.
-    Any continuous segments below the duration threshold are set to 0.
+) -> Tuple[np.ndarray, List[Tuple[int, int, int]]]:
+    """Applies a duration threshold to filter desired events.
+
+    This function filters out events in the `potential_events` list that have a
+    duration below the specified threshold. The duration threshold is converted 
+    from seconds to samples using the provided sampling rate. Events that meet the 
+    threshold are retained, and the corresponding segments in `interpolated_probs`
+    are preserved.
 
     Args:
-        interpolated_probs: Interpolated probabilities, where rows correspond
-                            to time steps.
-        sampling_rate: The number of samples per second in the time series.
-        duration_threshold: The duration threshold in seconds. Continuous
-                            segments below this duration will be zeroed out.
+        interpolated_probs: A 2D array of interpolated probabilities (n_timesteps, n_classes).
+        potential_events: A list of tuples (start, end, class) representing potential events.
+                          Start and end are in samples.
+        sr: Sampling rate of the time series.
+        duration_threshold: Duration threshold in seconds.
 
     Returns:
-        np.ndarray: The modified interpolated probabilities after applying
-                    the duration threshold.
+        Tuple:
+            - np.ndarray: Modified interpolated probabilities, where segments below the threshold are zeroed.
+            - List[Tuple[int, int, int]]: Filtered events that meet the duration threshold.
     """
-    # Convert duration from seconds to samples
-    duration_samples = int(sampling_rate * duration_threshold)
-    n_instances, n_classes = interpolated_probs.shape
+    
+    # Convert duration to samples.
+    min_duration_samples = int(sr * duration_threshold)
+    
+    # Filter events based on duration.
+    events = [(start, end, cls) for start, end, cls in potential_events 
+              if end - start >= min_duration_samples]
+    
+    # Zero out segments below the threshold.
     modified_probs = np.zeros_like(interpolated_probs)
+    for start, end, cls in events:
+        modified_probs[start:end, cls] = interpolated_probs[start:end, cls]
 
-    # Iterate over each class
-    for i in range(n_classes):
-        class_probs = interpolated_probs[:, i]
-        # Create a boolean array indicating where the
-        # class probability is above zero
-        is_above_zero = class_probs > 0
-        # Find the indices where the above-zero segments start and end
-        above_zero_diff = np.diff(is_above_zero.astype(int))
-        # +1 to correct the diff offset
-        segment_starts = np.where(above_zero_diff == 1)[0] + 1
-        segment_ends = np.where(above_zero_diff == -1)[0] + 1
-
-        if is_above_zero[0]:
-            segment_starts = np.insert(segment_starts, 0, 0)
-        if is_above_zero[-1]:
-            segment_ends = np.append(segment_ends, n_instances)
-
-        # Filter segments by duration and only keep those
-        # that meet the duration threshold
-        for start, end in zip(segment_starts, segment_ends):
-            if end - start >= duration_samples:
-                modified_probs[start:end, i] = class_probs[start:end]
-
-    return modified_probs
+    return modified_probs, events
 
 
-def get_continuous_events(threshold_probas: np.ndarray) -> List[Tuple[int, int, int]]:
-    significant_segments = []
+def get_continuous_events(probabilities: np.ndarray) -> List[Tuple[int, int, int]]:
+    """Identifies continuous segments where probabilities
+    are above zero and returns them as events.
 
-    # Iterate over each class to find significant segments
-    for class_idx in range(threshold_probas.shape[1]):
-        class_probs = threshold_probas[:, class_idx]
-        is_above_zero: np.ndarray = (class_probs > 0).astype(int)
+    Args:
+        probabilities: A 2D numpy array (n_instances, n_classes)
+                       containing probabilities for each class.
+
+    Returns:
+        List[Tuple[int, int, int]]: A list of tuples (start, end, class) 
+                                    representing the continuous events. 
+                                    Start and end indices are inclusive.
+    """
+    events = []
+    for class_idx in range(probabilities.shape[1]):  # Iterate through classes
+        class_probs = probabilities[:, class_idx]
+
+        # Efficiently find segment transitions using np.diff and np.where
+        is_above_zero = (class_probs > 0).astype(int)
         above_zero_diff = np.diff(is_above_zero, prepend=0, append=0)
-        segment_starts = np.where(above_zero_diff == 1)[0]
-        segment_ends = np.where(above_zero_diff == -1)[0]
+        start_indices = np.where(above_zero_diff == 1)[0]
+        end_indices = np.where(above_zero_diff == -1)[0] # not substracting 1 in purpose
 
-        # Identify segments that meet the duration threshold
-        for start, end in zip(segment_starts, segment_ends):
-            # -1 to make end index inclusive
-            significant_segments.append((start, end - 1, class_idx))
+        events.extend(zip(start_indices, end_indices, [class_idx] * len(start_indices)))
 
-    return significant_segments
+    return events
 
 
 def classify_events(
