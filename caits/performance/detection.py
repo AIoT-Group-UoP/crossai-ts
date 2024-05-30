@@ -88,7 +88,7 @@ def get_continuous_events(probabilities: np.ndarray) -> List[Tuple[int, int, int
         is_above_zero = (class_probs > 0).astype(int)
         above_zero_diff = np.diff(is_above_zero, prepend=0, append=0)
         start_indices = np.where(above_zero_diff == 1)[0]
-        end_indices = np.where(above_zero_diff == -1)[0] # not substracting 1 in purpose
+        end_indices = np.where(above_zero_diff == -1)[0] # not substracting 1 on purpose
 
         events.extend(zip(start_indices, end_indices, [class_idx] * len(start_indices)))
 
