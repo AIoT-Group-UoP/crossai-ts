@@ -11,8 +11,8 @@ from ..filtering import filter_butterworth
 from .detection import (
     apply_duration_threshold,
     apply_probability_threshold,
-    classify_events,
     get_continuous_events,
+    classify_events,
 )
 from .metrics import detection_ratio, erer, prediction_statistics, reliability
 from .utils import generate_probabilities, get_gt_events_from_dict, interpolate_probas
@@ -167,8 +167,15 @@ def robustness_analysis(
 
     # Apply a probability threshold to the interpolated probabilities
     # and a `at least event time` duration
-    threshold_probas = apply_probability_threshold(smoothed_probas, prob_th)
-    threshold_probas = apply_duration_threshold(threshold_probas, sr, duration_th)
+    threshold_probas = apply_probability_threshold(interpolated_probs=smoothed_probas, threshold=prob_th)
+    potential_events = get_continuous_events(probabilities=threshold_probas)
+
+    threshold_probas, predicted_events = apply_duration_threshold(
+        interpolated_probs=threshold_probas, 
+        potential_events=potential_events, 
+        sr=sr, 
+        duration_threshold=duration_th
+    )
     # Append thresholded probabilities
     if "thresholded_probas" in options_to_include:
         results["thresholded_probas"] = threshold_probas
@@ -195,7 +202,7 @@ def robustness_analysis(
         }
 
     # Extract event segments after applying the rules
-    predicted_events = get_continuous_events(threshold_probas)
+    # predicted_events = get_continuous_events(threshold_probas)
     print(f"Predicted Events: {predicted_events}")
     print(f"Ground truth Events: {ground_truths}")
 
