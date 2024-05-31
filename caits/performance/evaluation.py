@@ -120,12 +120,14 @@ def robustness_analysis(
     # Create figure for probabilities plot
     pred_probas_fig = plot_prediction_probas(
         probabilities=mean_probas,
-        sr=sr, ws=ws, 
+        sr=sr, ws=ws,
         overlap_percentage=overlap_percentage,
         class_names=class_names,
         figsize=figsize,
         mode=x_axis,
-        events=ground_truths
+        events=ground_truths,
+        original_length=original_length,
+        draw_final=True
     )
 
     # Express it as a spline
