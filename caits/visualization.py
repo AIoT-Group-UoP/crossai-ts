@@ -14,44 +14,94 @@ def plot_prediction_probas(
     overlap_percentage: float,
     class_names: Optional[List[str]] = None,
     figsize: Tuple[int, int] = (14, 6),
-    mode: str = "samples",  
+    mode: str = "samples",
     events: Optional[List[Tuple[float, float, int]]] = None,
     title: Optional[str] = "Prediction Probabilities Across Windows",
+    original_length: Optional[int] = None,
+    draw_final: bool = False,
 ) -> Fig:
-    """Plots prediction probabilities as horizontal lines with optional event highlighting.
+    """Plots prediction probabilities as horizontal lines for each class,
+    optionally highlighting events.
+
+    This function is designed to visualize the probabilities output from a
+    sliding window classifier. It supports both sample-based and time-based
+    plotting. The horizontal lines represent the probability of each class
+    across different windows, and events can be overlaid for additional
+    context.
 
     Args:
-        probabilities: Prediction probabilities, shape (n_instances, n_classes).
+        probabilities: Prediction probabilities for each class,
+                       shape (n_instances, n_classes).
         sr: Sampling rate of the time series.
         ws: Window size in seconds.
         overlap_percentage: Overlap percentage between windows (0 to 1).
-        class_names: A list of class names for labeling purposes.
-                     If not provided, classes will be labeled numerically.
-        figsize: Figure size in inches.
-        mode: Plot mode - "samples" or "time". Defaults to "samples".
-        events: List of event tuples (start, end, class). Start and end are in
-                samples. If mode="time" and sr is provided, they will be converted to time units.
+        class_names: List of class names. If None, classes are labeled
+                     numerically. Defaults to None.
+        figsize: Figure size (width, height) in inches. Defaults to (14, 6).
+        mode: Plot mode. 'samples' for sample-based x-axis, 'time' for
+              time-based x-axis. Defaults to 'samples'.
+        events: List of event tuples (start, end, class_index). Start and end
+                are in samples. Defaults to None.
         title: Title of the plot.
+               Defaults to "Prediction Probabilities Across Windows".
+        original_length: Original length of the signal (in samples).
+                         If provided and `draw_final` is True, the plot will
+                         extend to the full original length, even if the
+                         last window was shorter than the specified window
+                         size. Defaults to None.
+        draw_final: If True and `original_length` is provided, draw the final
+                    segment up to the original length. Defaults to False.
 
     Returns:
-        The matplotlib Figure object.
+        matplotlib.figure.Figure: Matplotlib Figure object containing the plot.
     """
 
+    # Window size in samples
     ws_samples = int(ws * sr)
-    OP_step = int(ws_samples * (1 - overlap_percentage))
+    # Non-overlapping segment length
+    op_step = int(ws_samples * (1 - overlap_percentage))
+    # Number of classes
+    num_classes = probabilities.shape[1]
 
-    # Colors for each class
-    colors = plt.cm.jet(np.linspace(0, 1, probabilities.shape[1]))
+    # Color palette selection
+    if num_classes <= 10:
+        colors = sns.color_palette("tab10", n_colors=num_classes)
+    else:
+        colors = sns.color_palette("viridis", n_colors=num_classes)
 
     fig, ax = plt.subplots(figsize=figsize)
 
-    # Plot probabilities
+    # Plot probabilities (only non-overlapping parts)
     for i, class_probs in enumerate(probabilities.T):
         label = class_names[i] if class_names is not None else f"Class {i + 1}"
-        for j, prob in enumerate(class_probs):
-            start_idx = j * OP_step / sr if mode == "time" and sr is not None else j * OP_step
-            end_idx = start_idx + OP_step / sr if mode == "time" and sr is not None else start_idx + OP_step
-            ax.hlines(prob, start_idx, end_idx, colors=colors[i], lw=2, label=label if j == 0 else "")
+
+        # Starting positions of non-overlapping segments
+        start_idx = np.arange(len(class_probs), dtype="float64") * op_step
+
+        # Calculate end indices, ensure they are floats for time mode
+        if mode == "time" and sr is not None:
+            start_idx /= sr
+            end_idx = start_idx + op_step / sr
+        else:
+            end_idx = start_idx + op_step
+
+        # Plot non-overlapping segments
+        ax.hlines(
+            class_probs,
+            xmin=start_idx,
+            xmax=end_idx,
+            colors=colors[i],
+            lw=2,
+            label=label,
+        )
+
+        # Plot the last segment to fill the original length if needed
+        if draw_final and original_length is not None:
+            last_start_idx = end_idx[-1]
+            if last_start_idx < original_length / sr if mode == "time" else original_length:
+                last_end_idx = original_length / sr if mode == "time" else original_length
+                last_prob = class_probs[-1]
+                ax.hlines(last_prob, last_start_idx, last_end_idx, colors=colors[i], lw=2)
 
     # Fill events (optional)
     if events is not None:
@@ -65,56 +115,17 @@ def plot_prediction_probas(
                 start, end = start / sr, end / sr
             ax.axvspan(start, end, color=class_colors[cls], alpha=0.5, label=class_label)
 
-
     # Set labels and title
     ax.set_xlabel("Time (s)" if mode == "time" else "Samples")
     ax.set_ylabel("Probability")
     ax.set_title(title)
 
     ax.grid(True)
-    
+
     # Create a combined legend for both channel and event classes
     handles, labels = ax.get_legend_handles_labels()
     by_label = dict(zip(labels, handles))
     ax.legend(by_label.values(), by_label.keys())
-
-    return fig
-
-
-# This function is redundant for the moment, can be replaced by `plot_signal` function
-def plot_interpolated_probas(
-    interpolated_probs: np.ndarray,
-    class_names: Optional[List[str]] = None,
-    figsize: Tuple[int, int] = (14, 6),
-) -> Fig:
-    """Plots the interpolated prediction probabilities for each class.
-
-    Args:
-        interpolated_probs: 2D array of interpolated probabilities,
-                            where each column represents a class.
-        class_names: A list of class names for labeling purposes.
-                     If not provided, classes will be labeled numerically.
-        figzise: Figure size in inches.
-
-    Returns:
-        The matplotlib Figure object.
-    """
-    n_points, n_classes = interpolated_probs.shape
-    x_interpolated = np.linspace(0, n_points - 1, num=n_points)
-
-    # Colors for each class
-    colors = plt.cm.jet(np.linspace(0, 1, interpolated_probs.shape[1]))
-
-    fig, ax = plt.subplots(figsize=figsize)
-
-    for i in range(n_classes):
-        label = class_names[i] if class_names is not None else f"Class {i + 1}"
-        ax.plot(x_interpolated, interpolated_probs[:, i], color=colors[i], label=label)
-
-    plt.title("Interpolated Prediction Probabilities")
-    plt.xlabel("Interpolated Instances")
-    plt.ylabel("Probability")
-    plt.legend()
 
     return fig
 
