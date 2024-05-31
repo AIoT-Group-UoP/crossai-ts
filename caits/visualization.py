@@ -130,44 +130,6 @@ def plot_prediction_probas(
     return fig
 
 
-# This function is redundant for the moment, can be replaced by `plot_signal` function
-def plot_interpolated_probas(
-    interpolated_probs: np.ndarray,
-    class_names: Optional[List[str]] = None,
-    figsize: Tuple[int, int] = (14, 6),
-) -> Fig:
-    """Plots the interpolated prediction probabilities for each class.
-
-    Args:
-        interpolated_probs: 2D array of interpolated probabilities,
-                            where each column represents a class.
-        class_names: A list of class names for labeling purposes.
-                     If not provided, classes will be labeled numerically.
-        figzise: Figure size in inches.
-
-    Returns:
-        The matplotlib Figure object.
-    """
-    n_points, n_classes = interpolated_probs.shape
-    x_interpolated = np.linspace(0, n_points - 1, num=n_points)
-
-    # Colors for each class
-    colors = plt.cm.jet(np.linspace(0, 1, interpolated_probs.shape[1]))
-
-    fig, ax = plt.subplots(figsize=figsize)
-
-    for i in range(n_classes):
-        label = class_names[i] if class_names is not None else f"Class {i + 1}"
-        ax.plot(x_interpolated, interpolated_probs[:, i], color=colors[i], label=label)
-
-    plt.title("Interpolated Prediction Probabilities")
-    plt.xlabel("Interpolated Instances")
-    plt.ylabel("Probability")
-    plt.legend()
-
-    return fig
-
-
 def plot_signal(
     sig: np.ndarray,
     sr: int = 44100,
