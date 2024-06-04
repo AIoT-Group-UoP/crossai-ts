@@ -17,8 +17,6 @@ def plot_prediction_probas(
     mode: str = "samples",
     events: Optional[List[Tuple[float, float, int]]] = None,
     title: Optional[str] = "Prediction Probabilities Across Windows",
-    original_length: Optional[int] = None,
-    draw_final: bool = False,
 ) -> Fig:
     """Plots prediction probabilities as horizontal lines for each class,
     optionally highlighting events.
@@ -44,13 +42,6 @@ def plot_prediction_probas(
                 are in samples. Defaults to None.
         title: Title of the plot.
                Defaults to "Prediction Probabilities Across Windows".
-        original_length: Original length of the signal (in samples).
-                         If provided and `draw_final` is True, the plot will
-                         extend to the full original length, even if the
-                         last window was shorter than the specified window
-                         size. Defaults to None.
-        draw_final: If True and `original_length` is provided, draw the final
-                    segment up to the original length. Defaults to False.
 
     Returns:
         matplotlib.figure.Figure: Matplotlib Figure object containing the plot.
@@ -60,8 +51,8 @@ def plot_prediction_probas(
     ws_samples = int(ws * sr)
     # Non-overlapping segment length
     op_step = int(ws_samples * (1 - overlap_percentage))
-    # Number of classes
-    num_classes = probabilities.shape[1]
+    # Number of instances, classes
+    n_intances, num_classes = probabilities.shape
 
     # Color palette selection
     if num_classes <= 10:
@@ -76,7 +67,7 @@ def plot_prediction_probas(
         label = class_names[i] if class_names is not None else f"Class {i + 1}"
 
         # Starting positions of non-overlapping segments
-        start_idx = np.arange(len(class_probs), dtype="float64") * op_step
+        start_idx = np.arange(n_intances, dtype="float32") * op_step
 
         # Calculate end indices, ensure they are floats for time mode
         if mode == "time" and sr is not None:
@@ -94,14 +85,6 @@ def plot_prediction_probas(
             lw=2,
             label=label,
         )
-
-        # Plot the last segment to fill the original length if needed
-        if draw_final and original_length is not None:
-            last_start_idx = end_idx[-1]
-            if last_start_idx < original_length / sr if mode == "time" else original_length:
-                last_end_idx = original_length / sr if mode == "time" else original_length
-                last_prob = class_probs[-1]
-                ax.hlines(last_prob, last_start_idx, last_end_idx, colors=colors[i], lw=2)
 
     # Fill events (optional)
     if events is not None:
