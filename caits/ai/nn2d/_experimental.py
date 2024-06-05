@@ -3,7 +3,7 @@ from typing import Callable, Optional, Tuple, Union
 from tensorflow.keras import Model
 from tensorflow.keras.layers import Conv2D, Dense, Flatten, GlobalAveragePooling2D, Input, MaxPooling2D
 
-from .._layers_dropout import dropout_layer_1d, dropout_layer_2d
+from .._layers import dropout_layer_1d, dropout_layer_2d
 
 
 def CNN2D(
