@@ -17,7 +17,7 @@ from tensorflow.keras.layers import (
 )
 from tensorflow.keras.regularizers import Regularizer, l2
 
-from .._layers_dropout import dense_drop_block
+from .._layers import dense_drop_block
 
 
 # This architecture is based on ResNet 50 (2015)

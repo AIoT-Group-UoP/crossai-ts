@@ -7,7 +7,7 @@ from tensorflow.keras.layers import Add, BatchNormalization, Conv2D, Dense, Flat
 from tensorflow.keras.models import Model
 from tensorflow.keras.regularizers import Regularizer, l2
 
-from .._layers_dropout import dense_drop_block
+from .._layers import dense_drop_block
 
 
 # This architecture is based on ResNet 34 (2015)
