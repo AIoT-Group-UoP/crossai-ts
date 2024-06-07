@@ -52,7 +52,8 @@ def interpolate_probabilities(
     probabilities: np.ndarray,
     sr: int,
     ws: float,
-    overlap_percentage: float
+    overlap_percentage: float,
+    interp_choice: int = 2,
 ) -> np.ndarray:
     """Interpolates each column of the prediction probability
     matrix using cubic spline.
@@ -61,7 +62,8 @@ def interpolate_probabilities(
         probabilities: Prediction probability matrix (windows x classes).
         sr: Sampling rate.
         ws: Window size in seconds.
-        overlap_percentage (float): Overlap percentage between windows.
+        overlap_percentage: Overlap percentage between windows.
+        interp_choice: Choice for interpolation points (1: start, 2: middle, 3: end).
 
     Returns:
         np.ndarray: Interpolated probabilities matrix.
@@ -75,22 +77,30 @@ def interpolate_probabilities(
     # Number of instances, classes
     n_instances, num_classes = probabilities.shape
 
-    # Original indices
+    # Calculate starting and ending indices for each non-overlapping segment
     start_idx = np.arange(n_instances) * non_op_step
     end_idx = start_idx + non_op_step
 
-    # Calculate the end of the last window probability
-    final_end_idx = end_idx[-1]
+    # Calculate interpolation points based on choice
+    if interp_choice == 1:
+        interp_idx = start_idx
+    elif interp_choice == 2:
+        interp_idx = (start_idx + end_idx) // 2
+    elif interp_choice == 3:
+        interp_idx = end_idx
+    else:
+        raise ValueError("Invalid interp_choice. Choose 1 (start), 2 (middle), or 3 (end).")
 
     # Create an array for interpolated indices
-    interp_indices = np.arange(start_idx[0], final_end_idx)
+    final_end_idx = end_idx[-1]
+    interp_indices = np.arange(0, final_end_idx)
 
     # Interpolated probability matrix
     interpolated_probabilities = np.zeros((final_end_idx, num_classes))
 
     for i in range(num_classes):
-        # Create a cubic spline interpolator with clamped boundary conditions
-        spline = spi.CubicSpline(start_idx, probabilities[:, i], bc_type="natural")
+        # Create a cubic spline interpolator
+        spline = spi.CubicSpline(interp_idx, probabilities[:, i])
         # Interpolate data points
         interpolated_probabilities[:, i] = spline(interp_indices)
 
