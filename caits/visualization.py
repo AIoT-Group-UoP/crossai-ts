@@ -7,7 +7,7 @@ from matplotlib.figure import Figure as Fig
 import seaborn as sns
 
 
-def plot_prediction_probas(
+def plot_prediction_probabilities(
     probabilities: np.ndarray,
     sr: int,
     ws: float,
@@ -17,10 +17,8 @@ def plot_prediction_probas(
     mode: str = "samples",
     events: Optional[List[Tuple[float, float, int]]] = None,
     title: Optional[str] = "Prediction Probabilities Across Windows",
-    original_length: Optional[int] = None,
-    draw_final: bool = False,
-) -> Fig:
-    """Plots prediction probabilities as horizontal lines for each class,
+) -> plt.Figure:
+    """Plots prediction probabilities from window instances, as horizontal lines for each class,
     optionally highlighting events.
 
     This function is designed to visualize the probabilities output from a
@@ -28,80 +26,36 @@ def plot_prediction_probas(
     plotting. The horizontal lines represent the probability of each class
     across different windows, and events can be overlaid for additional
     context.
-
-    Args:
-        probabilities: Prediction probabilities for each class,
-                       shape (n_instances, n_classes).
-        sr: Sampling rate of the time series.
-        ws: Window size in seconds.
-        overlap_percentage: Overlap percentage between windows (0 to 1).
-        class_names: List of class names. If None, classes are labeled
-                     numerically. Defaults to None.
-        figsize: Figure size (width, height) in inches. Defaults to (14, 6).
-        mode: Plot mode. 'samples' for sample-based x-axis, 'time' for
-              time-based x-axis. Defaults to 'samples'.
-        events: List of event tuples (start, end, class_index). Start and end
-                are in samples. Defaults to None.
-        title: Title of the plot.
-               Defaults to "Prediction Probabilities Across Windows".
-        original_length: Original length of the signal (in samples).
-                         If provided and `draw_final` is True, the plot will
-                         extend to the full original length, even if the
-                         last window was shorter than the specified window
-                         size. Defaults to None.
-        draw_final: If True and `original_length` is provided, draw the final
-                    segment up to the original length. Defaults to False.
-
-    Returns:
-        matplotlib.figure.Figure: Matplotlib Figure object containing the plot.
     """
 
     # Window size in samples
     ws_samples = int(ws * sr)
-    # Non-overlapping segment length
-    op_step = int(ws_samples * (1 - overlap_percentage))
-    # Number of classes
-    num_classes = probabilities.shape[1]
+    # Overlap size in samples
+    op_samples = int(ws_samples * overlap_percentage)
+    # Non-overlapping segment in samples
+    non_op_step = ws_samples - op_samples
+    # Number of instances, classes
+    n_instances, num_classes = probabilities.shape
 
     # Color palette selection
-    if num_classes <= 10:
-        colors = sns.color_palette("tab10", n_colors=num_classes)
-    else:
-        colors = sns.color_palette("viridis", n_colors=num_classes)
+    palette_name = "tab10" if num_classes <= 10 else "viridis"
+    colors = sns.color_palette(palette_name, n_colors=num_classes)
 
     fig, ax = plt.subplots(figsize=figsize)
 
+    # Calculate starting and ending indices for each non-overlapping segment
+    start_idx = np.arange(n_instances) * non_op_step
+    end_idx = start_idx + non_op_step
+
+    # Adjust indices for time mode
+    if mode == "time" and sr is not None:
+        start_idx = start_idx / sr
+        end_idx = end_idx / sr
+    
     # Plot probabilities (only non-overlapping parts)
     for i, class_probs in enumerate(probabilities.T):
         label = class_names[i] if class_names is not None else f"Class {i + 1}"
-
-        # Starting positions of non-overlapping segments
-        start_idx = np.arange(len(class_probs), dtype="float64") * op_step
-
-        # Calculate end indices, ensure they are floats for time mode
-        if mode == "time" and sr is not None:
-            start_idx /= sr
-            end_idx = start_idx + op_step / sr
-        else:
-            end_idx = start_idx + op_step
-
-        # Plot non-overlapping segments
-        ax.hlines(
-            class_probs,
-            xmin=start_idx,
-            xmax=end_idx,
-            colors=colors[i],
-            lw=2,
-            label=label,
-        )
-
-        # Plot the last segment to fill the original length if needed
-        if draw_final and original_length is not None:
-            last_start_idx = end_idx[-1]
-            if last_start_idx < original_length / sr if mode == "time" else original_length:
-                last_end_idx = original_length / sr if mode == "time" else original_length
-                last_prob = class_probs[-1]
-                ax.hlines(last_prob, last_start_idx, last_end_idx, colors=colors[i], lw=2)
+        ax.hlines(class_probs, xmin=start_idx, xmax=end_idx, colors=colors[i], lw=2, label=label)
 
     # Fill events (optional)
     if events is not None:
@@ -110,9 +64,10 @@ def plot_prediction_probas(
         class_colors = {cls: color for cls, color in zip(unique_classes, palette)}
 
         for start, end, cls in events:
+            if mode == "time":
+                start = start / sr
+                end = end / sr
             class_label = class_names[cls] if class_names else f"Class {cls}"
-            if mode == "time" and sr is not None:
-                start, end = start / sr, end / sr
             ax.axvspan(start, end, color=class_colors[cls], alpha=0.5, label=class_label)
 
     # Set labels and title
