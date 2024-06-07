@@ -452,7 +452,7 @@ def mfcc(
         # differences between channels
         S = power_to_db(melspectrogram(y=y, sr=sr, **kwargs))
 
-    M: np.ndarray = scipy.fftpack.dct(S, axis=-2, type=dct_type, norm=norm)[..., :n_mfcc, :]
+    M: np.ndarray = scipy.fft.dct(S, axis=-2, type=dct_type, norm=norm)[..., :n_mfcc, :]
 
     if lifter > 0:
         # shape lifter for broadcasting
