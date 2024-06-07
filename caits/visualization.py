@@ -7,7 +7,7 @@ from matplotlib.figure import Figure as Fig
 import seaborn as sns
 
 
-def plot_window_probabilities(
+def plot_prediction_probabilities(
     probabilities: np.ndarray,
     sr: int,
     ws: float,
@@ -56,7 +56,7 @@ def plot_window_probabilities(
     for i, class_probs in enumerate(probabilities.T):
         label = class_names[i] if class_names is not None else f"Class {i + 1}"
         ax.hlines(class_probs, xmin=start_idx, xmax=end_idx, colors=colors[i], lw=2, label=label)
-        
+
     # Fill events (optional)
     if events is not None:
         unique_classes = set([event[2] for event in events])
@@ -64,6 +64,9 @@ def plot_window_probabilities(
         class_colors = {cls: color for cls, color in zip(unique_classes, palette)}
 
         for start, end, cls in events:
+            if mode == "time":
+                start = start / sr
+                end = end / sr
             class_label = class_names[cls] if class_names else f"Class {cls}"
             ax.axvspan(start, end, color=class_colors[cls], alpha=0.5, label=class_label)
 
