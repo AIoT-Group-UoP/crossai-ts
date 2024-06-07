@@ -15,8 +15,8 @@ from .detection import (
     classify_events,
 )
 from .metrics import detection_ratio, erer, prediction_statistics, reliability
-from .utils import generate_probabilities, get_gt_events_from_dict, interpolate_probas
-from ..visualization import plot_prediction_probas, plot_signal
+from .utils import generate_probabilities, get_gt_events_from_dict, interpolate_probabilities
+from ..visualization import plot_prediction_probabilities, plot_signal
 
 _OPTIONS = [
     "transformed_data",
@@ -35,7 +35,6 @@ _OPTIONS = [
 def robustness_analysis(
     model: Union[BaseEstimator, Model],
     input_data: np.ndarray,
-    original_length: int, 
     class_names: List[str],
     sr: int,
     ws: float,
@@ -44,8 +43,9 @@ def robustness_analysis(
     cutoff: float,
     repeats: int = 5,
     metrics: str = "all",
+    interp_choice: Optional[int] = 2,
     prob_th: float = 0.7,
-    duration_th: float = 1.0,
+    dur_th: float = 1.0,
     iou_th: float = 0.5,
     figsize=(14, 6),
     x_axis: Optional[Literal["time", "samples"]] = "time",
@@ -61,7 +61,6 @@ def robustness_analysis(
                     Must be at least 2-dimensional. Each instance should
                     represent the window while the second dimension should
                     represent the features.
-        original_length: The original length of the input data before sliding window
         class_names: List of unique class names corresponding to the model's
                      outputs.
         sr: Sampling rate of the input data.
@@ -73,8 +72,9 @@ def robustness_analysis(
         repeats: Number of times the prediction process is repeated.
         metrics: Specifies which metrics to compute; 'all' computes all
                  available metrics.
+        interp_choice: Choice for interpolation points (1: start, 2: middle, 3: end).
         prob_th: Probability threshold for considering a prediction positive.
-        duration_th: Minimum duration for an event to be considered valid.
+        dur_th: Minimum duration for an event to be considered valid.
         iou_th: Intersection over Union threshold for event accuracy
                 classification.
         figsize: Figure size for any generated plots.
@@ -118,7 +118,7 @@ def robustness_analysis(
     mean_probas = pred_stats["mean_pred"]
 
     # Create figure for probabilities plot
-    pred_probas_fig = plot_prediction_probas(
+    pred_probas_fig = plot_prediction_probabilities(
         probabilities=mean_probas,
         sr=sr, ws=ws,
         overlap_percentage=overlap_percentage,
@@ -126,18 +126,15 @@ def robustness_analysis(
         figsize=figsize,
         mode=x_axis,
         events=ground_truths,
-        original_length=original_length,
-        draw_final=True
     )
 
     # Express it as a spline
-    interpolated_probas = interpolate_probas(
+    interpolated_probas = interpolate_probabilities(
         probabilities=mean_probas,
-        n_points=original_length,
-        with_overlaps=False,
+        sr=sr,
+        ws=ws,
         overlap_percentage=overlap_percentage,
-        kind="cubic",
-        clamp=True
+        interp_choice=interp_choice,
     )
 
     # Append interpolated probabilities
@@ -176,7 +173,7 @@ def robustness_analysis(
         interpolated_probs=threshold_probas, 
         potential_events=potential_events, 
         sr=sr, 
-        duration_threshold=duration_th
+        duration_threshold=dur_th
     )
     # Append thresholded probabilities
     if "thresholded_probas" in options_to_include:
