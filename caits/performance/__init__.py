@@ -21,7 +21,7 @@ from .metrics import (
 from .utils import (
     generate_probabilities,
     get_gt_events_from_dict,
-    interpolate_probas,
+    interpolate_probabilities,
 )
 
 __all__ = [
@@ -40,6 +40,6 @@ __all__ = [
     "reliability",
     "erer",
     "generate_probabilities",
-    "interpolate_probas",
+    "interpolate_probabilities",
     "get_gt_events_from_dict",
 ]
