@@ -233,7 +233,7 @@ def mel_frequencies(n_mels: int = 128, *, fmin: float = 0.0, fmax: float = 11025
 
 def hz_to_mel(
         frequencies: _ScalarOrSequence[_FloatLike_co], *, htk: bool = False
-) -> Union[np.floating[Any], np.ndarray]:
+) -> Union[np.floating, np.ndarray]:
     frequencies = np.asanyarray(frequencies)
 
     if htk:
@@ -263,7 +263,7 @@ def hz_to_mel(
     return mels
 
 
-def mel_to_hz(mels: _ScalarOrSequence[_FloatLike_co], *, htk: bool = False) -> Union[np.floating[Any], np.ndarray]:
+def mel_to_hz(mels: _ScalarOrSequence[_FloatLike_co], *, htk: bool = False) -> Union[np.floating, np.ndarray]:
     mels = np.asanyarray(mels)
 
     if htk:
