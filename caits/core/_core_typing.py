@@ -4,8 +4,9 @@
 from typing import Any, Callable, Sequence, Tuple, TypeVar, Union
 
 import numpy as np
-from numpy.typing import ArrayLike
 from typing_extensions import Literal
+
+from caits.core.numpy_typing import ArrayLike
 
 _Real = Union[float, "np.integer[Any]", "np.floating[Any]"]
 _Number = Union[complex, "np.number[Any]"]

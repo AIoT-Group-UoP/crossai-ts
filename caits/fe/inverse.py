@@ -2,12 +2,12 @@ import warnings
 from typing import Any, Optional, Union
 
 import numpy as np
-from numpy.typing import DTypeLike
+
+from caits.core.numpy_typing import DTypeLike
 
 from ..core._core_checks import dtype_r2c
 from ..core._core_typing import _PadModeSTFT, _WindowSpec
 from ..core._core_window import tiny
-
 from ._spectrum import istft, stft
 from .core_spectrum._phase import phasor
 from .core_spectrum._utils import mel_filter, nnls

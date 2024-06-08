@@ -5,7 +5,8 @@
 from typing import Dict, Optional, Union
 
 import numpy as np
-from numpy.typing import DTypeLike
+
+from caits.core.numpy_typing import DTypeLike
 
 
 class Deprecated(object):
@@ -32,9 +33,9 @@ def is_positive_int(x: float) -> bool:
 
 
 def valid_audio(
-    y: np.ndarray,
-    *,
-    mono: Union[bool, Deprecated] = Deprecated()
+        y: np.ndarray,
+        *,
+        mono: Union[bool, Deprecated] = Deprecated()
 ) -> bool:
     if not isinstance(y, np.ndarray):
         raise ValueError("Audio data must be of type numpy.ndarray")
@@ -58,9 +59,9 @@ def valid_audio(
 
 
 def dtype_r2c(
-    d: DTypeLike,
-    *,
-    default: Optional[type] = np.complex64
+        d: DTypeLike,
+        *,
+        default: Optional[type] = np.complex64
 ) -> DTypeLike:
     mapping: Dict[DTypeLike, type] = {
         np.dtype(np.float32): np.complex64,
@@ -79,9 +80,9 @@ def dtype_r2c(
 
 
 def dtype_c2r(
-    d: DTypeLike,
-    *,
-    default: Optional[type] = np.float32
+        d: DTypeLike,
+        *,
+        default: Optional[type] = np.float32
 ) -> DTypeLike:
     mapping: Dict[DTypeLike, type] = {
         np.dtype(np.complex64): np.float32,

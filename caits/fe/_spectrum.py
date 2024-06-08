@@ -7,18 +7,18 @@ from typing import Any, Callable, Optional, Tuple, Union
 import numpy as np
 import scipy
 from numpy import fft
-from numpy.typing import ArrayLike, DTypeLike
+
+from caits.core.numpy_typing import ArrayLike, DTypeLike
 
 from ..core._core_checks import dtype_c2r, dtype_r2c, is_positive_int, valid_audio
 from ..core._core_fix import fix_length
 from ..core._core_typing import _ComplexLike_co, _PadModeSTFT, _ScalarOrSequence, _WindowSpec
 from ..core._core_window import frame, get_window, pad_center, tiny, window_sumsquare
-
 from .core_spectrum import __overlap_add, expand_to
 from .core_spectrum._utils import mel_filter
 
 # Constrain STFT block sizes to 256 KB
-MAX_MEM_BLOCK = 2**8 * 2**10
+MAX_MEM_BLOCK = 2 ** 8 * 2 ** 10
 
 
 def stft(
@@ -133,7 +133,7 @@ def stft(
             # Determine if we have any frames that will fit inside the tail pad
             if tail_k * hop_length - n_fft // 2 + n_fft <= y.shape[-1] + n_fft // 2:
                 padding[-1] = (0, n_fft // 2)
-                y_post = np.pad(y[..., (tail_k) * hop_length - n_fft // 2 :], padding, mode=pad_mode)
+                y_post = np.pad(y[..., (tail_k) * hop_length - n_fft // 2:], padding, mode=pad_mode)
                 y_frames_post = frame(y_post, frame_length=n_fft, hop_length=hop_length)
                 # How many extra frames do we have from the tail?
                 extra += y_frames_post.shape[-1]
@@ -200,7 +200,7 @@ def stft(
     for bl_s in range(0, y_frames.shape[-1], n_columns):
         bl_t = min(bl_s + n_columns, y_frames.shape[-1])
 
-        stft_matrix[..., bl_s + off_start : bl_t + off_start] = fft.rfft(fft_window * y_frames[..., bl_s:bl_t], axis=-2)
+        stft_matrix[..., bl_s + off_start: bl_t + off_start] = fft.rfft(fft_window * y_frames[..., bl_s:bl_t], axis=-2)
     return stft_matrix
 
 
@@ -287,10 +287,10 @@ def istft(
 
         # If y is smaller than the head buffer, take everything
         if y.shape[-1] < shape[-1] - n_fft // 2:
-            y[..., :] = head_buffer[..., n_fft // 2 : y.shape[-1] + n_fft // 2]
+            y[..., :] = head_buffer[..., n_fft // 2: y.shape[-1] + n_fft // 2]
         else:
             # Trim off the first n_fft//2 samples from the head and copy into target buffer
-            y[..., : shape[-1] - n_fft // 2] = head_buffer[..., n_fft // 2 :]
+            y[..., : shape[-1] - n_fft // 2] = head_buffer[..., n_fft // 2:]
 
         # This offset compensates for any differences between frame alignment
         # and padding truncation
@@ -311,7 +311,7 @@ def istft(
         ytmp = ifft_window * fft.irfft(stft_matrix[..., bl_s:bl_t], n=n_fft, axis=-2)
 
         # Overlap-add the istft block starting at the i'th frame
-        __overlap_add(y[..., frame * hop_length + offset :], ytmp, hop_length)
+        __overlap_add(y[..., frame * hop_length + offset:], ytmp, hop_length)
 
         frame += bl_t - bl_s
 
@@ -592,7 +592,7 @@ def amplitude_to_db(
 
     power = np.square(magnitude, out=magnitude)
 
-    return power_to_db(power, ref=ref_value**2, amin=amin**2, top_db=top_db)
+    return power_to_db(power, ref=ref_value ** 2, amin=amin ** 2, top_db=top_db)
 
 
 def db_to_amplitude(S_db: np.ndarray, *, ref: float = 1.0) -> np.ndarray:
@@ -605,4 +605,4 @@ def db_to_amplitude(S_db: np.ndarray, *, ref: float = 1.0) -> np.ndarray:
     # The functionality in this implementation is basically derived from
     # librosa v0.10.1:
     # https://github.com/librosa/librosa/blob/main/librosa/core/spectrum.py
-    return db_to_power(S_db, ref=ref**2) ** 0.5
+    return db_to_power(S_db, ref=ref ** 2) ** 0.5

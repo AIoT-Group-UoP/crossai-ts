@@ -3,7 +3,8 @@ from typing import Any, Callable, Optional, Tuple, Union
 import numpy as np
 import scipy
 from numpy.lib.stride_tricks import as_strided
-from numpy.typing import ArrayLike, DTypeLike
+
+from caits.core.numpy_typing import ArrayLike, DTypeLike
 
 from ._core_typing import _FloatLike_co, _WindowSpec
 
@@ -76,11 +77,11 @@ def window_sumsquare(
 
 
 def pad_center(
-    data: np.ndarray,
-    *,
-    size: int,
-    axis: int = -1,
-    **kwargs: Any
+        data: np.ndarray,
+        *,
+        size: int,
+        axis: int = -1,
+        **kwargs: Any
 ) -> np.ndarray:
     kwargs.setdefault("mode", "constant")
 
@@ -126,7 +127,7 @@ def __window_ss_fill(x, win_sq, n_frames, hop_length):  # pragma: no cover
     n_fft = len(win_sq)
     for i in range(n_frames):
         sample = i * hop_length
-        x[sample : min(n, sample + n_fft)] += win_sq[: max(
+        x[sample: min(n, sample + n_fft)] += win_sq[: max(
             0, min(n_fft, n - sample))]
 
 
@@ -173,7 +174,7 @@ def normalize(
         length = np.sum(mag > 0, axis=axis, keepdims=True, dtype=mag.dtype)
 
     elif np.issubdtype(type(norm), np.number) and norm > 0:
-        length = np.sum(mag**norm, axis=axis, keepdims=True) ** (1.0 / norm)
+        length = np.sum(mag ** norm, axis=axis, keepdims=True) ** (1.0 / norm)
 
         if axis is None:
             fill_norm = mag.size ** (-1.0 / norm)
