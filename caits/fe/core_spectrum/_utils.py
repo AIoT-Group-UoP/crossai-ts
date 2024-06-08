@@ -8,13 +8,13 @@ from typing import Any, List, Literal, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import scipy
-from numpy.typing import DTypeLike
 
 from caits.core._core_typing import _FloatLike_co, _ScalarOrSequence
 from caits.core._core_window import normalize
+from caits.core.numpy_typing import DTypeLike
 
 # Constrain STFT block sizes to 256 KB
-MAX_MEM_BLOCK = 2**8 * 2**10
+MAX_MEM_BLOCK = 2 ** 8 * 2 ** 10
 
 
 def expand_to(x: np.ndarray, *, ndim: int, axes: Union[int, slice, Sequence[int], Sequence[slice]]) -> np.ndarray:
@@ -51,7 +51,7 @@ def __overlap_add(y, ytmp, hop_length):
         if N > y.shape[-1] - sample:
             N = y.shape[-1] - sample
 
-        y[..., sample : (sample + N)] += ytmp[..., :N, frame]
+        y[..., sample: (sample + N)] += ytmp[..., :N, frame]
 
 
 def _nnls_obj(x: np.ndarray, shape: Sequence[int], A: np.ndarray, B: np.ndarray) -> Tuple[float, np.ndarray]:
@@ -64,7 +64,7 @@ def _nnls_obj(x: np.ndarray, shape: Sequence[int], A: np.ndarray, B: np.ndarray)
     diff = np.einsum("mf,...ft->...mt", A, x, optimize=True) - B
 
     # Compute the objective value
-    value = (1 / B.size) * 0.5 * np.sum(diff**2)
+    value = (1 / B.size) * 0.5 * np.sum(diff ** 2)
 
     # And the gradient
     grad = (1 / B.size) * np.einsum("mf,...mt->...ft", A, diff, optimize=True)
@@ -195,7 +195,7 @@ def mel_filter(
     if isinstance(norm, str):
         if norm == "slaney":
             # Slaney-style mel is scaled to be approx constant energy per channel
-            enorm = 2.0 / (mel_f[2 : n_mels + 2] - mel_f[:n_mels])
+            enorm = 2.0 / (mel_f[2: n_mels + 2] - mel_f[:n_mels])
             weights *= enorm[:, np.newaxis]
         else:
             raise ValueError(f"Unsupported norm={norm}")
@@ -232,7 +232,7 @@ def mel_frequencies(n_mels: int = 128, *, fmin: float = 0.0, fmax: float = 11025
 
 
 def hz_to_mel(
-    frequencies: _ScalarOrSequence[_FloatLike_co], *, htk: bool = False
+        frequencies: _ScalarOrSequence[_FloatLike_co], *, htk: bool = False
 ) -> Union[np.floating[Any], np.ndarray]:
     frequencies = np.asanyarray(frequencies)
 
