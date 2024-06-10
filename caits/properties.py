@@ -87,32 +87,48 @@ def rolling_rms(
     return rms_values
 
 
-def sma_signal(signal) -> np.ndarray:
+def sma_signal(signal: np.ndarray) -> np.ndarray:
     """Calculates the rolling Simple Moving Average (SMA) between the axes
     of a multi-axis signal in time-domain.
-        Formula: sum(abs(signal))
+    Formula: sum(abs(signal))
 
     Args:
         signal: The input signal as a numpy.ndarray.
 
     Returns:
         numpy.ndarray: The SMA of the input signal.
+
+    Raises:
+        ValueError: If the input signal has only one channel, 
+                    regardless of whether it's 1D or 2D.
     """
-    return np.sum(np.abs(signal), axis=1)
+
+    if signal.ndim == 1 or (signal.ndim == 2 and signal.shape[1] == 1):  
+        raise ValueError("SMA requires a signal with at least two channels.")
+    else:
+        return np.sum(np.abs(signal), axis=1)
 
 
 def magnitude_signal(signal: np.ndarray) -> np.ndarray:
     """Calculates the Magnitude between the axes of a multi-axis signal in
     time-domain.
-        Formula: sqrt(sum(signal^2))
+    Formula: sqrt(sum(signal^2))
 
     Args:
         signal: The input signal as a numpy.ndarray.
 
     Returns:
         numpy.ndarray: The magnitude of the input signal.
+
+    Raises:
+        ValueError: If the input signal has only one channel, 
+                    regardless of whether it's 1D or 2D.
     """
-    return np.sqrt(np.sum(signal**2, axis=1))
+
+    if signal.ndim == 1 or (signal.ndim == 2 and signal.shape[1] == 1):  
+        raise ValueError("Magnitude requires a signal with at least two channels.")
+    else:
+        return np.sqrt(np.sum(signal**2, axis=1))
 
 
 def rolling_zcr(
