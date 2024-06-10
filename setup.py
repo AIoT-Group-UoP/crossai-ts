@@ -44,5 +44,5 @@ setup(
         "boto3==1.29.2",
         "tqdm==4.66.2"
     ],
-    python_requires=">=3.10"
+    python_requires=">=3.8"
 )
