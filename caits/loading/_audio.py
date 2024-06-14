@@ -54,7 +54,7 @@ def wav_loader(
 
     if target_sr is not None and target_sr != sample_rate:
         # Resamples audio to target_sr per channel
-        audio_data = resample_2d(audio_data, sample_rate, target_sr)
+        audio_data = resample_2d(audio_data, sample_rate, target_sr, dtype)
     else:
         target_sr = sample_rate
 
