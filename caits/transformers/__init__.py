@@ -5,6 +5,7 @@ from ._feature_extractor import FeatureExtractor
 from ._feature_extractor_2d import FeatureExtractor2D
 from ._func_transformer import FunctionTransformer
 from ._sliding_window import SlidingWindow
+from ._func_transformer_2d import FunctionTransformer2D
 
 __all__ = [
     "Augmenter1D",
