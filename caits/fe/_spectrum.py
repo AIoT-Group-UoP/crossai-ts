@@ -468,7 +468,6 @@ def mfcc(
 
 
 def melspectrogram(
-    *,
     y: Optional[np.ndarray] = None,
     sr: float = 22050,
     S: Optional[np.ndarray] = None,
