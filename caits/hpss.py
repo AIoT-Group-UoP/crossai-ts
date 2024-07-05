@@ -1,9 +1,9 @@
 import numpy as np
 from typing import Tuple, Union, List, Any, Optional
 from scipy.ndimage import median_filter
-from caits.core._core_checks import dtype_r2c
-from caits.core._core_typing import _IntLike_co, _FloatLike_co
-from caits.fe import stft, istft
+from .core._core_checks import dtype_r2c
+from .core._core_typing import _IntLike_co, _FloatLike_co
+from .fe import stft, istft
 
 
 def hpss(
@@ -17,18 +17,22 @@ def hpss(
     the output waveforms have equal length to the input waveform `y`.
 
     Args:
-        y (np.ndarray): Audio time series of shape (..., n). Multi-channel is supported.
-        percussion_factor (Optional[float]): Factor to apply to the percussive component 
-                                             for enhanced audio. If None, harmonic and 
-                                             percussive components are returned. 
-                                             Default is None.
-        **kwargs (Any): Additional keyword arguments for `librosa.decompose.hpss`.
+        y (np.ndarray): Audio time series of shape (..., n). Multichannel is
+            supported.
+        percussion_factor (Optional[float]): Factor to apply to the percussive
+            component for enhanced audio. If None, harmonic and percussive
+            components are returned. Default is None.
+        **kwargs (Any): Additional keyword arguments for
+            `librosa.decompose.hpss`.
 
     Returns:
         Tuple[np.ndarray, np.ndarray]: 
-            - np.ndarray: Audio time series of the harmonic elements, of shape (..., n).
-            - np.ndarray: Audio time series of the percussive elements, of shape (..., n).
-            - np.ndarray: Enhanced audio time series if `percussion_factor` is provided, of shape (..., n).
+            - np.ndarray: Audio time series of the harmonic elements, of
+                shape (..., n).
+            - np.ndarray: Audio time series of the percussive elements, of
+                shape (..., n).
+            - np.ndarray: Enhanced audio time series if `percussion_factor` is
+                provided, of shape (..., n).
     """
     # Compute the STFT matrix
     stft_matrix = stft(y)
@@ -77,8 +81,8 @@ def _hpss(
 
     .. [#] Driedger, Müller, Disch.
         "Extending harmonic-percussive separation of audio."
-        15th International Society for Music Information Retrieval Conference (ISMIR 2014),
-        Taipei, Taiwan, 2014.
+        15th International Society for Music Information Retrieval Conference
+        (ISMIR 2014), Taipei, Taiwan, 2014.
 
     Parameters
     ----------
@@ -176,7 +180,7 @@ def _hpss(
     if mask:
         return mask_harm, mask_perc
 
-    return ((S * mask_harm) * phase, (S * mask_perc) * phase)
+    return (S * mask_harm) * phase, (S * mask_perc) * phase
 
 
 def magphase(
@@ -184,7 +188,7 @@ def magphase(
     *,
     power: float = 1
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """Separate a complex-valued spectrogram D into its magnitude (S)
+    """Separates a complex-valued spectrogram D into its magnitude (S)
     and phase (P) components, so that ``D = S * P``.
 
     Parameters
@@ -226,21 +230,22 @@ def softmask(
     power: float = 1,
     split_zeros: bool = False
 ) -> np.ndarray:
-    """Robustly compute a soft-mask operation.
+    """Robustly computes a soft-mask operation.
 
     `M = X**power / (X**power + X_ref**power)`
 
     Args:
-        X: The (non-negative) input array corresponding to the positive mask elements.
+        X: The (non-negative) input array corresponding to the positive mask
+            elements.
         X_ref: The (non-negative) array of reference or background elements. 
                Must have the same shape as `X`.
-        power: Exponent for the soft mask. If finite, returns the soft mask computed
-               in a numerically stable way. If infinite, returns a hard (binary) mask
-               equivalent to `X > X_ref`. Note: for hard masks, ties are always broken
-               in favor of `X_ref` (mask=0). Default is 1.
-        split_zeros: If `True`, entries where `X` and `X_ref` are both small (close to 0) 
-                     will receive mask values of 0.5. Otherwise, the mask is set to 0 for
-                     these entries. Default is False.
+        power: Exponent for the soft mask. If finite, returns the soft mask
+            computed in a numerically stable way. If infinite, returns a hard
+            (binary) mask equivalent to `X > X_ref`. Note: for hard masks,
+            ties are always broken in favor of `X_ref` (mask=0). Default is 1.
+        split_zeros: If `True`, entries where `X` and `X_ref` are both small
+            (close to 0) will receive mask values of 0.5. Otherwise, the mask
+            is set to 0 for these entries. Default is False.
 
     Returns:
         np.ndarray: The output mask array, with the same shape as `X`.
