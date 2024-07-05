@@ -7,7 +7,9 @@ from caits.fe import stft, istft
 
 
 def hpss(
-    y: np.ndarray, percussion_factor: Optional[float] = None, **kwargs: Any
+    y: np.ndarray,
+    percussion_factor: Optional[float] = None,
+    **kwargs: Any
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Decomposes an audio time series into harmonic and percussive components.
 
@@ -82,7 +84,7 @@ def _hpss(
     ----------
     S : np.ndarray [shape=(..., d, n)]
         input spectrogram. May be real (magnitude) or complex.
-        Multi-channel is supported.
+        Multichannel is supported.
 
     kernel_size : int or tuple (kernel_harmonic, kernel_percussive)
         kernel size(s) for the median filters.
@@ -177,7 +179,11 @@ def _hpss(
     return ((S * mask_harm) * phase, (S * mask_perc) * phase)
 
 
-def magphase(D: np.ndarray, *, power: float = 1) -> Tuple[np.ndarray, np.ndarray]:
+def magphase(
+    D: np.ndarray,
+    *,
+    power: float = 1
+) -> Tuple[np.ndarray, np.ndarray]:
     """Separate a complex-valued spectrogram D into its magnitude (S)
     and phase (P) components, so that ``D = S * P``.
 
@@ -214,7 +220,11 @@ def magphase(D: np.ndarray, *, power: float = 1) -> Tuple[np.ndarray, np.ndarray
 
 
 def softmask(
-    X: np.ndarray, X_ref: np.ndarray, *, power: float = 1, split_zeros: bool = False
+    X: np.ndarray,
+    X_ref: np.ndarray,
+    *,
+    power: float = 1,
+    split_zeros: bool = False
 ) -> np.ndarray:
     """Robustly compute a soft-mask operation.
 
@@ -277,4 +287,3 @@ def softmask(
         mask = X > X_ref
 
     return mask
-
