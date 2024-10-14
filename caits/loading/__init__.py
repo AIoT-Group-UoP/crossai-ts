@@ -12,5 +12,6 @@ __all__ = [
     "s3_audio_loader",
     "s3_csv_loader",
     "wav_loader",
+    "s3_wav_loader",
     "wav_specs_check",
 ]
