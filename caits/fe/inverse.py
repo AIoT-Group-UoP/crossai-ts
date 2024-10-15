@@ -3,7 +3,7 @@ from typing import Any, Optional, Union
 
 import numpy as np
 
-from caits.core.numpy_typing import DTypeLike
+from ..core.numpy_typing import DTypeLike
 
 from ..core._core_checks import dtype_r2c
 from ..core._core_typing import _PadModeSTFT, _WindowSpec
