@@ -9,9 +9,9 @@ from typing import Any, List, Literal, Optional, Sequence, Tuple, Union
 import numpy as np
 import scipy
 
-from caits.core._core_typing import _FloatLike_co, _ScalarOrSequence
-from caits.core._core_window import normalize
-from caits.core.numpy_typing import DTypeLike
+from ...core._core_typing import _FloatLike_co, _ScalarOrSequence
+from ...core._core_window import normalize
+from ...core.numpy_typing import DTypeLike
 
 # Constrain STFT block sizes to 256 KB
 MAX_MEM_BLOCK = 2 ** 8 * 2 ** 10
