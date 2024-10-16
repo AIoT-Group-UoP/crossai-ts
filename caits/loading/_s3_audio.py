@@ -1,10 +1,11 @@
 import io
+import wave
 import boto3
 import pandas as pd
 import numpy as np
 import soundfile as sf
 from scipy.io import wavfile
-from typing import List, Optional, Tuple, Union, Literal
+from typing import List, Optional, Tuple, Union, Literal, Dict
 from tqdm import tqdm
 
 from ..preprocessing import resample_2d
@@ -138,3 +139,33 @@ def s3_audio_loader(
         return pd.DataFrame({"X": all_features, "y": all_y, "id": all_id})
     elif export == "dict":
         return {"X": all_features, "y": all_y, "id": all_id}
+
+
+def s3_wav_specs_check(file_content: bytes, print_base: bool = False) -> Dict:
+    """Checks the specifications of a WAV file from bytes.
+
+    It returns the sample rate, the number of channels and other information
+    regarding the wav file.
+
+    Args:
+        print_base: If True, prints the sample rate and number of channels.
+        file_content: The audio file as bytes.
+
+    Returns:
+        A dictionary containing the specifications of the WAV file.
+    """
+    file_obj = io.BytesIO(file_content)
+    with wave.open(file_obj, "rb") as wf:
+        num_channels = wf.getnchannels()
+        sr = wf.getframerate()
+        if print_base:
+            print(f"Sample rate: {sr} Hz")
+
+        if num_channels == 1 and print_base:
+            print("Mono")
+        elif num_channels == 2 and print_base:
+            print("Stereo")
+        elif num_channels > 2 and print_base:
+            print(f"Multi-channel: ({num_channels} channels)")
+
+    return wf.getparams()._asdict()
