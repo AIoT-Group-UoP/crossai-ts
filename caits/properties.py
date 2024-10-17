@@ -6,7 +6,11 @@ from scipy.signal import hilbert
 from .windowing import frame_signal
 
 
-def amplitude_envelope_hbt(signal: np.ndarray, N: Optional[int] = None, axis: Optional[int] = -1) -> np.ndarray:
+def amplitude_envelope_hbt(
+    signal: np.ndarray, 
+    N: Optional[int] = None, 
+    axis: Optional[int] = -1
+) -> np.ndarray:
     """Calculates the envelope of a signal by computing first the analytic
     signal using the Hilbert transform.
 
