@@ -5,7 +5,11 @@ from scipy.ndimage import gaussian_filter, median_filter
 from scipy.signal import butter, filtfilt, medfilt, sosfilt, sosfilt_zi, sosfiltfilt
 
 
-def filter_median_simple(array: np.ndarray, kernel_size: int = None) -> np.ndarray:
+def filter_median_simple(
+    array: np.ndarray, 
+    kernel_size: 
+    int = None
+) -> np.ndarray:
     """Performs a median filter on an N-dimensional array.
 
     Args:
@@ -24,7 +28,14 @@ def filter_median_simple(array: np.ndarray, kernel_size: int = None) -> np.ndarr
     return filtered_signal
 
 
-def filter_median_gen(array, window_size, output=None, mode="reflect", cval=0.0, origin=0) -> np.ndarray:
+def filter_median_gen(
+    array, 
+    window_size, 
+    output=None, 
+    mode="reflect", 
+    cval=0.0, 
+    origin=0
+) -> np.ndarray:
     """Calculates a multidimensional median filter. This is more general
         function than median_simple, and thus, has a more efficient
         implementation of a median filter and therefore runs much faster.
@@ -110,7 +121,8 @@ def filter_butterworth(
     # Check if filter type is valid
     if filter_type not in ["lowpass", "highpass", "bandpass", "bandstop"]:
         raise ValueError(
-            "Invalid filter type provided. Please choose from " "'lowpass', 'highpass', 'bandpass', or 'bandstop'."
+            "Invalid filter type provided. Please choose from " 
+            "'lowpass', 'highpass', 'bandpass', or 'bandstop'."
         )
 
     nyquist_freq = 0.5 * fs
@@ -143,9 +155,11 @@ def filter_butterworth(
         elif method == "sosfiltfilt":
             return sosfiltfilt(sos, array, axis=axis, **kwargs)
         else:
-            raise ValueError("Invalid method provided. Please choose from " "'sosfilt' or 'sosfiltfilt'.")
+            raise ValueError("Invalid method provided. Please choose from " 
+                             "'sosfilt' or 'sosfiltfilt'.")
     else:
-        raise ValueError("Invalid method provided. Please choose from " "'filtfilt', 'sosfilt', or 'sosfiltfilt'.")
+        raise ValueError("Invalid method provided. Please choose from " 
+                         "'filtfilt', 'sosfilt', or 'sosfiltfilt'.")
 
 
 def filter_gaussian(
@@ -183,4 +197,8 @@ def filter_gaussian(
         >>> signal = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9])
         >>> filtered_signal = filter_gaussian(signal, sigma=1)
     """
-    return gaussian_filter(array, sigma=sigma, order=order, output=output, mode=mode, cval=cval, truncate=truncate)
+    return gaussian_filter(
+        array, sigma=sigma, order=order, 
+        output=output, mode=mode, cval=cval, 
+        truncate=truncate
+    )

@@ -21,7 +21,12 @@ def normalize_signal(sig: np.ndarray) -> np.ndarray:
             return sig / max(sig.max(), -sig.min())
 
 
-def resample_signal(sig: np.ndarray, native_sr: int, target_sr: int, dtype: str = "float32") -> np.ndarray:
+def resample_signal(
+    sig: np.ndarray, 
+    native_sr: int, 
+    target_sr: int, 
+    dtype: str = "float32"
+) -> np.ndarray:
     """Resamples an audio signal to the target sampling rate.
 
     This function prioritizes computational accuracy by performing the resampling
@@ -56,7 +61,12 @@ def resample_signal(sig: np.ndarray, native_sr: int, target_sr: int, dtype: str 
 
 
 # TODO: Make it also work for (n_samples, ) arrays for robustness
-def resample_2d(audio_data: np.ndarray, native_sr: int, target_sr: int, dtype: str = "float32") -> np.ndarray:
+def resample_2d(
+    audio_data: np.ndarray, 
+    native_sr: int, 
+    target_sr: int, 
+    dtype: str = "float32"
+) -> np.ndarray:
     """Resamples 2D audio data (multi-channel) to a target sampling rate.
 
     Args:
@@ -91,7 +101,12 @@ def resample_2d(audio_data: np.ndarray, native_sr: int, target_sr: int, dtype: s
     return resampled_audio_data
 
 
-def trim_signal(array: np.ndarray, axis=0, epsilon: float = 1e-5) -> np.ndarray:
+def trim_signal(
+    array: np.ndarray, 
+    axis=0, 
+    epsilon: 
+    float = 1e-5
+) -> np.ndarray:
     """Trims the noise from beginning and end of a signal.
 
     Args:
