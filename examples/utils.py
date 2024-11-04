@@ -4,20 +4,21 @@ def load_wav_instance(path, return_vector=True):
     from caits.loading import wav_loader
 
     audio_params = wav_specs_check(path)
-    audio_load = wav_loader(path)
+    audio_load, sample_rate = wav_loader(path)    
 
     if audio_params["nchannels"] == 1 and return_vector:
-        ch_name = list(audio_load[0].columns)[0]
-        sig = audio_load[0][ch_name].values
+        print(audio_params["nchannels"])
+        ch_name = list(audio_load.columns)[0]
+        sig = audio_load[ch_name].values
     elif audio_params["nchannels"] == 1 and not return_vector:
-        ch_name = list(audio_load[0].columns)
-        sig = audio_load[0].values
+        ch_name = list(audio_load.columns)[0]
+        sig = audio_load.values
 
     return {
         "signal": sig,
         "params": audio_params,
         "channels": ch_name,
-        "sr": audio_params["framerate"],
+        "sr": sample_rate,
         "shape": sig.shape
     }
 
