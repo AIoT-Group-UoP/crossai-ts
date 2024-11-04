@@ -31,7 +31,7 @@ def instantaneous_frequency_hbt(
     signal: np.ndarray,
     fs: int,
     N: Optional[int] = None,
-    axis: Optional[int] = -1,
+    axis: Optional[int] = -1
 ) -> np.ndarray:
     """Calculates the instantaneous frequency of a signal by computing first
     the analytic signal using the Hilbert transform.
@@ -99,7 +99,7 @@ def rolling_rms(
     signal: np.ndarray,
     frame_length: float,
     hop_length: float,
-    padding_mode: str = "constant",
+    padding_mode: str = "constant"
 ) -> np.ndarray:
     """Calculates the rolling Root Mean Square (RMS) of a signal in
     time-domain.
@@ -139,7 +139,7 @@ def rolling_zcr(
     frame_length: int = 2048,
     hop_length: int = 512,
     center: bool = True,
-    padding_mode: str = "edge",
+    padding_mode: str = "edge"
 ) -> np.ndarray:
     """Calculates the rolling Zero Crossing Rate (ZCR) of a signal in
     time-domain. Implementation based on:
