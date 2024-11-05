@@ -17,7 +17,7 @@ def wav_loader(
     mode: str = "soundfile",
     target_sr: Optional[int] = None,
     dtype: str = "float64",
-    channels: Optional[List[str]] = None,
+    channels: Optional[List[str]] = None
 ) -> Tuple[pd.DataFrame, int]:
     """Loads and optionally resamples a mono or multichannel audio
     file into a DataFrame.
@@ -72,7 +72,7 @@ def audio_loader(
     target_sr: Optional[List[int]] = None,
     classes: Optional[List[str]] = None,
     channels: List[str] = ["Ch_1"],
-    export: Literal["df", "dict"] = "dict",
+    export: Literal["df", "dict"] = "dict"
 ) -> Union[pd.DataFrame, Dict[str, List]]:
     """Loads audio files from a directory into a DataFrame
     or dictionary with optional resampling.
@@ -124,7 +124,11 @@ def audio_loader(
         return {"X": all_features, "y": all_y, "id": all_id}
 
 
-def wav_specs_check(wav_file_path: str, print_base: bool = False) -> Dict:
+def wav_specs_check(
+    wav_file_path: str, 
+    print_base: 
+    bool = False
+) -> Dict:
     """Checks the specifications of a WAV file.
 
     It returns the sample rate, the number of channels and other information
