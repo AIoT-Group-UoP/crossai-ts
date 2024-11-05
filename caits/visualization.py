@@ -1,6 +1,5 @@
 import os
 from typing import List, Optional, Tuple, Union
-
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.figure import Figure as Fig
@@ -294,7 +293,7 @@ def plot_simple_spectrogram(spectrogram: np.ndarray, title: str = "Spectrogram")
     """
     plt.imshow(spectrogram, aspect="auto", origin="lower")
     plt.colorbar()
-    plt.xlabel("Time")
+    plt.xlabel("Windows")
     plt.ylabel("Frequency")
     plt.title(title)
     plt.show()
