@@ -34,6 +34,7 @@ def stft(
     out: Optional[np.ndarray] = None,
 ) -> np.ndarray:
     """
+    Note:
         The functionality in this implementation are basically derived from
         librosa v0.10.1:
         https://github.com/librosa/librosa/blob/main/librosa/core/spectrum.py
@@ -217,6 +218,7 @@ def istft(
     out: Optional[np.ndarray] = None,
 ) -> np.ndarray:
     """
+    Note:
         The functionality in this implementation are basically derived from
         librosa v0.10.1:
         https://github.com/librosa/librosa/blob/main/librosa/core/spectrum.py
@@ -359,6 +361,11 @@ def spectrogram(
 
     This is primarily used in feature extraction functions that can operate on
     either audio time-series or spectrogram input.
+
+    Note:
+        The functionality in this implementation are basically derived from
+        librosa v0.10.1:
+        https://github.com/librosa/librosa/blob/main/librosa/core/spectrum.py
 
     Args:
         y: (np.ndarray) Audio time-series.
@@ -549,6 +556,7 @@ def power_to_db(
     top_db: Optional[float] = 80.0,
 ) -> np.ndarray:
     """
+    Note:
         The functionality in this implementation are basically derived from
         librosa v0.10.1:
         https://github.com/librosa/librosa/blob/main/librosa/core/spectrum.py
@@ -593,8 +601,9 @@ def db_to_power(
     *, 
     ref: float = 1.0
 ) -> np.ndarray:
-    """Convert a dB-scale spectrogram to a power spectrogram.
+    """Converts a dB-scale spectrogram to a power spectrogram.
 
+    Note:
         The functionality in this implementation is basically derived from
         librosa v0.10.1:
         https://github.com/librosa/librosa/blob/main/librosa/core/spectrum.py
@@ -613,8 +622,9 @@ def amplitude_to_db(
     amin: float = 1e-5,
     top_db: Optional[float] = 80.0,
 ) -> np.ndarray:
-    """Convert an amplitude spectrogram to dB-scaled spectrogram.
+    """Converts an amplitude spectrogram to dB-scaled spectrogram.
 
+    Note:
         The functionality in this implementation is basically derived from
         librosa v0.10.1:
         https://github.com/librosa/librosa/blob/main/librosa/core/spectrum.py
@@ -650,8 +660,9 @@ def db_to_amplitude(
     *, 
     ref: float = 1.0
 ) -> np.ndarray:
-    """Convert a dB-scaled spectrogram to an amplitude spectrogram.
+    """Converts a dB-scaled spectrogram to an amplitude spectrogram.
 
+    Note:
         The functionality in this implementation is basically derived from
         librosa v0.10.1:
         https://github.com/librosa/librosa/blob/main/librosa/core/spectrum.py
