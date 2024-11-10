@@ -676,6 +676,7 @@ def db_to_amplitude(
 
 
 def fft_frequencies(
+    *,
     sr: float = 22050, 
     n_fft: int = 2048
 ) -> np.ndarray:
