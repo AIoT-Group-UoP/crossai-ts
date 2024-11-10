@@ -34,6 +34,9 @@ def stft(
     out: Optional[np.ndarray] = None,
 ) -> np.ndarray:
     """
+        The functionality in this implementation are basically derived from
+        librosa v0.10.1:
+        https://github.com/librosa/librosa/blob/main/librosa/core/spectrum.py
 
     Args:
         y:
@@ -51,9 +54,6 @@ def stft(
     Returns:
 
     """
-    # The functionality in this implementation are basically derived from
-    # librosa v0.10.1:
-    # https://github.com/librosa/librosa/blob/main/librosa/core/spectrum.py
 
     # By default, use the entire frame
     if win_length is None:
@@ -216,9 +216,13 @@ def istft(
     length: Optional[int] = None,
     out: Optional[np.ndarray] = None,
 ) -> np.ndarray:
-    # The functionality in this implementation are basically derived from
-    # librosa v0.10.1:
-    # https://github.com/librosa/librosa/blob/main/librosa/core/spectrum.py
+    """
+        The functionality in this implementation are basically derived from
+        librosa v0.10.1:
+        https://github.com/librosa/librosa/blob/main/librosa/core/spectrum.py
+
+    """
+    
 
     if n_fft is None:
         n_fft = 2 * (stft_matrix.shape[-2] - 1)
@@ -353,40 +357,40 @@ def spectrogram(
 ) -> Tuple[np.ndarray, int]:
     """Retrieves a magnitude spectrogram.
 
-        This is primarily used in feature extraction functions that can operate on
-        either audio time-series or spectrogram input.
+    This is primarily used in feature extraction functions that can operate on
+    either audio time-series or spectrogram input.
 
-        Args:
-            y: (np.ndarray) Audio time-series.
-            S: (np.ndarray) Spectrogram input, optional.
-            n_fft: (int) STFT window size.
-            hop_length: (int) STFT hop length.
-            power: (float) Exponent for the magnitude spectrogram,
-                e.g., 1 for energy, 2 for power, etc.
-                win_length: (int) Each frame of audio is windowed by `window`.
-                The window will be of length `win_length` and then padded
-                with zeros to match `n_fft`.  
+    Args:
+        y: (np.ndarray) Audio time-series.
+        S: (np.ndarray) Spectrogram input, optional.
+        n_fft: (int) STFT window size.
+        hop_length: (int) STFT hop length.
+        power: (float) Exponent for the magnitude spectrogram,
+            e.g., 1 for energy, 2 for power, etc.
+            win_length: (int) Each frame of audio is windowed by `window`.
+            The window will be of length `win_length` and then padded
+            with zeros to match `n_fft`.  
 
-                If unspecified, defaults to `win_length = n_fft`.
-            window: (string, tuple, number, function, or np.ndarray)
-                - a window specification (string, tuple, or number);
-                    see `scipy.signal.get_window`
-                - a window function, such as `scipy.signal.windows.hann`
-                - a vector or array of length `n_fft`
-            center: (boolean)
-                - If `True`, the signal `y` is padded so that frame
-                    `t` is centered at `y[t * hop_length]`.
-                - If `False`, then frame `t` begins at `y[t * hop_length]`
-            pad_mode: (string) If `center=True`, the padding mode to use
-            at the edges of the signal. By default, STFT uses zero padding.
+            If unspecified, defaults to `win_length = n_fft`.
+        window: (string, tuple, number, function, or np.ndarray)
+            - a window specification (string, tuple, or number);
+                see `scipy.signal.get_window`
+            - a window function, such as `scipy.signal.windows.hann`
+            - a vector or array of length `n_fft`
+        center: (boolean)
+            - If `True`, the signal `y` is padded so that frame
+                `t` is centered at `y[t * hop_length]`.
+            - If `False`, then frame `t` begins at `y[t * hop_length]`
+        pad_mode: (string) If `center=True`, the padding mode to use
+        at the edges of the signal. By default, STFT uses zero padding.
 
-        Returns:
-            S_out: (np.ndarray)
-                - If `S` is provided as input, then `S_out == S`
-                - Else, `S_out = |stft(y, ...)|**power`
-            n_fft: (int)
-                - If `S` is provided, then `n_fft` is inferred from `S`
-                - Else, copied from input
+    Returns:
+        S_out: (np.ndarray)
+            - If `S` is provided as input, then `S_out == S`
+            - Else, `S_out = |stft(y, ...)|**power`
+        n_fft: (int)
+            - If `S` is provided, then `n_fft` is inferred from `S`
+            - Else, copied from input
     """
 
     if S is not None:
