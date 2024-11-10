@@ -27,6 +27,7 @@ from ._spectrum import (
     power_to_db,
     spectrogram,
     stft,
+    fft_frequencies
 )
 from ._statistical import (
     average_power,
@@ -93,6 +94,7 @@ __all__ = [
     "power_to_db",
     "spectrogram",
     "stft",
+    "fft_frequencies",
     "average_power",
     "central_moments",
     "crest_factor",
