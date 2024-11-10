@@ -672,3 +672,28 @@ def db_to_amplitude(
         db_to_amplitude(S_db) ~= 10.0**(0.5 * S_db/10 + log10(ref))
     """
     return db_to_power(S_db, ref=ref ** 2) ** 0.5
+
+
+
+def fft_frequencies(
+    sr: float = 22050, 
+    n_fft: int = 2048
+) -> np.ndarray:
+  """This is an alternative implementation of `np.fft.fftfreq`
+  with a predefined window length and the sample spacing calculated as
+  1 / sampling rate.
+
+  Args:
+      sr: Signal sampling rate as integer.
+      n_fft: FFT window size as integer.
+
+  Returns:
+      np.ndarray: Frequencies ``(0, sr/n_fft, 2*sr/n_fft, ..., sr/2)``
+
+  Examples:
+    >>> fft_frequencies(sr=22050, n_fft=16)
+    array([     0.,   1400.17,   2800.24,   4200.83,    
+            5600.89,   7000.03,   8400.48,   9800.92,   11200.38    ])
+
+  """
+  return np.fft.rfftfreq(n=n_fft, d=1.0 / sr)
