@@ -50,7 +50,7 @@ def rolling_window_df(
 
 
 def sliding_window_df(df: pd.DataFrame, window_size: int, overlap: int) -> List[pd.DataFrame]:
-    """Generate windowed DataFrames based on the specified
+    """Generates windowed DataFrames based on the specified
     window size and overlap.
 
     Args:
@@ -127,7 +127,11 @@ def windowing_df(
         return "Invalid mode. Use 'dict' or 'df' as mode."
 
 
-def frame_signal(array: np.ndarray, frame_length: int, hop_length: int) -> np.ndarray:
+def frame_signal(
+    array: np.ndarray,
+    frame_length: int,
+    hop_length: int
+) -> np.ndarray:
     """Distinguishes a signal into overlapping frames.
 
     Args:
@@ -152,8 +156,11 @@ def frame_signal(array: np.ndarray, frame_length: int, hop_length: int) -> np.nd
     return frames
 
 
-def create_chunks(array: np.ndarray, chunk_length: int) -> List[np.ndarray]:
-    """
+def create_chunks(
+    array: np.ndarray,
+    chunk_length: int
+) -> List[np.ndarray]:
+    """ Creates chunks of a given length from a numpy array.
 
     Args:
         array:
