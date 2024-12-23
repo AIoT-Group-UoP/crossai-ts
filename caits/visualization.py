@@ -102,14 +102,17 @@ def plot_signal(
         sig: The input signal as a 2D numpy array (timesteps, channels).
         sr: The sampling rate of the signal. Defaults to 44100.
         mode: Plot mode - "samples" or "time". Defaults to "samples".
-        name: Name of the signal. Defaults to "Signal".
+        title: Name of the signal. Defaults to "Signal".
         channels: Channel names, applicable for multichannel signals
-                    or a single label.
+            or a single label.
         figsize: Figure size in inches. Defaults to (10, 4).
         events: List of event tuples (start, end, class). Start and end are in
-                samples. If mode="time" and sr is provided, they will be converted to time units.
-        class_names: List of class names corresponding to the class indices in events.
-        return_mode: Whether to return the plot in the function. Defaults to True.
+            samples. If mode="time" and sr is provided, they will be
+            converted to time units.
+        class_names: List of class names corresponding to the class indices
+            in events.
+        return_mode: Whether to return the plot in the function. Defaults to
+            True.
 
     Returns:
         plt.Figure: The figure object containing the plot.
@@ -190,8 +193,7 @@ def export_fig(
     fig_extension: str = "png",
     resolution: Union[float, str] = "figure",
 ) -> None:
-    """
-    Exports a matplotlib figure object by saving, showing, or doing both.
+    """Exports a matplotlib figure object by saving, showing, or doing both.
 
     Args:
         fig_object: The matplotlib figure object to export.
