@@ -17,8 +17,8 @@ def plot_prediction_probabilities(
     events: Optional[List[Tuple[float, float, int]]] = None,
     title: Optional[str] = "Prediction Probabilities Across Windows",
 ) -> plt.Figure:
-    """Plots prediction probabilities from window instances, as horizontal lines for each class,
-    optionally highlighting events.
+    """Plots prediction probabilities from window instances, as horizontal
+    lines for each class, optionally highlighting events.
 
     This function is designed to visualize the probabilities output from a
     sliding window classifier. It supports both sample-based and time-based
@@ -251,7 +251,8 @@ def plot_spectrogram(
     log: Optional[str] = None,
     plot_title: str = "Spectrogram",
 ) -> None:
-    """Plots the spectrogram.
+    """Plots the spectrogram of a signal based on the sample freqiences and
+    the time segment.
 
     Args:
         f: The array of sample frequencies in np.ndarray.
@@ -284,11 +285,15 @@ def plot_spectrogram(
     plt.show()
 
 
-def plot_simple_spectrogram(spectrogram: np.ndarray, title: str = "Spectrogram") -> None:
+def plot_simple_spectrogram(
+    spectrogram: np.ndarray,
+    title: str = "Spectrogram"
+) -> None:
     """Simple function that plots a Spectrogram.
 
     Args:
         spectrogram: The array of the spectrogram in 2D np.ndarray.
+        title: The title of the plot. Defaults to "Spectrogram".
 
     Returns:
 
