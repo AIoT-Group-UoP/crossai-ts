@@ -2,13 +2,13 @@ from typing import List, Union
 
 import numpy as np
 from scipy.ndimage import gaussian_filter, median_filter
-from scipy.signal import butter, filtfilt, medfilt, sosfilt, sosfilt_zi, sosfiltfilt
+from scipy.signal import (butter, filtfilt, medfilt, sosfilt, sosfilt_zi,
+                          sosfiltfilt)
 
 
 def filter_median_simple(
     array: np.ndarray, 
-    kernel_size: 
-    int = None
+    kernel_size: int = None
 ) -> np.ndarray:
     """Performs a median filter on an N-dimensional array.
 
