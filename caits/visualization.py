@@ -189,6 +189,7 @@ def export_fig(
     fig_id: str,
     save_path: Optional[str] = None,
     export: str = "save",
+    create_dir: bool = True,
     tight_layout: bool = True,
     fig_extension: str = "png",
     resolution: Union[float, str] = "figure",
@@ -203,6 +204,8 @@ def export_fig(
                    includes "save".
         export: Determines the action to perform - "save", "show", or "both".
                 Defaults to "save".
+        create_dir: Whether to create the directory if it does not exist.
+                    Defaults to True.
         tight_layout: Whether to apply tight layout adjustment before
                       exporting. Defaults to True.
         fig_extension: Format of the figure file if saving. Defaults to "png".
@@ -220,15 +223,20 @@ def export_fig(
         fig_object.tight_layout()
 
     if "save" in export and save_path:
-        if not os.path.isdir(save_path):
+        if create_dir and not os.path.exists(save_path):
+            os.makedirs(save_path, exist_ok=True)
+        elif not create_dir and not os.path.isdir(save_path):
             raise FileNotFoundError(
                 f"Provided path '{save_path}' does not \
                                       exist or is not a directory."
             )
+        else:
+            raise ValueError("Invalid save path provided.")
 
         file_path = os.path.join(save_path, f"{fig_id}.{fig_extension}")
         dpi = resolution if isinstance(resolution, float) else None
-        fig_object.savefig(file_path, format=fig_extension, bbox_inches="tight", dpi=dpi)
+        fig_object.savefig(file_path, format=fig_extension,
+                           bbox_inches="tight", dpi=dpi)
         print(f"Figure saved to {file_path}")
 
     if "show" in export:
