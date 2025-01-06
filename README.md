@@ -17,3 +17,8 @@ If you install the library for first time, run:
 ```text
 pip install crossai-ts@git+https://github.com/AIoT-Group-UoP/crossai-ts.git
 ```
+
+In case you want to update the library, run:
+```text
+pip uninstall crossai-ts
+pip install crossai-ts@git+https://github.com/AIoT-Group-UoP/crossai-ts.git
