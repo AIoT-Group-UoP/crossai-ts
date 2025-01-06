@@ -2,9 +2,9 @@
 
 ## Introduction
 
-CrossAI Time Series is a Python library that provides a set of tools for uni- 
-or multi-axes time series analysis and pattern recognition with respect to 
-time-series data. The library is built on top of the 
+CrossAI Time Series (CrossAI-TS) is a Python library that provides a set of 
+tools for uni- or multi-axes time series analysis and pattern recognition with 
+respect to time-series data. The library is built on top of the 
 [librosa](https://librosa.org/), [pandas](https://pandas.pydata.org/), 
 [numpy](https://numpy.org/),
 [sci-kit learn](https://scikit-learn.org/stable/), and
