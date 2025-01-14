@@ -9,7 +9,10 @@ from ..properties import rolling_rms, rolling_zcr
 from ._spectrum import mfcc
 
 
-def std_value(array: np.ndarray, axis: int = 0) -> float:
+def std_value(
+    array: np.ndarray,
+    axis: int = 0
+) -> float:
     """Computes the standard deviation of an audio signal.
 
     Args:
@@ -23,7 +26,10 @@ def std_value(array: np.ndarray, axis: int = 0) -> float:
     return np.std(array, axis=axis)
 
 
-def variance_value(array: np.ndarray, axis: int = 0) -> float:
+def variance_value(
+    array: np.ndarray,
+    axis: int = 0
+) -> float:
     """Computes the variance of an audio signal.
 
     Args:
@@ -37,7 +43,10 @@ def variance_value(array: np.ndarray, axis: int = 0) -> float:
     return np.var(array, axis=axis)
 
 
-def mean_value(array: np.ndarray, axis: int = 0) -> float:
+def mean_value(
+    array: np.ndarray,
+    axis: int = 0
+) -> float:
     """Computes the mean of an audio signal.
 
     Args:
@@ -51,7 +60,10 @@ def mean_value(array: np.ndarray, axis: int = 0) -> float:
     return np.mean(array, axis=axis)
 
 
-def median_value(array: np.ndarray, axis: int = 0) -> float:
+def median_value(
+    array: np.ndarray,
+    axis: int = 0
+) -> float:
     """Computes the median of an audio signal.
 
     Args:
@@ -65,7 +77,10 @@ def median_value(array: np.ndarray, axis: int = 0) -> float:
     return np.median(array, axis=axis)
 
 
-def max_value(array: np.ndarray, axis: int = 0) -> float:
+def max_value(
+    array: np.ndarray,
+    axis: int = 0
+) -> float:
     """Computes the maximum value of an audio signal.
 
     Args:
@@ -79,7 +94,10 @@ def max_value(array: np.ndarray, axis: int = 0) -> float:
     return np.max(array, axis=axis)
 
 
-def min_value(array: np.ndarray, axis: int = 0) -> float:
+def min_value(
+    array: np.ndarray,
+    axis: int = 0
+) -> float:
     """Computes the minimum value of a signal.
 
     Args:
@@ -265,10 +283,10 @@ def zcr_mean(
 
 
 def zcr_min(
-        signal: np.ndarray,
-        frame_length: int,
-        hop_length: int,
-        **kwargs: Any
+    signal: np.ndarray,
+    frame_length: int,
+    hop_length: int,
+    **kwargs: Any
 ) -> float:
     """Computes the minimum of the rolling zero crossing rate of a signal.
 
