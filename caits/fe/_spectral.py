@@ -380,7 +380,10 @@ def spectral_values(
     array: np.ndarray,
     fs: int,
     perc: float = 0.95,
-    p: int = 2
+    nperseg_th: int = 900,
+    noverlap_th: int = 600,
+    b1_th: int = 0,
+    b2_th: int = 8000
 ) -> Dict[str, float]:
     """Computes the underlying spectral values of a signal.
 
@@ -388,7 +391,12 @@ def spectral_values(
         array: The input signal as a numpy.ndarray.
         fs: The sampling frequency of the signal.
         perc: The percentage of the total spectral energy.
-        p: The exponent of the Minkowski distance.
+        nperseg_th: The theoretical length of each segment for the Welch
+                    method. Default: 900.
+        noverlap_th: The theoretical number of points to overlap between
+                     segments. Default: 600.
+        b1_th: The lower bound of the frequency range.
+        b2_th: The upper bound of the frequency range.
 
     Returns:
         dict: A dictionary containing the spectral centroid, spectral rolloff,
@@ -402,8 +410,9 @@ def spectral_values(
         "spectral_skewness": spectral_skewness(array, fs),
         "spectral_kurtosis": spectral_kurtosis(array, fs),
         "spectral_bandwidth": spectral_bandwidth(array, fs),
-        "spectral_flatness": spectral_flatness(array, fs),
-        "spectral_std": spectral_std(array, fs),
-        "spectral_slope": spectral_slope(array, fs),
-        "spectral_decrease": spectral_decrease(array, fs),
+        "spectral_flatness": spectral_flatness(array, fs, nperseg_th,
+                                               noverlap_th),
+        "spectral_std": spectral_std(array, fs, nperseg_th, noverlap_th),
+        "spectral_slope": spectral_slope(array, fs, b1_th, b2_th),
+        "spectral_decrease": spectral_decrease(array, fs, b1_th, b2_th),
     }
