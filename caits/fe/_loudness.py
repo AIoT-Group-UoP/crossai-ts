@@ -5,7 +5,10 @@ import numpy as np
 from ._statistical import rms_value
 
 
-def dBFS(array: np.ndarray, sample_width: int) -> float:
+def dBFS(
+    array: np.ndarray,
+    sample_width: int
+) -> float:
     """Calculates the decibels relative to full scale (dBFS) of an audio.
 
     Args:
@@ -37,7 +40,11 @@ def max_possible_amplitude(sample_width: int) -> float:
     return max_possible_val / 2
 
 
-def ratio_to_db(ratio, val2=None, using_amplitude=True) -> float:
+def ratio_to_db(
+    ratio,
+    val2=None,
+    using_amplitude=True
+) -> float:
     """Converts the input float to db, which represents the equivalent
         to the ratio in power represented by the multiplier passed in.
 
