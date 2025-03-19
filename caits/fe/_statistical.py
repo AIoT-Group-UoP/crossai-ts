@@ -8,6 +8,7 @@ from scipy.stats import kurtosis, moment, skew
 from ..properties import rolling_rms, rolling_zcr
 from ._spectrum import mfcc
 
+# --- STATISTICAL ---
 
 def std_value(
     array: np.ndarray,
@@ -111,19 +112,23 @@ def min_value(
     return np.min(array, axis=axis)
 
 
-def kurtosis_value(array: np.ndarray) -> float:
+def kurtosis_value(
+    array: np.ndarray,
+    axis: int = 0
+) -> float:
     """Computes the kurtosis of an audio signal.
 
     Args:
         array: The input signal as a numpy.ndarray.
+        axis: The axis along which to compute the kurtosis. Defaults to 0.
 
     Returns:
         float: The kurtosis of the audio signal.
     """
-    return kurtosis(array)
+    return kurtosis(array, axis=axis)
 
 
-def sample_skewness(array) -> float:
+def sample_skewness(array: np.ndarray) -> float:
     """
     Calculate the sample skewness of an array using scipy.
 
@@ -146,6 +151,77 @@ def sample_skewness(array) -> float:
 
     return skew(array, bias=False)
 
+
+def signal_length(
+    array: np.ndarray,
+    fs: int,
+    time_mode: str = "time"
+) -> float:
+    """Computes the length of a signal in seconds.
+
+    Args:
+        array: The input signal as a numpy.ndarray.
+        fs: The sampling frequency of the signal.
+        time_mode: The export format. Can be "time" or "samples". Defaults to
+            "time".
+
+    Returns:
+        float: The length of the signal in seconds.
+    """
+    if time_mode == "time":
+        return len(array) / fs
+    elif time_mode == "samples":
+        return len(array)
+    else:
+        raise ValueError(f"Unsupported export={time_mode}")
+
+
+def central_moments(
+    array: np.ndarray,
+    export: str = "array"
+) -> Union[np.ndarray, Dict[str, float]]:
+    """
+    Calculate the 0th, 1st, 2nd, 3rd, and 4th central moments of an array using
+    scipy.
+
+    Args:
+        array: The input signal as a numpy.ndarray.
+        export: The export format. Can be "array" or "dict". Defaults to
+            "array".
+
+    Returns:
+        Union[np.ndarray, dict]: The central moments of the input array.
+
+    Raises:
+        ValueError: If the input array is empty.
+
+    Examples:
+        >>> arr = np.array([1, 2, 3, 4, 5])
+        >>> central_moments(arr)
+        (1.0, 0.0, 2.5, 0.0, 26.0)
+    """
+    if len(array) == 0:
+        raise ValueError("Input array is empty")
+
+    moment0 = moment(array, moment=0)
+    moment1 = moment(array, moment=1)
+    moment2 = moment(array, moment=2)
+    moment3 = moment(array, moment=3)
+    moment4 = moment(array, moment=4)
+    if export == "array":
+        return np.array([moment0, moment1, moment2, moment3, moment4])
+    elif export == "dict":
+        return {
+            "moment0": moment0,
+            "moment1": moment1,
+            "moment2": moment2,
+            "moment3": moment3,
+            "moment4": moment4
+        }
+    else:
+        raise ValueError(f"Unsupported export={export}")
+
+# --- ENERGY ---
 
 def rms_value(array: np.ndarray) -> float:
     """Computes the RMS Power value of a signal.
@@ -304,93 +380,6 @@ def zcr_min(
     return np.min(zcr_values)
 
 
-def dominant_frequency(array: np.ndarray, fs: int) -> float:
-    """Computes the dominant frequency of a signal.
-
-    Args:
-        array: The input signal as a numpy.ndarray.
-        fs: The sampling frequency of the signal.
-
-    Returns:
-        float: The dominant frequency of the signal.
-    """
-
-    nperseg = array.shape[0]
-    freqs, psd = scipy.signal.welch(x=array, fs=fs, nperseg=nperseg)
-
-    return freqs[np.argmax(psd)]
-
-
-def central_moments(
-    array: np.ndarray,
-    export: str = "array"
-) -> Union[np.ndarray, Dict[str, float]]:
-    """
-    Calculate the 0th, 1st, 2nd, 3rd, and 4th central moments of an array using
-    scipy.
-
-    Args:
-        array: The input signal as a numpy.ndarray.
-        export: The export format. Can be "array" or "dict". Defaults to
-            "array".
-
-    Returns:
-        Union[np.ndarray, dict]: The central moments of the input array.
-
-    Raises:
-        ValueError: If the input array is empty.
-
-    Examples:
-        >>> arr = np.array([1, 2, 3, 4, 5])
-        >>> central_moments(arr)
-        (1.0, 0.0, 2.5, 0.0, 26.0)
-    """
-    if len(array) == 0:
-        raise ValueError("Input array is empty")
-
-    moment0 = moment(array, moment=0)
-    moment1 = moment(array, moment=1)
-    moment2 = moment(array, moment=2)
-    moment3 = moment(array, moment=3)
-    moment4 = moment(array, moment=4)
-    if export == "array":
-        return np.array([moment0, moment1, moment2, moment3, moment4])
-    elif export == "dict":
-        return {
-            "moment0": moment0,
-            "moment1": moment1,
-            "moment2": moment2,
-            "moment3": moment3,
-            "moment4": moment4
-        }
-    else:
-        raise ValueError(f"Unsupported export={export}")
-
-
-def signal_length(
-    array: np.ndarray,
-    fs: int,
-    time_mode: str = "time"
-) -> float:
-    """Computes the length of a signal in seconds.
-
-    Args:
-        array: The input signal as a numpy.ndarray.
-        fs: The sampling frequency of the signal.
-        time_mode: The export format. Can be "time" or "samples". Defaults to
-            "time".
-
-    Returns:
-        float: The length of the signal in seconds.
-    """
-    if time_mode == "time":
-        return len(array) / fs
-    elif time_mode == "samples":
-        return len(array)
-    else:
-        raise ValueError(f"Unsupported export={time_mode}")
-
-
 def energy(array: np.ndarray) -> float:
     """Computes the energy of a signal:
     https://dsp.stackexchange.com/questions/3377/calculating-the-total-energy-of-a-signal
@@ -490,6 +479,24 @@ def envelope_energy_peak_detection(
         return dict(zip(names, n_peaks))
     else:
         raise ValueError(f"Unsupported export={export}")
+
+# --- SPECTRAL ---
+
+def dominant_frequency(array: np.ndarray, fs: int) -> float:
+    """Computes the dominant frequency of a signal.
+
+    Args:
+        array: The input signal as a numpy.ndarray.
+        fs: The sampling frequency of the signal.
+
+    Returns:
+        float: The dominant frequency of the signal.
+    """
+
+    nperseg = array.shape[0]
+    freqs, psd = scipy.signal.welch(x=array, fs=fs, nperseg=nperseg)
+
+    return freqs[np.argmax(psd)]
 
 
 def mfcc_mean(
