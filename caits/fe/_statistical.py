@@ -128,12 +128,16 @@ def kurtosis_value(
     return kurtosis(array, axis=axis)
 
 
-def sample_skewness(array: np.ndarray) -> float:
+def sample_skewness(
+    array: np.ndarray,
+    axis: int = 0
+) -> float:
     """
     Calculate the sample skewness of an array using scipy.
 
     Args:
         array (numpy.ndarray): Input array.
+        axis (int): Axis along which to compute the skewness. Defaults to 0.
 
     Returns:
         float: Sample skewness of the array.
@@ -149,19 +153,19 @@ def sample_skewness(array: np.ndarray) -> float:
     if len(array) < 3:
         raise ValueError("Input array must have at least 3 elements")
 
-    return skew(array, bias=False)
+    return skew(array, axis=axis, bias=False)
 
 
 def signal_length(
     array: np.ndarray,
-    fs: int,
+    fs: float,
     time_mode: str = "time"
 ) -> float:
     """Computes the length of a signal in seconds.
 
     Args:
         array: The input signal as a numpy.ndarray.
-        fs: The sampling frequency of the signal.
+        fs: The sampling frequency of the signal as a float.
         time_mode: The export format. Can be "time" or "samples". Defaults to
             "time".
 
