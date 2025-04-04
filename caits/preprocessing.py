@@ -60,7 +60,6 @@ def resample_signal(
     return resampled_buffer
 
 
-# TODO: Make it also work for (n_samples, ) arrays for robustness
 def resample_2d(
     audio_data: np.ndarray, 
     native_sr: int, 
