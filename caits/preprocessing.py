@@ -81,24 +81,22 @@ def resample_2d(
         ValueError: If the input `audio_data` is not a 2-dimensional NumPy array.
     """
 
+    # If audio data is 1D (n_samples, ), make it 2D (n_samples, 1)
+    if audio_data.ndim == 1:
+        audio_data = np.expand_dims(audio_data, axis=-1)
+
     # Check if audio data is 2D
-    if audio_data.ndim != 2:
-        raise ValueError("Input audio data must be a 2-dimensional NumPy array " "(n_samples, n_channels).")
+    elif audio_data.ndim != 2:
+        raise ValueError(
+            "Input audio data must be a 1-dimensional or 2-dimensional NumPy array " "(n_samples, n_channels).")
 
-    # Initialize a list to hold resampled channels
-    resampled_channels = []
-
-    # Iterate through each channel in the audio data
-    for i in range(audio_data.shape[1]):
-        channel_data = audio_data[:, i]
-        resampled_channel_data = resample_signal(channel_data, native_sr, target_sr, dtype)
-
-        resampled_channels.append(resampled_channel_data)
-
-    # Stack the resampled channels back into a 2D array
-    resampled_audio_data = np.stack(resampled_channels, axis=1)
-
-    return resampled_audio_data
+    return np.apply_along_axis(
+        func1d=resample_signal,
+        axis=0,
+        arr=audio_data,
+        native_sr=native_sr,
+        target_sr=target_sr
+    )
 
 
 def trim_signal(
