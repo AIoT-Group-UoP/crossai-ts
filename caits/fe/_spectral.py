@@ -7,7 +7,7 @@ from scipy.integrate import simps
 
 def spectral_centroid(
     array: np.ndarray,
-    fs: int
+    fs: Union[int, float],
 ) -> float:
     """Computes the spectral centroid of a signal.
 
@@ -25,7 +25,7 @@ def spectral_centroid(
 
 def spectral_rolloff(
     array: np.ndarray,
-    fs: int,
+    fs: Union[int, float],
     perc: float = 0.95
 ) -> float:
     """Computes the spectral rolloff of a signal, meaning the frequency below
@@ -47,7 +47,7 @@ def spectral_rolloff(
 
 def spectral_spread(
     array: np.ndarray,
-    fs: int
+    fs: Union[int, float]
 ) -> float:
     """Computes the spectral spread of a signal, meaning the weighted
     standard deviation of frequencies wrt FFT value.
@@ -62,12 +62,13 @@ def spectral_spread(
     magnitudes, freqs, sum_mag = underlying_spectral(array, fs)
     spec_centroid = spectral_centroid(array, fs)
 
-    return np.sqrt(np.sum(((freqs - spec_centroid) ** 2) * magnitudes) / sum_mag)
+    return np.sqrt(np.sum(((freqs - spec_centroid) ** 2) * magnitudes)
+                   / sum_mag)
 
 
 def spectral_skewness(
     array: np.ndarray,
-    fs: int
+    fs: Union[int, float]
 ) -> float:
     """Computes the spectral skewness of a signal, meaning the distribution
     of the spectrum around its mean.
@@ -83,12 +84,13 @@ def spectral_skewness(
     spec_centroid = spectral_centroid(array, fs)
     spec_spread = spectral_spread(array, fs)
 
-    return np.sum(((freqs - spec_centroid) ** 3) * magnitudes) / ((spec_spread**3) * sum_mag)
+    return (np.sum(((freqs - spec_centroid) ** 3) * magnitudes) /
+            ((spec_spread**3) * sum_mag))
 
 
 def spectral_kurtosis(
     array: np.ndarray,
-    fs: int
+    fs: Union[int, float]
 ) -> float:
     """Computes the spectral kurtosis of a signal, meaning the distribution
     of the spectrum around its mean.
@@ -104,19 +106,21 @@ def spectral_kurtosis(
     spec_centroid = spectral_centroid(array, fs)
     spec_spread = spectral_spread(array, fs)
 
-    return np.sum(((freqs - spec_centroid) ** 4) * magnitudes) / ((spec_spread**4) * sum_mag)
+    return (np.sum(((freqs - spec_centroid) ** 4) * magnitudes)
+            / ((spec_spread**4) * sum_mag))
 
 
 def underlying_spectral(
     array: np.ndarray,
-    fs: int
+    fs: Union[int, float],
 ) -> Tuple[np.ndarray, np.ndarray, float]:
     """Calculates the magnitudes and frequencies of the positive side of the
     Fourier Transform of a signal, along with the total sum of the magnitudes.
 
     Args:
         array (np.ndarray): The input signal.
-        fs (int): Sampling frequency of the signal.
+        fs (int): Sampling frequency of the signal in Hz as an integer or
+            float.
 
     Returns:
         tuple[np.ndarray, np.ndarray, float]: A tuple containing:
@@ -142,7 +146,7 @@ def underlying_spectral(
 
 def spectral_bandwidth(
     array: np.ndarray,
-    fs: int
+    fs: Union[int, float]
 ) -> float:
     """Calculates the spectral bandwidth of a given signal using its p
     ower spectrum.
@@ -197,7 +201,7 @@ def spectral_bandwidth(
 
 def spectral_flatness(
     array: np.ndarray,
-    fs: int,
+    fs: Union[int, float],
     nperseg_th: int = 900,
     noverlap_th: int = 600
 ) -> float:
@@ -224,7 +228,7 @@ def spectral_flatness(
 
 def spectral_std(
     array: np.ndarray,
-    fs: int,
+    fs: Union[int, float],
     nperseg_th: int = 900,
     noverlap_th: int = 600
 ) -> float:
@@ -248,7 +252,7 @@ def spectral_std(
 
 def spectral_slope(
     array: np.ndarray,
-    fs: int,
+    fs: Union[int, float],
     b1_th: int = 0,
     b2_th: int = 8000
 ) -> float:
@@ -280,7 +284,7 @@ def spectral_slope(
 
 def spectral_decrease(
     array: np.ndarray,
-    fs: int,
+    fs: Union[int, float],
     b1_th: int = 0,
     b2_th: int = 8000
 ) -> float:
@@ -313,7 +317,7 @@ def spectral_decrease(
 
 def power_spectral_density(
     array: np.ndarray,
-    fs: int,
+    fs: Union[int, float],
     nperseg_th: int = 900,
     noverlap_th: int = 600,
     freq_cuts: List[Tuple[int, int]] = [
@@ -378,7 +382,7 @@ def power_spectral_density(
 
 def spectral_values(
     array: np.ndarray,
-    fs: int,
+    fs: Union[int, float],
     perc: float = 0.95,
     nperseg_th: int = 900,
     noverlap_th: int = 600,
