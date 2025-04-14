@@ -428,7 +428,7 @@ def crest_factor(array: np.ndarray) -> float:
 
 def envelope_energy_peak_detection(
     array: np.ndarray,
-    fs: int,
+    fs: Union[int, float],
     start: int = 50,
     stop: int = 1000,
     freq_step: int = 50,
@@ -440,7 +440,7 @@ def envelope_energy_peak_detection(
 
     Args:
         array: The input time-domain signal.
-        fs: The sampling frequency of the signal (Hz).
+        fs: The sampling frequency of the signal (Hz) as float or integer.
         start: The lower frequency bound of the first band (Hz). Default: 50.
         stop: The upper frequency bound of the last band (Hz). Default: 1000.
         freq_step: The width of each frequency band (Hz). Default: 50.
