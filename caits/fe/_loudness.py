@@ -12,11 +12,11 @@ def dBFS(
     """Calculates the decibels relative to full scale (dBFS) of an audio.
 
     Args:
-        array:
-        sample_width:
+        array: The audio data (signal) as a numpy array.
+        sample_width: The sample width as an integer.
 
     Returns:
-
+        float: The decibels relative to full scale (dBFS) of an audio signal.
     """
     rms = rms_value(array)
     if not rms:
@@ -31,7 +31,7 @@ def max_possible_amplitude(sample_width: int) -> float:
         sample_width: The sample width as an integer.
 
     Returns:
-
+        float: The maximum possible amplitude of the signal.
     """
     bits = sample_width * 8
     max_possible_val = 2**bits
