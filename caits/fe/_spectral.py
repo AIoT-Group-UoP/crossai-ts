@@ -208,13 +208,15 @@ def spectral_flatness(
     """Calculates the spectral flatness of a signal.
 
     Args:
-        array:
-        fs:
-        nperseg_th:
-        noverlap_th:
+        array: The input signal as a numpy.ndarray.
+        fs: The sampling frequency of the signal as an integer or float.
+        nperseg_th: The theoretical length of each segment for the Welch
+            method.
+        noverlap_th: The theoretical number of points to overlap between
+            segments.
 
     Returns:
-        float:
+        float: The spectral flatness of the signal.
     """
     nperseg = min(nperseg_th, len(array))
     noverlap = min(noverlap_th, int(nperseg / 2))
@@ -235,13 +237,15 @@ def spectral_std(
     """Calculates the standard deviation of the power spectral density (PSD)
 
     Args:
-        array:
-        fs:
-        nperseg_th:
-        noverlap_th:
+        array: The input signal as a numpy.ndarray.
+        fs: The sampling frequency of the signal as an integer or float.
+        nperseg_th: The theoretical length of each segment for the Welch
+            method.
+        noverlap_th: The theoretical number of points to overlap between
+            segments.
 
     Returns:
-
+        float: The standard deviation of the PSD of the signal.
     """
     nperseg = min(nperseg_th, len(array))
     noverlap = min(noverlap_th, int(nperseg / 2))
@@ -256,16 +260,16 @@ def spectral_slope(
     b1_th: int = 0,
     b2_th: int = 8000
 ) -> float:
-    """
+    """Calculates the spectral slope of a signal.
 
     Args:
-        array:
-        fs:
-        b1_th:
-        b2_th:
+        array: The input signal as a numpy.ndarray.
+        fs: The sampling frequency of the signal as an integer or float.
+        b1_th: The lower bound of the frequency range.
+        b2_th: The upper bound of the frequency range.
 
     Returns:
-
+        float: The spectral slope of the signal.
     """
     b1 = b1_th
     b2 = b2_th
@@ -288,16 +292,16 @@ def spectral_decrease(
     b1_th: int = 0,
     b2_th: int = 8000
 ) -> float:
-    """
+    """Calculates the spectral decrease of a signal.
 
     Args:
-        array:
-        fs:
-        b1_th:
-        b2_th:
+        array: The input signal as a numpy.ndarray.
+        fs: The sampling frequency of the signal as an integer or float.
+        b1_th: The lower bound of the frequency range.
+        b2_th: The upper bound of the frequency range.
 
     Returns:
-
+        float: The spectral decrease of the signal.
     """
     b1 = b1_th
     b2 = b2_th
