@@ -334,6 +334,7 @@ def power_spectral_density(
         (2850, 2950),
         (3800, 3900),
     ],
+    axis: int = 0,
     export: str = "array",
 ) -> Union[np.ndarray, Dict[str, float]]:
     """Calculates the power spectral density (PSD) of a signal and returns
@@ -348,6 +349,8 @@ def power_spectral_density(
                      segments. Default: 600.
         freq_cuts: A list of tuples defining the frequency bands of interest.
                    Default: Predefined bands.
+        axis: Axis along which the periodogram is computed; the default is
+            over the first axis (i.e. ``axis=0``).
         export: The desired output format ("array" for NumPy array, "dict" for
                       dictionary). Default: "array".
 
@@ -364,7 +367,9 @@ def power_spectral_density(
     nperseg = min(nperseg_th, len(array))
     noverlap = min(noverlap_th, nperseg / 2)
 
-    freqs, psd = scipy.signal.welch(array, fs, nperseg=nperseg, noverlap=noverlap)
+    freqs, psd = scipy.signal.welch(
+        array, fs, nperseg=nperseg, noverlap=noverlap, axis=axis
+    )
     dx_freq = freqs[1] - freqs[0]
     total_power = simps(psd, dx=dx_freq)
 
