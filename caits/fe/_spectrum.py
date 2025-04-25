@@ -10,10 +10,13 @@ from numpy import fft
 
 from caits.core.numpy_typing import ArrayLike, DTypeLike
 
-from ..core._core_checks import dtype_c2r, dtype_r2c, is_positive_int, valid_audio
+from ..core._core_checks import (dtype_c2r, dtype_r2c, is_positive_int,
+                                 valid_audio)
 from ..core._core_fix import fix_length
-from ..core._core_typing import _ComplexLike_co, _PadModeSTFT, _ScalarOrSequence, _WindowSpec
-from ..core._core_window import frame, get_window, pad_center, tiny, window_sumsquare
+from ..core._core_typing import (_ComplexLike_co, _PadModeSTFT,
+                                 _ScalarOrSequence, _WindowSpec)
+from ..core._core_window import (frame, get_window, pad_center, tiny,
+                                 window_sumsquare)
 from .core_spectrum import __overlap_add, expand_to
 from .core_spectrum._utils import mel_filter
 
@@ -40,50 +43,64 @@ def melspectrogram(
     the mel basis by ``mel_f.dot(S)``.
 
     If a time-series input ``y, sr`` is provided, then its magnitude
-    spectrogram ``S`` is first computed, and then mapped onto the mel scale by
+    spectrogram ``S`` is first computed and then mapped onto the mel scale by
     ``mel_f.dot(S**power)``.
 
     By default, ``power=2`` operates on a power spectrum.
 
     Args:
         y: Audio time-series as a numpy array. Multi-channel is supported.
+
         sr: The sampling rate of ``y`` as an integer.
+
         S: Spectrogram input, optional. If provided, ``y`` and ``sr`` are
             ignored.
+
         n_fft: The length of the FFT window as an integer.
+
         hop_length: The number of samples as integer between successive frames.
+
         win_length: Each frame of audio is windowed by `window()`. The window
             must be an integer <= n_fft.  The window will be of length
             `win_length` and then padded with zeros to match ``n_fft``.
             If unspecified, defaults to ``win_length = n_fft``.
+
         window: string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
             - a window specification (string, tuple, or number);
               see `scipy.signal.get_window`
             - a window function, such as `scipy.signal.windows.hann`
             - a vector or array of length ``n_fft``
+
         center: Boolean value that indicates:
             - If `True`, the signal ``y`` is padded so that frame
               ``t`` is centered at ``y[t * hop_length]``.
             - If `False`, then frame ``t`` begins at ``y[t * hop_length]``
+
         pad_mode: If ``center=True``, the padding mode to use at the edges of
             the signal. By default, STFT uses zero padding.
+
         power: A float that indicates the exponent for the magnitude
             spectrogram, e.g., 1 for energy, 2 for power, etc.
+
         **kwargs: Additional keyword arguments for Mel filter bank parameters
             n_mels: Number of Mel bands to generate as an integer > 0.
+
             fmin: The lowest frequency (in Hz), as a float >= 0
 
             fmax: The highest frequency (in Hz) as a float >= 0. If `None`,
-                use ``fmax = sr / 2.0``
+                use ``fmax = sr /
+
             htk: A boolean that shows the use HTK formula instead of Slaney.
+
             norm: Can be None, 'slaney', or number
                 If 'slaney', divide the triangular mel weights by the width of
                 the mel band (area normalization).
                 If numeric, use `librosa.util.normalize` to normalize each
                 filter by to unit l_p norm. See `librosa.util.normalize` for a
-                full description of supported norm values (including `+-np.inf`).
-                Otherwise, leave all the triangles aiming for a peak value of
-                1.0.
+                full description of supported norm values (including
+                `+-np.inf`). Otherwise, leave all the triangles aiming for a
+                peak value of 1.0.
+
             dtype : np.dtype
                 The data type of the output basis.
                 By default, uses 32-bit (single-precision) floating point.
@@ -107,8 +124,10 @@ def melspectrogram(
     # Build a Mel filter
     mel_basis = mel_filter(sr=sr, n_fft=n_fft, **kwargs)
 
-    melspec: np.ndarray = np.einsum("...ft,mf->...mt", S, mel_basis,
-                                    optimize=True)
+    melspec: np.ndarray = np.einsum(
+        "...ft,mf->...mt", S, mel_basis, optimize=True
+    )
+
     return melspec
 
 
@@ -119,7 +138,7 @@ def power_to_db(
         amin: float = 1e-10,
         top_db: Optional[float] = 80.0,
 ) -> np.ndarray:
-    """ Converts a power spectrogram to decibel (dB) units.
+    """Converts a power spectrogram to decibel (dB) units.
 
     This computes the scaling ``10 * log10(S / ref)`` in a numerically
     stable way.
@@ -376,15 +395,17 @@ def spectrogram(
     """
 
     if S is not None:
-        # Infer n_fft from spectrogram shape, but only if it mismatches
+        # Infer n_fft from spectrogram's shape, but only if it mismatches
         if n_fft is None or n_fft // 2 + 1 != S.shape[-2]:
             n_fft = 2 * (S.shape[-2] - 1)
     else:
         # Otherwise, compute a magnitude spectrogram from input
         if n_fft is None:
-            raise ValueError(f"Unable to compute spectrogram with n_fft={n_fft}")
+            raise ValueError(f"Unable to compute spectrogram with "
+                             f"n_fft={n_fft}")
         if y is None:
-            raise ValueError("Input signal must be provided to compute a spectrogram")
+            raise ValueError("Input signal must be provided to compute a "
+                             "spectrogram")
         S = (
             np.abs(
                 stft(
@@ -447,7 +468,7 @@ def delta(
     """Computes the delta (derivative) of an input array using the
         Savitzky-Golay filter. The operation is applied along a
         specified axis, and the degree of smoothing and differentiation order
-        can be configured. The method checks for parameters validity before
+        can be configured. The method checks for parameters' validity before
         applying the transformation.
 
     The Savitzky-Golay filter is commonly used for smoothing and
@@ -456,14 +477,19 @@ def delta(
     Args:
         data: Input data as a numpy array. The array must have at least 1
             dimension.
+
         width: The length of the filter window must be an odd integer greater
             than or equal to 3. Defaults to 9.
+
         order: The order of the derivative to compute. Must be a positive
             integer. Defaults to 1.
+
         axis: The axis of the array along which to smooth and differentiate.
             Defaults to -1.
+
         mode: The mode of the symmetric boundary extension, where 'interp'
             uses an interpolation mechanism. Defaults to "interp".
+
         **kwargs: Additional keyword arguments passed to the
             `scipy.signal.savgol_filter` function.
 
@@ -471,8 +497,10 @@ def delta(
         np.ndarray: The filtered and smoothed derivative of the input array.
 
     Raises:
-        ValueError: If the mode is "interp" and the window width exceeds the size of the specified axis.
-        ValueError: If the window width is less than 3 or is not an odd integer.
+        ValueError: If the mode is "interp" and the window width exceeds the
+            size of the specified axis.
+        ValueError: If the window width is less than 3 or is not an odd
+            integer.
         ValueError: If the order is not a positive integer.
     """
     data = np.atleast_1d(data)
