@@ -488,7 +488,10 @@ def delta(
 
     kwargs.pop("deriv", None)
     kwargs.setdefault("polyorder", order)
-    result: np.ndarray = scipy.signal.savgol_filter(data, width, deriv=order, axis=axis, mode=mode, **kwargs)
+    result: np.ndarray = scipy.signal.savgol_filter(
+        data, width, deriv=order, axis=axis, mode=mode, **kwargs
+    )
+
     return result
 
 
