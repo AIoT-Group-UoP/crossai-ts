@@ -25,19 +25,16 @@ def times_like(
             signal.
         hop_length: An integer (scalar) > 0 corresponding to the number of
             samples between successive frames
-    n_fft : None or int > 0 [scalar]
-        Optional: length of the FFT window.
-        If given, time conversion will include an offset of ``n_fft // 2``
-        to counteract windowing effects when using a non-centered STFT.
-    axis : int [scalar]
-        The axis representing the time axis of X.
-        By default, the last axis (-1) is taken.
+        n_fft: Can be None or integer (scalar) > 0
+            Optional: length of the FFT window.
+            If given, time conversion will include an offset of ``n_fft // 2``
+            to counteract windowing effects when using a non-centered STFT.
+        axis: An integer (scalar) which indicates the axis representing the time
+            axis of ``X``. By default, the last axis ``(-1)`` is taken.
 
-    Returns
-    -------
-    times : np.ndarray [shape=(n,)]
-        ndarray of times (in seconds) corresponding to each frame of X.
-
+    Returns:
+        A numpy array in [shape=(n,)] that corresponds to the times (in
+        seconds) corresponding to each frame of X.
     """
     samples = samples_like(X, hop_length=hop_length, n_fft=n_fft, axis=axis)
     time: np.ndarray = samples_to_time(samples, sr=sr)
@@ -56,28 +53,22 @@ def samples_like(
     feature matrix.
 
     Args:
-    X: A numpy array or scalar
-        - If ndarray, X is a feature matrix, e.g. STFT, chromagram, or mel spectrogram.
+        X: A numpy array or scalar
+        - If ndarray, X is a feature matrix, e.g., STFT, chromagram, or mel
+            spectrogram.
         - If scalar, X represents the number of frames.
-    hop_length : int > 0 [scalar]
-        number of samples between successive frames
-    n_fft : None or int > 0 [scalar]
-        Optional: length of the FFT window.
-        If given, time conversion will include an offset of ``n_fft // 2``
-        to counteract windowing effects when using a non-centered STFT.
-    axis : int [scalar]
-        The axis representing the time axis of ``X``.
-        By default, the last axis (-1) is taken.
+        hop_length: An integer (scalar) > 0 with the number of samples between
+            successive frames.
+        n_fft: Can be None or integer (scalar) > 0
+            Optional: length of the FFT window.
+            If given, time conversion will include an offset of ``n_fft // 2``
+            to counteract windowing effects when using a non-centered STFT.
+        axis: An integer (scalar) which indicates the axis representing the
+            time axis of ``X``. By default, the last axis ``(-1)`` is taken.
 
-    Returns
-    -------
-    samples : np.ndarray [shape=(n,)]
-        ndarray of sample indices corresponding to each frame of ``X``.
-
-    See Also
-    --------
-    times_like :
-        Return an array of time values to match the time axis from a feature matrix.
+    Returns:
+        A numpy array in [shape=(n,)] with the sample indices corresponding to
+        each frame of ``X``.
 
     """
     # suppress type checks because mypy does not understand isscalar
