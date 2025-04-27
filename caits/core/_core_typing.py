@@ -1,4 +1,4 @@
-# The functionality in this implementation are basically derived from
+# The functionality in this implementation is basically derived from
 # librosa v0.10.1:
 # https://github.com/librosa/librosa/blob/main/librosa/_typing.py
 from typing import Any, Callable, Sequence, Tuple, TypeVar, Union
