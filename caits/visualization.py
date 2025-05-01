@@ -6,6 +6,82 @@ from matplotlib.figure import Figure as Fig
 import seaborn as sns
 
 
+def export_fig(
+    fig_object: plt.Figure,
+    fig_id: str = None,
+    save_path: Optional[str] = None,
+    export: str = "save",
+    create_dir: bool = True,
+    tight_layout: bool = True,
+    fig_extension: str = Union["png", "jpg"],
+    resolution: Union[float, str] = "figure",
+) -> None:
+    """Exports a matplotlib Figure object by saving, showing, or doing both.
+
+    Args:
+        fig_object: The matplotlib figure object to export.
+        fig_id: Unique identifier for the figure. Used in naming the saved
+                file.
+        save_path: The path of the local saving directory. Required if "export"
+                   includes "save".
+        export: Determines the action to perform - "save", "show", or "both".
+                Defaults to "save".
+        create_dir: Whether to create the directory if it does not exist.
+                    Defaults to True.
+        tight_layout: Whether to apply tight layout adjustment before
+                      exporting. Defaults to True.
+        fig_extension: Format of the figure file if saving. Defaults to "png".
+            Can be "png" or "jpg".
+        resolution: Resolution of the exported figure if saving. Can be a float
+                    or "figure". Defaults to "figure".
+
+    Returns:
+        None. The figure is either saved, shown, or both, based on the "export"
+              argument.
+    """
+    if tight_layout:
+        fig_object.tight_layout()
+
+    if "save" in export and not save_path:
+        raise ValueError("Save path must be provided to save the figure.")
+
+    if "save" in export and fig_id is None:
+        raise ValueError("Figure ID must be provided to save the figure.")
+
+    if "save" in export and fig_extension not in ["png", "jpg"]:
+        raise ValueError(
+            "Figure extension must be one of 'png' ορ 'jpg'."
+        )
+
+    if "save" in export and save_path and fig_id is not None:
+        if create_dir and not os.path.exists(save_path):
+            os.makedirs(save_path, exist_ok=True)
+        elif not create_dir and not os.path.isdir(save_path):
+            raise FileNotFoundError(
+                f"Provided path '{save_path}' does not \
+                                      exist or is not a directory."
+            )
+        else:
+            raise ValueError("Invalid save path provided.")
+
+        file_path = os.path.join(save_path, f"{fig_id}.{fig_extension}")
+        dpi = resolution if isinstance(resolution, float) else None
+        fig_object.savefig(file_path, format=fig_extension,
+                           bbox_inches="tight", dpi=dpi)
+        print(f"Figure saved to {file_path}")
+
+    if "show" in export:
+        plt.show()
+
+    if "save" not in export and "show" not in export:
+        raise ValueError(
+            "Invalid export option. Use 'save', 'show', \
+                          or 'both'."
+        )
+
+    return
+
+
 def plot_prediction_probabilities(
     probabilities: np.ndarray,
     sr: int,
@@ -25,6 +101,25 @@ def plot_prediction_probabilities(
     plotting. The horizontal lines represent the probability of each class
     across different windows, and events can be overlaid for additional
     context.
+
+    Args:
+        probabilities: 2D numpy array of shape (n_instances, n_classes)
+            containing the predicted probabilities for each class.
+        sr: Sampling rate of the signal.
+        ws: Window size in seconds.
+        overlap_percentage: Percentage of overlap between windows (0 to 1).
+        class_names: List of class names corresponding to the columns in
+            probabilities. If None, default labels will be used.
+        figsize: Size of the figure in inches. Defaults to (14, 6).
+        mode: Plotting mode - "samples" or "time". Defaults to "samples".
+        events: List of tuples (start, end, class) representing events to
+            highlight. Start and end are in samples. If mode="time" and sr is
+            provided, they will be converted to time units.
+        title: Title of the plot. Defaults to "Prediction Probabilities Across
+            Windows".
+
+    Returns:
+        plt.Figure: The figure object containing the plot.
     """
 
     # Window size in samples
@@ -180,99 +275,51 @@ def plot_signal(
 
     if return_mode:
         return fig
-    
-    return
-
-
-def export_fig(
-    fig_object: plt.Figure,
-    fig_id: str,
-    save_path: Optional[str] = None,
-    export: str = "save",
-    create_dir: bool = True,
-    tight_layout: bool = True,
-    fig_extension: str = "png",
-    resolution: Union[float, str] = "figure",
-) -> None:
-    """Exports a matplotlib figure object by saving, showing, or doing both.
-
-    Args:
-        fig_object: The matplotlib figure object to export.
-        fig_id: Unique identifier for the figure. Used in naming the saved
-                file.
-        save_path: The path of the local saving directory. Required if "export"
-                   includes "save".
-        export: Determines the action to perform - "save", "show", or "both".
-                Defaults to "save".
-        create_dir: Whether to create the directory if it does not exist.
-                    Defaults to True.
-        tight_layout: Whether to apply tight layout adjustment before
-                      exporting. Defaults to True.
-        fig_extension: Format of the figure file if saving. Defaults to "png".
-        resolution: Resolution of the exported figure if saving. Can be a float
-                    or "figure". Defaults to "figure".
-
-    Returns:
-        None. The figure is either saved, shown, or both, based on the "export"
-              argument.
-    """
-    if "save" in export and not save_path:
-        raise ValueError("Save path must be provided to save the figure.")
-
-    if tight_layout:
-        fig_object.tight_layout()
-
-    if "save" in export and save_path:
-        if create_dir and not os.path.exists(save_path):
-            os.makedirs(save_path, exist_ok=True)
-        elif not create_dir and not os.path.isdir(save_path):
-            raise FileNotFoundError(
-                f"Provided path '{save_path}' does not \
-                                      exist or is not a directory."
-            )
-        else:
-            raise ValueError("Invalid save path provided.")
-
-        file_path = os.path.join(save_path, f"{fig_id}.{fig_extension}")
-        dpi = resolution if isinstance(resolution, float) else None
-        fig_object.savefig(file_path, format=fig_extension,
-                           bbox_inches="tight", dpi=dpi)
-        print(f"Figure saved to {file_path}")
-
-    if "show" in export:
+    else:
         plt.show()
-
-    if "save" not in export and "show" not in export:
-        raise ValueError(
-            "Invalid export option. Use 'save', 'show', \
-                          or 'both'."
-        )
-
-    return
+        return None
 
 
 def plot_spectrogram(
     f: np.ndarray,
-    t: np.ndarray,
+    x: np.ndarray,
     spec: np.ndarray,
     factor: int = 1,
     log: Optional[str] = None,
-    plot_title: str = "Spectrogram",
-) -> None:
-    """Plots the spectrogram of a signal based on the sample freqiences and
+    figsize: Tuple[int, int] = (10, 4),
+    title: str = "Spectrogram",
+    time_like: bool = False,
+    y_axis_name: str = "Frequency",
+    colorbar_desc: str = "Intensity [dB]",
+    color_map: str = "viridis",
+    return_mode: bool = False,
+) -> Optional[plt.Figure]:
+    """Plots the spectrogram of a signal based on the sample frequencies and
     the time segment.
 
     Args:
         f: The array of sample frequencies in np.ndarray.
-        t: The array of segment times in np.ndarray.
+        x: The array of segment times in np.ndarray.
         spec: The spectrogram to plot in 2D np.ndarray.
-        factor: The factor to multiply the log scale with. Defaults to 10.
+        factor: The factor to multiply the log scale with. Defaults to 1.
         log: The log scale to use. If None, defaults to 10 * np.log10(spec).
-        plot_title: The title of the plot. Defaults to "Spectrogram".
+        figsize: The size of the figure in inches. Defaults to (10, 4).
+        title: The title of the plot. Defaults to "Spectrogram".
+        time_like: Whether the time axis is in time (secs) or samples.
+            Defaults to False.
+        y_axis_name: The name of the y-axis. Defaults to "Frequency".
+        colorbar_desc: The description of the colorbar. Defaults to
+            "Intensity [dB]".
+        color_map: The color map to use. Defaults to "viridis".
+        return_mode: Whether to return the plot in the function. Defaults to
+            False.
+
 
     Returns:
 
     """
+
+    fig = plt.figure(figsize=figsize)
 
     if log == "log10":
         spec_plot = factor * np.log10(spec)  # Convert to dB: 10 * log10(spec)
@@ -285,30 +332,58 @@ def plot_spectrogram(
     else:
         raise ValueError("log must be 'log10', 'log2', 'log', or None")
 
-    plt.pcolormesh(t, f, spec_plot, shading="gouraud")
-    plt.ylabel("Frequency [Hz]")
-    plt.xlabel("Time [sec]")
-    plt.title(plot_title)
-    plt.colorbar(label="Intensity [dB]")
-    plt.show()
+    if time_like:
+        x_axis_name = "Time [sec]"
+    else:
+        x_axis_name = "Samples"
+
+    plt.pcolormesh(x, f, spec_plot, shading="gouraud", cmap=color_map)
+    plt.title(title)
+    plt.xlabel(x_axis_name)
+    plt.ylabel(y_axis_name)
+    plt.colorbar(label=colorbar_desc)
+
+    if return_mode:
+        return fig
+    else:
+        plt.show()
+        return None
 
 
 def plot_simple_spectrogram(
-    spectrogram: np.ndarray,
-    title: str = "Spectrogram"
-) -> None:
+    spec: np.ndarray,
+    figsize: Tuple[int, int] = (10, 4),
+    title: str = "Spectrogram",
+    χ_axis_name: str = "Windows",
+    y_axis_name: str = "Frequency",
+    return_mode: bool = False,
+) -> Optional[plt.Figure]:
     """Simple function that plots a Spectrogram.
 
     Args:
-        spectrogram: The array of the spectrogram in 2D np.ndarray.
+        spec: The array of the spectrogram in 2D np.ndarray.
+        figsize: The size of the figure in inches. Defaults to (10, 4).
         title: The title of the plot. Defaults to "Spectrogram".
+        χ_axis_name: The name of the x-axis. Defaults to "Windows".
+        y_axis_name: The name of the y-axis. Defaults to "Frequency".
+        return_mode: Whether to return the plot in the function. Defaults to
+            False.
 
     Returns:
 
     """
-    plt.imshow(spectrogram, aspect="auto", origin="lower")
+    fig = plt.figure(figsize=figsize)
+
+    plt.imshow(spec, aspect="auto", origin="lower")
     plt.colorbar()
-    plt.xlabel("Windows")
-    plt.ylabel("Frequency")
+    plt.xlabel(χ_axis_name)
+    plt.ylabel(y_axis_name)
     plt.title(title)
-    plt.show()
+
+    if return_mode:
+        return fig
+    else:
+        plt.show()
+        return None
+
+
