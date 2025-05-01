@@ -333,9 +333,9 @@ def plot_spectrogram(
     else:
         raise ValueError("log must be 'log10', 'log2', 'log', or None")
 
-    if x_axis_name is "time":
+    if x_axis_name == "time":
         x_axis_name = "Time [sec]"
-    elif x_axis_name is "samples":
+    elif x_axis_name == "samples":
         x_axis_name = "Samples"
     else:
         x_axis_name = x_axis_name
