@@ -183,7 +183,7 @@ def plot_signal(
     sig: np.ndarray,
     sr: int = 44100,
     mode: str = "samples",
-    title: Optional[str] = "",
+    title: Optional[str] = "Signal",
     channels: Optional[Union[List[str], str]] = None,
     figsize: Tuple[int, int] = (10, 4),
     events: Optional[List[Tuple[int, int, int]]] = None,
