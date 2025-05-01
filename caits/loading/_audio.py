@@ -28,7 +28,8 @@ def wav_loader(
         target_sr: Optional target sampling rate for resampling. In case of
                    more than one channel, the resampling is done per channel.
         dtype: The desired data type for the audio data. Supported options:
-            - "float64" (default): Double-precision floating-point, normalized to [-1, 1]
+            - "float64" (default): Double-precision floating-point, normalized
+                to [-1, 1]
             - "float32": Single-precision floating-point, normalized to [-1, 1]
             - "int16": 16-bit signed integer, no normalization
             - "int32": 32-bit signed integer, no normalization
@@ -38,9 +39,9 @@ def wav_loader(
         pd.DataFrame: Loaded and optionally resampled audio data in 2D shape.
         int: Sample rate of the audio file.
     """
-
     if mode == "soundfile":
-        audio_data, sample_rate = sf.read(file_path, always_2d=True, dtype=dtype)
+        audio_data, sample_rate = sf.read(file_path, always_2d=True,
+                                          dtype=dtype)
     elif mode == "scipy":
         sample_rate, audio_data = wavfile.read(file_path)
         if audio_data.dtype != dtype and dtype in ["float32", "float64"]:

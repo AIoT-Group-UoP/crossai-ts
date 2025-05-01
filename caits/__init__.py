@@ -6,8 +6,8 @@ and developing end-to-end Artificial Intelligence pipelines for Time Series
 Analysis.
 """
 
-__version__ = "0.0.0.1"
-__author__ = "Pantelis Tzamalis, George Kontogiannis"
+__version__ = "0.0.0.2"
+__author__ = "Pantelis Tzamalis, George Kontogiannis, Sotiris Nikoletseas"
 __credits__ = (
     "Academia and enterprise individuals who are AI and Time "
     "Series Analysis enthusiasts. The main part of the library "
