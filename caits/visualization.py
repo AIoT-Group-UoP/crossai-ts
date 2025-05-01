@@ -288,7 +288,7 @@ def plot_spectrogram(
     log: Optional[str] = None,
     figsize: Tuple[int, int] = (10, 4),
     title: str = "Spectrogram",
-    time_like: bool = False,
+    x_axis_name: str = Union["time", "samples", str],
     y_axis_name: str = "Frequency",
     colorbar_desc: str = "Intensity [dB]",
     color_map: str = "viridis",
@@ -305,8 +305,10 @@ def plot_spectrogram(
         log: The log scale to use. If None, defaults to 10 * np.log10(spec).
         figsize: The size of the figure in inches. Defaults to (10, 4).
         title: The title of the plot. Defaults to "Spectrogram".
-        time_like: Whether the time axis is in time (secs) or samples.
-            Defaults to False.
+        x_axis_name: Whether the time axis is in time or samples. Can be
+            "time", "samples", or a string. If "time", the x-axis will be
+            labeled as "Time [sec]". If "samples", the x-axis will be labeled
+            as "Samples".
         y_axis_name: The name of the y-axis. Defaults to "Frequency".
         colorbar_desc: The description of the colorbar. Defaults to
             "Intensity [dB]".
@@ -314,9 +316,8 @@ def plot_spectrogram(
         return_mode: Whether to return the plot in the function. Defaults to
             False.
 
-
     Returns:
-
+        plt.Figure: The figure object containing the plot.
     """
 
     fig = plt.figure(figsize=figsize)
@@ -332,10 +333,12 @@ def plot_spectrogram(
     else:
         raise ValueError("log must be 'log10', 'log2', 'log', or None")
 
-    if time_like:
+    if x_axis_name is "time":
         x_axis_name = "Time [sec]"
-    else:
+    elif x_axis_name is "samples":
         x_axis_name = "Samples"
+    else:
+        x_axis_name = x_axis_name
 
     plt.pcolormesh(x, f, spec_plot, shading="gouraud", cmap=color_map)
     plt.title(title)
@@ -354,9 +357,9 @@ def plot_simple_spectrogram(
     spec: np.ndarray,
     figsize: Tuple[int, int] = (10, 4),
     title: str = "Spectrogram",
-    χ_axis_name: str = "Windows",
+    x_axis_name: str = "Windows",
     y_axis_name: str = "Frequency",
-    return_mode: bool = False,
+    return_mode: bool = False
 ) -> Optional[plt.Figure]:
     """Simple function that plots a Spectrogram.
 
@@ -364,7 +367,7 @@ def plot_simple_spectrogram(
         spec: The array of the spectrogram in 2D np.ndarray.
         figsize: The size of the figure in inches. Defaults to (10, 4).
         title: The title of the plot. Defaults to "Spectrogram".
-        χ_axis_name: The name of the x-axis. Defaults to "Windows".
+        x_axis_name: The name of the x-axis. Defaults to "Windows".
         y_axis_name: The name of the y-axis. Defaults to "Frequency".
         return_mode: Whether to return the plot in the function. Defaults to
             False.
@@ -376,7 +379,7 @@ def plot_simple_spectrogram(
 
     plt.imshow(spec, aspect="auto", origin="lower")
     plt.colorbar()
-    plt.xlabel(χ_axis_name)
+    plt.xlabel(x_axis_name)
     plt.ylabel(y_axis_name)
     plt.title(title)
 
