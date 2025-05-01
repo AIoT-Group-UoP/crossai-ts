@@ -10,11 +10,12 @@ def export_fig(
     fig_object: plt.Figure,
     fig_id: str = None,
     save_path: Optional[str] = None,
-    export: str = "save",
+    export: str = "show",
     create_dir: bool = False,
     tight_layout: bool = True,
     fig_extension: str = Union["png", "jpg"],
     resolution: Union[float, str] = "figure",
+    print_debug: bool = False,
 ) -> None:
     """Exports a matplotlib Figure object by saving, showing, or doing both.
 
@@ -24,8 +25,8 @@ def export_fig(
                 file.
         save_path: The path of the local saving directory. Required if "export"
                    includes "save".
-        export: Determines the action to perform - "save", "show", or "both".
-                Defaults to "save".
+        export: Determines the action to perform - "save", "show". Defaults to
+            "save".
         create_dir: Whether to create the directory if it does not exist.
                     Defaults to False.
         tight_layout: Whether to apply tight layout adjustment before
@@ -34,13 +35,19 @@ def export_fig(
             Can be "png" or "jpg".
         resolution: Resolution of the exported figure if saving. Can be a float
                     or "figure". Defaults to "figure".
+        print_debug: Whether to print debug information. Defaults to False.
 
     Returns:
-        None. The figure is either saved, shown, or both, based on the "export"
+        None. The figure is either saved or shown based on the "export"
               argument.
     """
     if tight_layout:
         fig_object.tight_layout()
+
+    if "save" not in export and "show" not in export:
+        raise ValueError(
+            "Invalid export option. Use 'save' or 'show'."
+        )
 
     if "save" in export and not save_path:
         raise ValueError("Save path must be provided to save the figure.")
@@ -53,29 +60,27 @@ def export_fig(
             "Figure extension must be one of 'png' ορ 'jpg'."
         )
 
-    if "save" in export and not os.path.isdir(save_path):
+    if "save" in export:
+        file_path = os.path.join(save_path, f"{fig_id}.{fig_extension}")
         if create_dir:
             os.makedirs(save_path, exist_ok=True)
-        else:
+        elif not create_dir and not os.path.exists(save_path):
             raise FileNotFoundError(
-                f"Provided path '{save_path}' does not exist or is not a "
-                f"directory."
+                f"Directory {save_path} does not exist. Set create_dir=True "
+                f"to create it."
             )
+        else:
+            if print_debug:
+                print(f"Directory {save_path} already exists.")
 
-        file_path = os.path.join(save_path, f"{fig_id}.{fig_extension}")
         dpi = resolution if isinstance(resolution, float) else None
         fig_object.savefig(file_path, format=fig_extension,
                            bbox_inches="tight", dpi=dpi)
-        print(f"Figure saved to {file_path}")
+        if print_debug:
+            print(f"Figure saved to {file_path}")
 
     if "show" in export:
         plt.show()
-
-    if "save" not in export and "show" not in export:
-        raise ValueError(
-            "Invalid export option. Use 'save', 'show', \
-                          or 'both'."
-        )
 
     return
 
