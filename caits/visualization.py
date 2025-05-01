@@ -62,11 +62,11 @@ def export_fig(
                 f"directory."
             )
 
-    file_path = os.path.join(save_path, f"{fig_id}.{fig_extension}")
-    dpi = resolution if isinstance(resolution, float) else None
-    fig_object.savefig(file_path, format=fig_extension,
-                       bbox_inches="tight", dpi=dpi)
-    print(f"Figure saved to {file_path}")
+        file_path = os.path.join(save_path, f"{fig_id}.{fig_extension}")
+        dpi = resolution if isinstance(resolution, float) else None
+        fig_object.savefig(file_path, format=fig_extension,
+                           bbox_inches="tight", dpi=dpi)
+        print(f"Figure saved to {file_path}")
 
     if "show" in export:
         plt.show()
