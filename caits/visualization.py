@@ -11,7 +11,7 @@ def export_fig(
     fig_id: str = None,
     save_path: Optional[str] = None,
     export: str = "save",
-    create_dir: bool = True,
+    create_dir: bool = False,
     tight_layout: bool = True,
     fig_extension: str = Union["png", "jpg"],
     resolution: Union[float, str] = "figure",
@@ -27,7 +27,7 @@ def export_fig(
         export: Determines the action to perform - "save", "show", or "both".
                 Defaults to "save".
         create_dir: Whether to create the directory if it does not exist.
-                    Defaults to True.
+                    Defaults to False.
         tight_layout: Whether to apply tight layout adjustment before
                       exporting. Defaults to True.
         fig_extension: Format of the figure file if saving. Defaults to "png".
@@ -53,22 +53,20 @@ def export_fig(
             "Figure extension must be one of 'png' ορ 'jpg'."
         )
 
-    if "save" in export and save_path and fig_id is not None:
-        if create_dir and not os.path.exists(save_path):
+    if "save" in export and not os.path.isdir(save_path):
+        if create_dir:
             os.makedirs(save_path, exist_ok=True)
-        elif not create_dir and not os.path.isdir(save_path):
-            raise FileNotFoundError(
-                f"Provided path '{save_path}' does not \
-                                      exist or is not a directory."
-            )
         else:
-            raise ValueError("Invalid save path provided.")
+            raise FileNotFoundError(
+                f"Provided path '{save_path}' does not exist or is not a "
+                f"directory."
+            )
 
-        file_path = os.path.join(save_path, f"{fig_id}.{fig_extension}")
-        dpi = resolution if isinstance(resolution, float) else None
-        fig_object.savefig(file_path, format=fig_extension,
-                           bbox_inches="tight", dpi=dpi)
-        print(f"Figure saved to {file_path}")
+    file_path = os.path.join(save_path, f"{fig_id}.{fig_extension}")
+    dpi = resolution if isinstance(resolution, float) else None
+    fig_object.savefig(file_path, format=fig_extension,
+                       bbox_inches="tight", dpi=dpi)
+    print(f"Figure saved to {file_path}")
 
     if "show" in export:
         plt.show()
