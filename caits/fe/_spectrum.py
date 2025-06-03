@@ -215,6 +215,7 @@ def istft(
     dtype: Optional[DTypeLike] = None,
     length: Optional[int] = None,
     out: Optional[np.ndarray] = None,
+    axis: int = 0
 ) -> np.ndarray:
     # The functionality in this implementation are basically derived from
     # librosa v0.10.1:
@@ -336,7 +337,7 @@ def istft(
 
     y[..., approx_nonzero_indices] /= ifft_window_sum[approx_nonzero_indices]
 
-    return y
+    return y if axis == 0 else y.T
 
 
 def spectrogram(

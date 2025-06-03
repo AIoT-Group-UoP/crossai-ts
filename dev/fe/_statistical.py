@@ -5,95 +5,13 @@ import scipy
 from scipy.signal import butter, filtfilt, find_peaks
 from scipy.stats import kurtosis, moment, skew
 
-from ..properties import rolling_rms, rolling_zcr
-from ._spectrum import mfcc
+from caits.properties import rolling_rms, rolling_zcr
+from caits.fe._spectrum import mfcc
+from caits.fe._statistical import max_value, min_value, mean_value, median_value, std_value, variance_value
 
 
-def std_value(array: np.ndarray, axis: int = 0) -> float:
-    """Computes the standard deviation of an audio signal.
 
-    Args:
-        array: The input signal as a numpy.ndarray.
-        axis: The axis along which to compute the standard deviation.
-            Defaults to 0.
-
-    Returns:
-        float: The standard deviation of the audio signal.
-    """
-    return np.std(array, axis=axis)
-
-
-def variance_value(array: np.ndarray, axis: int = 0) -> float:
-    """Computes the variance of an audio signal.
-
-    Args:
-        array: The input signal as a numpy.ndarray.
-        axis: The axis along which to compute the variance.
-            Defaults to 0.
-
-    Returns:
-        float: The variance of the audio signal.
-    """
-    return np.var(array, axis=axis)
-
-
-def mean_value(array: np.ndarray, axis: int = 0) -> float:
-    """Computes the mean of an audio signal.
-
-    Args:
-        array: The input signal as a numpy.ndarray.
-        axis: The axis along which to compute the mean value.
-            Defaults to 0.
-
-    Returns:
-        float: The mean of the audio signal.
-    """
-    return np.mean(array, axis=axis)
-
-
-def median_value(array: np.ndarray, axis: int = 0) -> float:
-    """Computes the median of an audio signal.
-
-    Args:
-        array: The input signal as a numpy.ndarray.
-        axis: The axis along which to compute the median value.
-            Defaults to 0.
-
-    Returns:
-        float: The median of the audio signal.
-    """
-    return np.median(array, axis=axis)
-
-
-def max_value(array: np.ndarray, axis: int = 0) -> float:
-    """Computes the maximum value of an audio signal.
-
-    Args:
-        array: The input signal as a numpy.ndarray.
-        axis: The axis along which to compute the maximum value.
-            Defaults to 0.
-
-    Returns:
-        float: The maximum value of the audio signal.
-    """
-    return np.max(array, axis=axis)
-
-
-def min_value(array: np.ndarray, axis: int = 0) -> float:
-    """Computes the minimum value of a signal.
-
-    Args:
-        array: The input signal as a numpy.ndarray.
-        axis: The axis along which to compute the minimum value.
-            Defaults to 0.
-
-    Returns:
-        float: The minimum value of the audio signal.
-    """
-    return np.min(array, axis=axis)
-
-
-def kurtosis_value(array: np.ndarray) -> float:
+def kurtosis_value(array: np.ndarray, axis: int = 0) -> float:
     """Computes the kurtosis of an audio signal.
 
     Args:
@@ -102,10 +20,10 @@ def kurtosis_value(array: np.ndarray) -> float:
     Returns:
         float: The kurtosis of the audio signal.
     """
-    return kurtosis(array)
+    return kurtosis(array, axis=axis)
 
 
-def sample_skewness(array) -> float:
+def sample_skewness(array, axis: int = 0) -> float:
     """
     Calculate the sample skewness of an array using scipy.
 
@@ -126,7 +44,7 @@ def sample_skewness(array) -> float:
     if len(array) < 3:
         raise ValueError("Input array must have at least 3 elements")
 
-    return skew(array, bias=False)
+    return skew(array, bias=False, axis=axis)
 
 
 def rms_value(array: np.ndarray) -> float:
@@ -145,6 +63,7 @@ def rms_max(
     signal: np.ndarray,
     frame_length: int,
     hop_length: int,
+    axis: int = 0,
     **kwargs: Any
 ) -> float:
     """Computes the maximum of the rolling Root Mean Square (RMS) values of a
@@ -160,13 +79,14 @@ def rms_max(
         float: The maximum RMS value.
     """
     rms_values = rolling_rms(signal, frame_length, hop_length, **kwargs)
-    return np.max(rms_values)
+    return np.max(rms_values, axis=axis)
 
 
 def rms_mean(
     signal: np.ndarray,
     frame_length: int,
     hop_length: int,
+    axis: int = 0,
     **kwargs: Any
 ) -> float:
     """Computes the mean of the rolling Root Mean Square (RMS) values of a
@@ -182,13 +102,14 @@ def rms_mean(
         float: The mean RMS value.
     """
     rms_values = rolling_rms(signal, frame_length, hop_length, **kwargs)
-    return np.mean(rms_values)
+    return np.mean(rms_values, axis=axis)
 
 
 def rms_min(
     signal: np.ndarray,
     frame_length: int,
     hop_length: int,
+    axis: int = 0,
     **kwargs: Any
 ) -> float:
     """Computes the minimum of the rolling Root Mean Square (RMS) values of a
@@ -204,10 +125,10 @@ def rms_min(
         float: The minimum RMS value.
     """
     rms_values = rolling_rms(signal, frame_length, hop_length, **kwargs)
-    return np.min(rms_values)
+    return np.min(rms_values, axis=axis)
 
 
-def zcr_value(array: np.ndarray) -> float:
+def zcr_value(array: np.ndarray, axis: int = 0) -> float:
     """Computes the zero crossing rate of a signal.
 
     Args:
@@ -352,7 +273,8 @@ def central_moments(
 def signal_length(
     array: np.ndarray,
     fs: int,
-    time_mode: str = "time"
+    time_mode: str = "time",
+    axis: int = 0
 ) -> float:
     """Computes the length of a signal in seconds.
 
@@ -365,10 +287,13 @@ def signal_length(
     Returns:
         float: The length of the signal in seconds.
     """
+
+    _array = array if axis == 0 else array.T
+
     if time_mode == "time":
-        return len(array) / fs
+        return len(_array) / fs
     elif time_mode == "samples":
-        return len(array)
+        return len(_array)
     else:
         raise ValueError(f"Unsupported export={time_mode}")
 
@@ -524,8 +449,8 @@ def signal_stats(
         f"{name}_median": median_value(arr, axis=axis),
         f"{name}_std": std_value(arr, axis=axis),
         f"{name}_var": variance_value(arr, axis=axis),
-        f"{name}_kurtosis": kurtosis_value(arr),
-        f"{name}_skewness": sample_skewness(arr),
+        f"{name}_kurtosis": kurtosis_value(arr, axis=axis),
+        f"{name}_skewness": sample_skewness(arr, axis=axis),
         f"{name}_rms": rms_value(arr),
         # f"{name}_zcr": zcr_value(arr),
         # f"{name}_dominant_frequency": dominant_frequency(arr, fs),

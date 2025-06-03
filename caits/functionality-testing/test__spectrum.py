@@ -1,23 +1,7 @@
-import pandas as pd
 import numpy as np
 import caits.fe._spectrum as spc1
 import dev.fe._spectrum as spc2
-
-def init_dataset(uni_dim=False):
-
-    data = pd.read_csv("examples/data/AirQuality/AirQuality.csv", sep=";")
-
-    if uni_dim:
-        data = data[["CO(GT)"]]
-
-    else:
-        data = data.drop(columns=['Date', 'Time'])
-
-    data = data.applymap(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
-    data = data.fillna(0)
-
-    return data.values.T
-
+from _utils import init_dataset
 
 def test_spectrogram():
     data = init_dataset(uni_dim=True)
@@ -65,7 +49,7 @@ def test_stft():
 
 
 def test_istft():
-    data = init_dataset(uni_dim=True)
+    data = init_dataset(uni_dim=False)
 
     stft1 = spc1.stft(
         y=data,
@@ -79,29 +63,23 @@ def test_istft():
         n_fft=2048,
         hop_length=512,
         win_length=10,
-        axis=0
+        axis=1
     )
 
-    print()
-    print(stft1.shape)
-    print(stft2.shape)
-
     istft1 = spc1.istft(
-        stft_matrix=stft1[0],
+        stft_matrix=stft1,
         hop_length=512,
         n_fft=2048,
-        win_length=10
+        win_length=10,
+        axis=0,
     )
 
     istft2 = spc1.istft(
-        stft_matrix=stft2[0],
+        stft_matrix=stft2,
         hop_length=512,
         n_fft=2048,
-        win_length=10
+        win_length=10,
+        axis=1,
     )
 
-    print()
-    print(istft1.shape)
-    print(istft2.shape)
-
-    assert np.array_equal(istft1, istft2)
+    assert np.array_equal(istft1, istft2.T)
