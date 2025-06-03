@@ -266,3 +266,5 @@ examples/data/AirQuality/
 examples/data/Fitabase_Data_3.12.16-4.11.16/
 examples/data/Gestures/
 
+# dev folders - use for developing new functions or refactoring existing functions
+#dev/
