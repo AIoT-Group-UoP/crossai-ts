@@ -268,3 +268,6 @@ examples/data/Gestures/
 
 # dev folders - use for developing new functions or refactoring existing functions
 #dev/
+
+.qodo/
+qodana.yaml
