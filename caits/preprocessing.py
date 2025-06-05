@@ -38,7 +38,7 @@ def resample_signal(
         sig: The input audio signal as a NumPy array.
         native_sr: The original sample rate of the signal (samples per second).
         target_sr: The desired sample rate of the resampled signal.
-        d_type: The desired data type for the resampled signal (default: float32).
+        dtype: The desired data type for the resampled signal (default: float32).
 
     Returns:
         The resampled signal as a NumPy array with the specified `dtype`.

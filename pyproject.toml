@@ -14,7 +14,7 @@ ignore_missing_imports = true
 
 [tool.poetry]
 name = "crossai-ts"
-version = "0.0.0.1"
+version = "0.0.0.2"
 description = "An open-source Python library for developing end-to-end AI pipelines for Time Series Analysis"
 authors = ["Pantelis Tzamalis <tzamalis@ceid.upatras.gr>", "George Kontogiannis <g.kontogiannis@ac.upatras.gr>"]
 readme = "README.md"
