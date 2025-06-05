@@ -60,7 +60,8 @@ def test_filter_gaussian_basic():
 def test_filter_gaussian_input_type():
     arr = np.random.rand(100, 2)
     assert isinstance(arr, np.ndarray)
-    filtering.filter_gaussian(arr, sigma=1)
+    filtered = filtering.filter_gaussian(arr, sigma=1)
+    assert filtered.shape == arr.shape
 
 def test_filter_gaussian_shape():
     arr = np.random.rand(100, 2)

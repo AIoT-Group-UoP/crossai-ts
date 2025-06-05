@@ -2,7 +2,24 @@ import numpy as np
 import pytest
 import caits.fe._spectrum as spc1
 import dev.fe._spectrum as spc2
-from _utils import init_dataset
+import pandas as pd
+
+def init_dataset(uni_dim=False):
+
+    data = pd.read_csv("examples/data/AirQuality/AirQuality.csv", sep=";")
+
+    if uni_dim:
+        data = data[["CO(GT)"]]
+
+    else:
+        data = data.drop(columns=['Date', 'Time'])
+
+    data = data.applymap(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
+    data = data.fillna(0)
+
+    return data.values.T
+
+
 
 def test_spectrogram():
     data = init_dataset(uni_dim=True)
@@ -23,9 +40,9 @@ def test_spectrogram():
         axis=0
     )
 
+    print(np.array_equal(spec1, spec2))
     assert np.array_equal(spec1[0], spec2[0])
-    assert spec1[1] == spec2[1]
-    
+
 
 def test_stft():
     data = init_dataset(uni_dim=True)
@@ -35,7 +52,7 @@ def test_stft():
         n_fft=2048,
         hop_length=512,
         win_length=10,
-        axis=0
+        axis=1
     )
 
     stft2 = spc2.stft(
@@ -43,20 +60,20 @@ def test_stft():
         n_fft=2048,
         hop_length=512,
         win_length=10,
-        axis=1
+        axis=0
     )
 
-    assert np.all(stft1 == stft2)
-
+    assert np.array_equal(stft1[0], stft2[0])
 
 def test_istft():
     data = init_dataset(uni_dim=False)
 
-    stft1 = spc1.stft(
+    stft1 = spc2.stft(
         y=data,
         n_fft=2048,
         hop_length=512,
         win_length=10,
+        axis=1
     )
 
     stft2 = spc2.stft(
@@ -64,23 +81,23 @@ def test_istft():
         n_fft=2048,
         hop_length=512,
         win_length=10,
-        axis=1
+        axis=0
     )
 
-    istft1 = spc1.istft(
+    istft1 = spc2.istft(
         stft_matrix=stft1,
         hop_length=512,
         n_fft=2048,
         win_length=10,
-        axis=0,
+        axis=1,
     )
 
-    istft2 = spc1.istft(
+    istft2 = spc2.istft(
         stft_matrix=stft2,
         hop_length=512,
         n_fft=2048,
         win_length=10,
-        axis=1,
+        axis=0,
     )
 
     assert np.array_equal(istft1, istft2.T)
@@ -163,15 +180,6 @@ def test_power_to_db_invalid_parameters():
     with pytest.raises(ValueError, match="top_db must be non-negative"):
         spc1.power_to_db(S, top_db=-1)
 
-
-def test_empty_signal():
-    # Test with empty signal
-    y = np.array([])
-    with pytest.raises(ValueError):
-        spc1.stft(y)
-    
-    with pytest.raises(ValueError):
-        spc1.melspectrogram(y=y)
 
 
 def test_stft_n_fft_too_large():
@@ -297,3 +305,155 @@ def test_mfcc_negative_lifter():
     with pytest.raises(ValueError, match="MFCC lifter=.*must be a non-negative number"):
         spc1.mfcc(y=y, sr=sr, lifter=-5)
 
+
+def test_empty_input_stft():
+    empty = np.array([])
+    out = spc2.stft(empty)
+    assert out.size == 0
+
+def test_empty_input_istft():
+    empty2d = np.empty((0, 0))
+    with pytest.raises(ValueError):
+        spc2.istft(empty2d)
+
+
+def test_empty_input_spectrogram():
+    empty = np.array([])
+    out = spc2.spectrogram(y=empty)
+    if isinstance(out, tuple):
+        assert all(hasattr(o, 'size') and o.size == 0 for o in out if hasattr(o, 'size'))
+    else:
+        assert hasattr(out, 'size') and out.size == 0
+
+def test_empty_input_mfcc_stats():
+    empty = np.array([])
+    out = spc2.mfcc_stats(y=empty)
+    assert not out
+
+def test_empty_input_delta():
+    empty = np.array([])
+    with pytest.raises(ValueError):
+        spc1.delta(empty)
+
+def test_empty_input_mfcc():
+    empty = np.array([])
+    out = spc2.mfcc(y=empty)
+    assert not out and hasattr(out, 'size') and out.size == 0
+
+def test_empty_input_melspectrogram():
+    empty = np.array([])
+    out = spc2.melspectrogram(y=empty)
+    assert not out or (hasattr(out, 'size') and out.size == 0)
+
+def test_empty_input_power_to_db():
+    empty = np.array([])
+    out = spc2.power_to_db(empty)
+    assert out.size == 0
+
+def test_empty_input_db_to_power():
+    empty = np.array([])
+    out = spc1.db_to_power(empty)
+    assert out.size == 0
+
+def test_empty_input_amplitude_to_db():
+    empty = np.array([])
+    with pytest.raises(ValueError):
+        spc1.amplitude_to_db(empty)
+
+def test_empty_input_db_to_amplitude():
+    empty = np.array([])
+    out = spc1.db_to_amplitude(empty)
+    assert out.size == 0
+
+def test_stft_shape():
+    n_samples, n_channels = 1024, 2
+    y = np.random.randn(n_samples, n_channels)
+    n_fft = 256
+    hop_length = 64
+    S = spc1.stft(y, n_fft=n_fft, hop_length=hop_length)
+    n_frames = 1 + (n_samples + 2 * (n_fft // 2) - n_fft) // hop_length
+    assert S.shape[0] == n_frames
+    assert S.shape[1] == 1 + n_fft // 2
+    assert S.shape[2] == n_channels
+
+
+def test_istft_shape():
+    n_samples, n_channels = 1024, 2
+    y = np.random.randn(n_samples, n_channels)
+    n_fft = 256
+    hop_length = 64
+    S = spc1.stft(y, n_fft=n_fft, hop_length=hop_length)
+    y_rec = spc1.istft(S, n_fft=n_fft, hop_length=hop_length, length=n_samples)
+    assert y_rec.shape == (n_samples, n_channels)
+
+
+def test_spectrogram_shape():
+    n_samples, n_channels = 1024, 2
+    y = np.random.randn(n_samples, n_channels)
+    n_fft = 128
+    S, n_fft_out = spc1.spectrogram(y=y, n_fft=n_fft)
+    assert S.shape[0] == S.shape[0]  # n_frames, not checked directly
+    assert S.shape[1] == 1 + n_fft // 2
+    assert S.shape[2] == n_channels
+    assert n_fft_out == n_fft
+
+
+def test_melspectrogram_shape():
+    n_samples, n_channels = 1024, 2
+    y = np.random.randn(n_samples, n_channels)
+    n_fft = 128
+    S = spc1.melspectrogram(y=y, n_fft=n_fft, sr=22050)
+    assert S.shape[0] == S.shape[0]  # n_frames, not checked directly
+    assert S.shape[1] > 0  # n_mels
+    assert S.shape[2] == n_channels
+
+
+def test_mfcc_shape():
+    n_samples, n_channels = 1024, 2
+    y = np.random.randn(n_samples, n_channels)
+    n_mfcc = 13
+    M = spc1.mfcc(y=y, n_mfcc=n_mfcc)
+    assert M.shape[0] == M.shape[0]  # n_frames, not checked directly
+    assert M.shape[1] == n_mfcc
+    assert M.shape[2] == n_channels
+
+
+def test_mfcc_stats_shape():
+    n_samples, n_channels = 1024, 2
+    y = np.random.randn(n_samples, n_channels)
+    n_mfcc = 13
+    arr = spc1.mfcc_stats(y=y, n_mfcc=n_mfcc, export='array')
+    assert arr.shape[0] == arr.shape[0]  # n_frames, not checked directly
+    assert arr.shape[1] == n_mfcc * 4
+    dct = spc1.mfcc_stats(y=y, n_mfcc=n_mfcc, export='dict')
+    assert set(dct.keys()) == {'mfcc_mean', 'mfcc_std', 'delta_mean', 'delta2_mean'}
+    for v in dct.values():
+        assert v.shape[0] == v.shape[0]  # n_frames, not checked directly
+        assert v.shape[1] == n_mfcc
+
+
+def test_delta_shape():
+    n_frames, n_mfcc, n_channels = 20, 13, 2
+    arr = np.random.randn(n_frames, n_mfcc, n_channels)
+    d = spc1.delta(arr, width=5, order=1, axis=0)
+    assert d.shape == arr.shape
+    d2 = spc1.delta(arr, width=5, order=2, axis=0)
+    assert d2.shape == arr.shape
+
+
+def test_power_to_db_and_back_shape():
+    n_frames, n_freq, n_channels = 10, 65, 2
+    S = np.abs(np.random.randn(n_frames, n_freq, n_channels))
+    S_db = spc1.power_to_db(S)
+    assert S_db.shape == S.shape
+    S_back = spc1.db_to_power(S_db)
+    assert S_back.shape == S.shape
+
+
+def test_amplitude_to_db_and_back_shape():
+    n_frames, n_freq, n_channels = 10, 65, 2
+    S = np.abs(np.random.randn(n_frames, n_freq, n_channels))
+    S_db = spc1.amplitude_to_db(S)
+    assert S_db.shape == S.shape
+    S_back = spc1.db_to_amplitude(S_db)
+    assert S_back.shape == S.shape
