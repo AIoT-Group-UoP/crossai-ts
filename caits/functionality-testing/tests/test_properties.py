@@ -57,7 +57,7 @@ def test_rolling_rms_shape():
     expected_frames = 1 + (len(x) + frame_length // 2 * 2 - frame_length) // hop_length
     assert rms.shape == (expected_frames,)
     x2d = np.random.randn(1000, 2)
-    rms2d = prop.rolling_rms(x2d[:, 0], frame_length, hop_length)
+    rms2d = prop.rolling_rms(x2d, frame_length, hop_length)
     assert rms2d.shape == (expected_frames,)
 
 
@@ -69,5 +69,5 @@ def test_rolling_zcr_shape():
     expected_frames = 1 + (len(x) + frame_length // 2 * 2 - frame_length) // hop_length
     assert zcr.shape == (expected_frames,)
     x2d = np.random.randn(1000, 2)
-    zcr2d = prop.rolling_zcr(x2d[:, 0], frame_length=frame_length, hop_length=hop_length)
+    zcr2d = prop.rolling_zcr(x2d, frame_length=frame_length, hop_length=hop_length)
     assert zcr2d.shape == (expected_frames,)

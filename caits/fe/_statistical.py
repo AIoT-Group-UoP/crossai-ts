@@ -227,7 +227,7 @@ def central_moments(
 
 # --- ENERGY ---
 
-def rms_value(array: np.ndarray) -> float:
+def rms_value(array: np.ndarray, axis: int = 0) -> float:
     """Computes the RMS Power value of a signal.
 
     Args:
@@ -236,15 +236,16 @@ def rms_value(array: np.ndarray) -> float:
     Returns:
         float: The RMS Power of the signal.
     """
-    return np.sqrt(np.mean(np.square(array)))
+    return np.sqrt(np.mean(np.square(array), axis=axis))
 
 
 def rms_max(
     signal: np.ndarray,
     frame_length: int,
     hop_length: int,
+    axis: int = 0,
     **kwargs: Any
-) -> float:
+) -> np.ndarray:
     """Computes the maximum of the rolling Root Mean Square (RMS) values of a
     signal.
 
@@ -258,15 +259,16 @@ def rms_max(
         float: The maximum RMS value.
     """
     rms_values = rolling_rms(signal, frame_length, hop_length, **kwargs)
-    return np.max(rms_values)
+    return np.max(rms_values, axis=axis)
 
 
 def rms_mean(
     signal: np.ndarray,
     frame_length: int,
     hop_length: int,
+    axis: int = 0,
     **kwargs: Any
-) -> float:
+) -> np.ndarray:
     """Computes the mean of the rolling Root Mean Square (RMS) values of a
     signal.
 
@@ -280,15 +282,16 @@ def rms_mean(
         float: The mean RMS value.
     """
     rms_values = rolling_rms(signal, frame_length, hop_length, **kwargs)
-    return np.mean(rms_values)
+    return np.mean(rms_values, axis=axis)
 
 
 def rms_min(
     signal: np.ndarray,
     frame_length: int,
     hop_length: int,
+    axis: int = 0,
     **kwargs: Any
-) -> float:
+) -> np.ndarray:
     """Computes the minimum of the rolling Root Mean Square (RMS) values of a
     signal.
 
@@ -302,7 +305,10 @@ def rms_min(
         float: The minimum RMS value.
     """
     rms_values = rolling_rms(signal, frame_length, hop_length, **kwargs)
-    return np.min(rms_values)
+    if rms_values.ndim == 1:
+        return np.min(rms_values)
+    else:
+        return np.min(rms_values, axis=axis)
 
 
 def zcr_value(array: np.ndarray) -> float:
@@ -321,8 +327,9 @@ def zcr_max(
     signal: np.ndarray,
     frame_length: int,
     hop_length: int,
+    axis: int = 0,
     **kwargs: Any
-) -> float:
+) -> np.ndarray:
     """Computes the maximum value of the rolling zero crossing rate of a
     signal.
 
@@ -336,16 +343,19 @@ def zcr_max(
         float: The maximum of the rolling RMS of the input signal.
     """
     zcr_values = rolling_zcr(signal, frame_length, hop_length, **kwargs)
-
-    return np.max(zcr_values)
+    if zcr_values.ndim == 1:
+        return np.max(zcr_values)
+    else:
+        return np.max(zcr_values, axis=axis)
 
 
 def zcr_mean(
     signal: np.ndarray,
     frame_length: int,
     hop_length: int,
+    axis: int = 0,
     **kwargs: Any
-) -> float:
+) -> np.ndarray:
     """Computes the mean value of the rolling zero crossing rate of a signal.
 
     Args:
@@ -358,16 +368,19 @@ def zcr_mean(
         float: The mean of the rolling RMS of the input signal.
     """
     zcr_values = rolling_zcr(signal, frame_length, hop_length, **kwargs)
-
-    return np.mean(zcr_values)
+    if zcr_values.ndim == 1:
+        return np.mean(zcr_values)
+    else:
+        return np.mean(zcr_values, axis=axis)
 
 
 def zcr_min(
     signal: np.ndarray,
     frame_length: int,
     hop_length: int,
+    axis: int = 0,
     **kwargs: Any
-) -> float:
+) -> np.ndarray:
     """Computes the minimum of the rolling zero crossing rate of a signal.
 
     Args:
@@ -380,49 +393,52 @@ def zcr_min(
         float: The minimum of the rolling RMS of the input signal.
     """
     zcr_values = rolling_zcr(signal, frame_length, hop_length, **kwargs)
+    if zcr_values.ndim == 1:
+        return np.min(zcr_values)
+    else:
+        return np.min(zcr_values, axis=axis)
 
-    return np.min(zcr_values)
 
-
-def energy(array: np.ndarray) -> float:
+def energy(array: np.ndarray, axis: int = 0) -> np.ndarray:
     """Computes the energy of a signal:
     https://dsp.stackexchange.com/questions/3377/calculating-the-total-energy-of-a-signal
 
     Args:
-        array: The input signal in 1D numpy.ndarray.
+        array: The input signal in 1D or 2D numpy.ndarray.
+        axis: The axis along which to compute the energy. Defaults to 0.
 
     Returns:
-        float: The energy of the signal.
+        np.ndarray: The energy of the signal.
     """
-    return np.sum(np.square(array))
+    return np.sum(np.square(array), axis=axis)
 
 
-def average_power(array: np.ndarray) -> float:
+def average_power(array: np.ndarray, axis: int = 0) -> np.ndarray:
     """Computes the average power of a signal:
     https://dsp.stackexchange.com/questions/3377/calculating-the-total-energy-of-a-signal
 
     Args:
-        array: The input signal in 1D numpy.ndarray.
+        array: The input signal in 1D or 2D numpy.ndarray.
+        axis: The axis along which to compute the average power. Defaults to 0.
 
     Returns:
-        float: The average power of the signal.
+        np.ndarray: The average power of the signal.
     """
-    return np.sum(np.square(array)) / len(array)
+    return np.sum(np.square(array), axis=axis) / array.shape[axis]
 
 
-def crest_factor(array: np.ndarray) -> float:
+def crest_factor(array: np.ndarray, axis: int = 0) -> np.ndarray:
     """Computes the crest factor of the signal
 
     Args:
         array: The input signal as a numpy.ndarray.
+        axis: The axis along which to compute the crest factor. Defaults to 0.
 
     Returns:
-        float: The crest factor of the signal.
+        np.ndarray: The crest factor of the signal.
     """
-
-    peak = np.amax(np.absolute(array))
-    rms = rms_value(array)
-
+    peak = np.amax(np.absolute(array), axis=axis)
+    rms = rms_value(array, axis=axis)
     return peak / rms
 
 
@@ -434,6 +450,7 @@ def envelope_energy_peak_detection(
     freq_step: int = 50,
     fcl_add: int = 50,
     export: str = "array",
+    axis: int = 0,
 ) -> Union[np.ndarray, dict]:
     """Computes the Envelope Energy Peak Detection of a signal within
     frequency bands.
@@ -486,7 +503,7 @@ def envelope_energy_peak_detection(
 
 # --- SPECTRAL ---
 
-def dominant_frequency(array: np.ndarray, fs: int) -> float:
+def dominant_frequency(array: np.ndarray, fs: int, axis: int = 0) -> float:
     """Computes the dominant frequency of a signal.
 
     Args:
@@ -498,7 +515,7 @@ def dominant_frequency(array: np.ndarray, fs: int) -> float:
     """
 
     nperseg = array.shape[0]
-    freqs, psd = scipy.signal.welch(x=array, fs=fs, nperseg=nperseg)
+    freqs, psd = scipy.signal.welch(x=array, fs=fs, nperseg=nperseg, axis=axis)
 
     return freqs[np.argmax(psd)]
 

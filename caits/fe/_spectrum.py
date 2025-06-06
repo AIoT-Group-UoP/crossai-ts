@@ -35,6 +35,7 @@ def melspectrogram(
         center: bool = True,
         pad_mode: _PadModeSTFT = "constant",
         power: float = 2.0,
+        axis: int = 0,
         **kwargs: Any,
 ) -> np.ndarray:
     """Computes a mel-scaled spectrogram.
@@ -119,6 +120,7 @@ def melspectrogram(
         window=window,
         center=center,
         pad_mode=pad_mode,
+        axis=axis
     )
 
     # Build a Mel filter
@@ -349,6 +351,7 @@ def spectrogram(
     window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
+    axis: int = 0
 ) -> Tuple[np.ndarray, int]:
     """Retrieves a magnitude spectrogram.
 
@@ -406,6 +409,7 @@ def spectrogram(
         if y is None:
             raise ValueError("Input signal must be provided to compute a "
                              "spectrogram")
+
         S = (
             np.abs(
                 stft(
@@ -416,6 +420,7 @@ def spectrogram(
                     center=center,
                     window=window,
                     pad_mode=pad_mode,
+                    axis=axis
                 )
             )
             ** power
@@ -433,9 +438,10 @@ def mfcc_stats(
     norm: Optional[str] = "ortho",
     lifter: float = 0,
     export: str = "array",
+    axis: int = 0,
     **kwargs: Any,
 ) -> Union[np.ndarray, dict]:
-    mfcc_arr = mfcc(y=y, sr=sr, S=S, n_mfcc=n_mfcc, dct_type=dct_type, norm=norm, lifter=lifter, **kwargs)
+    mfcc_arr = mfcc(y=y, sr=sr, S=S, n_mfcc=n_mfcc, dct_type=dct_type, norm=norm, lifter=lifter, axis=axis, **kwargs)
     delta_arr = delta(mfcc_arr)
 
     mfcc_mean = np.mean(mfcc_arr, axis=1)
@@ -531,12 +537,13 @@ def mfcc(
     dct_type: int = 2,
     norm: Optional[str] = "ortho",
     lifter: float = 0,
+    axis: int = 0,
     **kwargs: Any,
 ) -> np.ndarray:
     if S is None:
         # multichannel behavior may be different due to relative noise floor
         # differences between channels
-        S = power_to_db(melspectrogram(y=y, sr=sr, **kwargs))
+        S = power_to_db(melspectrogram(y=y, sr=sr, axis=axis, **kwargs))
 
     M: np.ndarray = scipy.fft.dct(S, axis=-2, type=dct_type, norm=norm)[..., :n_mfcc, :]
 
@@ -565,6 +572,7 @@ def stft(
         dtype: Optional[DTypeLike] = None,
         pad_mode: Union[str, Callable[..., Any]] = "constant",
         out: Optional[np.ndarray] = None,
+        axis: int = 0
 ) -> np.ndarray:
     """Short-time Fourier transform (STFT).
 
@@ -689,6 +697,8 @@ def stft(
         view: `D = out[..., :n_frames]`.
     """
 
+    _y = y.T if axis == 1 else y
+
     # By default, use the entire frame
     if win_length is None:
         win_length = n_fft
@@ -700,7 +710,7 @@ def stft(
         raise ValueError(f"hop_length={hop_length} must be a positive integer")
 
     # Check audio is valid
-    valid_audio(y, mono=False)
+    valid_audio(_y, mono=False)
 
     fft_window = get_window(window, win_length, fftbins=True)
 
@@ -708,7 +718,7 @@ def stft(
     fft_window = pad_center(fft_window, size=n_fft)
 
     # Reshape so that the window can be broadcast
-    fft_window = expand_to(fft_window, ndim=1 + y.ndim, axes=-2)
+    fft_window = expand_to(fft_window, ndim=1 + _y.ndim, axes=-2)
 
     # Pad the time series so that frames are centered
     if center:
@@ -719,31 +729,31 @@ def stft(
             # to a user-provided pad function should be encapsulated
             # by using functools.partial:
             #
-            # >>> my_pad_func = functools.partial(pad_func, foo=x, bar=y)
+            # >>> my_pad_func = functools.partial(pad_func, foo=x, bar=_y)
             # >>> librosa.stft(..., pad_mode=my_pad_func)
 
             raise ValueError(
                 f"pad_mode='{pad_mode}' is not supported by librosa.stft")
 
-        if n_fft > y.shape[-1]:
+        if n_fft > _y.shape[-1]:
             warnings.warn(
-                f"n_fft={n_fft} is too large for input signal of length={y.shape[-1]}")
+                f"n_fft={n_fft} is too large for input signal of length={_y.shape[-1]}")
 
         # Set up the padding array to be empty, and we'll fix the target dimension later
-        padding = [(0, 0) for _ in range(y.ndim)]
+        padding = [(0, 0) for _ in range(_y.ndim)]
 
         # How many frames depend on left padding?
         start_k = int(np.ceil(n_fft // 2 / hop_length))
 
         # What's the first frame that depends on extra right-padding?
-        tail_k = (y.shape[-1] + n_fft // 2 - n_fft) // hop_length + 1
+        tail_k = (_y.shape[-1] + n_fft // 2 - n_fft) // hop_length + 1
 
         if tail_k <= start_k:
             # If tail and head overlap, then just copy-pad the signal and carry on
             start = 0
             extra = 0
             padding[-1] = (n_fft // 2, n_fft // 2)
-            y = np.pad(y, padding, mode=pad_mode)
+            _y = np.pad(_y, padding, mode=pad_mode)
         else:
             # If tail and head do not overlap, then we can implement padding on each part separately
             # and avoid a full copy-pad
@@ -755,7 +765,7 @@ def stft(
             # +1 here is to ensure enough samples to fill the window
             # fixes bug #1567
             y_pre = np.pad(
-                y[..., : (start_k - 1) * hop_length - n_fft // 2 + n_fft + 1],
+                _y[..., : (start_k - 1) * hop_length - n_fft // 2 + n_fft + 1],
                 padding,
                 mode=pad_mode,
             )
@@ -768,10 +778,10 @@ def stft(
             extra = y_frames_pre.shape[-1]
 
             # Determine if we have any frames that will fit inside the tail pad
-            if tail_k * hop_length - n_fft // 2 + n_fft <= y.shape[
+            if tail_k * hop_length - n_fft // 2 + n_fft <= _y.shape[
                 -1] + n_fft // 2:
                 padding[-1] = (0, n_fft // 2)
-                y_post = np.pad(y[..., (tail_k) * hop_length - n_fft // 2:],
+                y_post = np.pad(_y[..., (tail_k) * hop_length - n_fft // 2:],
                                 padding, mode=pad_mode)
                 y_frames_post = frame(y_post, frame_length=n_fft,
                                       hop_length=hop_length)
@@ -786,9 +796,9 @@ def stft(
                 post_shape[-1] = 0
                 y_frames_post = np.empty_like(y_frames_pre, shape=post_shape)
     else:
-        if n_fft > y.shape[-1]:
+        if n_fft > _y.shape[-1]:
             raise ValueError(
-                f"n_fft={n_fft} is too large for uncentered analysis of input " f"signal of length={y.shape[-1]}"
+                f"n_fft={n_fft} is too large for uncentered analysis of input " f"signal of length={_y.shape[-1]}"
             )
 
         # "Middle" of the signal starts at sample 0
@@ -797,10 +807,10 @@ def stft(
         extra = 0
 
     if dtype is None:
-        dtype = dtype_r2c(y.dtype)
+        dtype = dtype_r2c(_y.dtype)
 
     # Window the time series.
-    y_frames = frame(y[..., start:], frame_length=n_fft, hop_length=hop_length)
+    y_frames = frame(_y[..., start:], frame_length=n_fft, hop_length=hop_length)
 
     # Pre-allocate the STFT matrix
     shape = list(y_frames.shape)
@@ -865,6 +875,7 @@ def istft(
         dtype: Optional[DTypeLike] = None,
         length: Optional[int] = None,
         out: Optional[np.ndarray] = None,
+        axis: int = 0
 ) -> np.ndarray:
     """Inverse short-time Fourier transform (ISTFT).
 
@@ -1066,7 +1077,7 @@ def istft(
 
     y[..., approx_nonzero_indices] /= ifft_window_sum[approx_nonzero_indices]
 
-    return y
+    return y.T if axis == 1 else y
 
 
 def fft_frequencies(
