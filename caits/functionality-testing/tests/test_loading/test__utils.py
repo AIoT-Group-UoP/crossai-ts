@@ -4,7 +4,7 @@ import shutil
 import json
 import yaml
 import pytest
-from caits.loading._utils import load_yaml_config, json_loader
+from caits.loading import load_yaml_config, json_loader
 
 
 def test_load_yaml_config_success():

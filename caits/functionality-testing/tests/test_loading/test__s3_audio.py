@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 import wave
 from unittest.mock import patch, MagicMock
-from caits.loading._s3_audio import s3_wav_loader, s3_audio_loader, s3_wav_specs_check
+from caits.loading import s3_wav_loader, s3_audio_loader, s3_wav_specs_check
 
 
 def generate_wav_bytes(duration_sec=1, sr=8000, n_channels=1, dtype=np.int16):

@@ -2,7 +2,7 @@ import io
 import pandas as pd
 import pytest
 from unittest.mock import patch, MagicMock
-from caits.loading._s3_csv_read import s3_csv_loader
+from caits.loading import s3_csv_loader
 
 CSV_CONTENT = "col1,col2\n1,2\n3,4\n"
 CSV_CONTENT2 = "col1,col2\n5,6\n7,8\n"

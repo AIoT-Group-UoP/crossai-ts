@@ -1,7 +1,7 @@
 import os
 import pytest
 import pandas as pd
-from caits.loading._csv_read import csv_loader
+from caits.loading import csv_loader
 
 EXAMPLES_DATA = os.path.join(os.path.dirname(__file__), '../../../../examples/data')
 
