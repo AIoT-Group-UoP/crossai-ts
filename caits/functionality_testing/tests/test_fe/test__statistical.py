@@ -29,47 +29,47 @@ from caits.fe import (
 
 def test_std_value_shape():
     x = np.random.randn(100, 3)
-    out = std_value(x)
+    out = std_value(x, axis=0)
     assert out.shape == (3,)
 
 def test_variance_value_shape():
     x = np.random.randn(100, 3)
-    out = variance_value(x)
+    out = variance_value(x, axis=0)
     assert out.shape == (3,)
 
 def test_mean_value_shape():
     x = np.random.randn(100, 3)
-    out = mean_value(x)
+    out = mean_value(x, axis=0)
     assert out.shape == (3,)
 
 def test_median_value_shape():
     x = np.random.randn(100, 3)
-    out = median_value(x)
+    out = median_value(x, axis=0)
     assert out.shape == (3,)
 
 def test_max_value_shape():
     x = np.random.randn(100, 3)
-    out = max_value(x)
+    out = max_value(x, axis=0)
     assert out.shape == (3,)
 
 def test_min_value_shape():
     x = np.random.randn(100, 3)
-    out = min_value(x)
+    out = min_value(x, axis=0)
     assert out.shape == (3,)
 
 def test_kurtosis_value_shape():
     x = np.random.randn(100, 3)
-    out = kurtosis_value(x)
+    out = kurtosis_value(x, axis=0)
     assert out.shape == (3,)
 
 def test_sample_skewness_shape():
     x = np.random.randn(100, 3)
-    out = sample_skewness(x)
+    out = sample_skewness(x, axis=0)
     assert out.shape == (3,)
 
 def test_rms_value_shape():
     x = np.random.randn(100, 3)
-    out = rms_value(x)
+    out = rms_value(x, axis=0)
     assert out.shape == (3,)
 
 def test_rms_max_shape():
@@ -79,22 +79,22 @@ def test_rms_max_shape():
 
 def test_rms_mean_shape():
     x = np.random.randn(100, 3)
-    out = rms_mean(x, frame_length=5, hop_length=2)
+    out = rms_mean(x, frame_length=5, hop_length=2, axis=0)
     assert out.shape == (3,)
 
 def test_rms_min_shape():
     x = np.random.randn(100, 3)
-    out = rms_min(x, frame_length=5, hop_length=2)
+    out = rms_min(x, frame_length=5, hop_length=2, axis=0)
     assert out.shape == (3,)
 
 def test_zcr_value_shape():
     x = np.random.randn(100, 3)
-    out = zcr_value(x)
+    out = zcr_value(x, axis=0)
     assert out.shape == (3,)
 
 def test_zcr_max_shape():
     x = np.random.randn(100, 3)
-    out = zcr_max(x, frame_length=5, hop_length=2)
+    out = zcr_max(x, frame_length=5, hop_length=2, axis=0)
     assert out.shape == (3,)
 
 def test_zcr_mean_shape():
@@ -110,7 +110,10 @@ def test_zcr_min_shape():
 def test_dominant_frequency_shape():
     x = np.sin(2 * np.pi * 1 * np.arange(100) / 100)
     x2d = np.stack([x, x], axis=1)
-    out = dominant_frequency(x2d, fs=100)
+    out = dominant_frequency(x2d, fs=100, axis=0)
+    assert out.shape == (2,)
+    x2d = x2d.T
+    out = dominant_frequency(x2d, fs=100, axis=1)
     assert out.shape == (2,)
 
 def test_central_moments_shape():
@@ -126,50 +129,65 @@ def test_central_moments_shape():
 
 def test_signal_length_shape():
     x = np.random.randn(100, 3)
-    out = signal_length(x, fs=10)
-    assert out.shape == (3,)
-    out_samples = signal_length(x, fs=10, time_mode="samples")
-    assert out_samples.shape == (3,)
+    out = signal_length(x, fs=9, axis=0)
+    assert out == 100 / 9
+    out_samples = signal_length(x, fs=10, time_mode="samples", axis=0)
+    assert out_samples == 100
 
 def test_energy_shape():
     x = np.random.randn(100, 3)
-    out = energy(x)
+    out = energy(x, axis=0)
     assert out.shape == (3,)
 
 def test_average_power_shape():
     x = np.random.randn(100, 3)
-    out = average_power(x)
+    out = average_power(x, axis=0)
     assert out.shape == (3,)
 
 def test_crest_factor_shape():
     x = np.abs(np.random.randn(100, 3)) + 1e-3
-    out = crest_factor(x)
+    out = crest_factor(x, axis=0)
     assert out.shape == (3,)
 
 def test_envelope_energy_peak_detection_shape():
     x = np.random.randn(1000, 3)
-    out = envelope_energy_peak_detection(x, fs=1000)
+    out = envelope_energy_peak_detection(x, fs=1000, axis=0)
     assert isinstance(out, np.ndarray)
     assert out.shape[0] == 3
-    out_dict = envelope_energy_peak_detection(x, fs=1000, export="dict")
+    out_dict = envelope_energy_peak_detection(x, fs=1000, export="dict", axis=0)
     assert isinstance(out_dict, dict)
     for v in out_dict.values():
         assert v.shape == (3,)
 
 def test_mfcc_mean_shape():
     x = np.random.randn(22050, 3)
-    out = mfcc_mean(x, sr=22050, n_mfcc=13)
+    out = mfcc_mean(x, sr=22050, n_mfcc=13, axis=0)
     assert isinstance(out, np.ndarray)
     assert out.shape == (13, 3)
 
 def test_signal__shape():
     x = np.random.randn(100, 3)
-    out = signal_stats(x, name="test")
+    out = signal_stats(x, name="test", axis=0)
     assert isinstance(out, dict)
-    expected_keys = {"test_max", "test_min", "test_mean", "test_median", "test_std", "test_var", "test_kurtosis", "test_skewness", "test_rms", "test_crest_factor", "test_signal_length"}
+    expected_keys = {
+        "test_max",
+        "test_min",
+        "test_mean",
+        "test_median",
+        "test_std",
+        "test_var",
+        "test_kurtosis",
+        "test_skewness",
+        "test_rms",
+        "test_crest_factor",
+        "test_signal_length",
+        "test_dominant_frequency",
+    }
+
     assert set(out.keys()) == expected_keys
-    for v in out.values():
-        assert v.shape == (3,)
+    for k, v in out.items():
+        if k != "test_signal_length":
+            assert v.shape == (3,)
 
 
 def test_std_value_shape_multi():
@@ -216,12 +234,12 @@ def test_min_value_shape_multi():
 
 def test_kurtosis_value_shape_multi():
     x = np.random.randn(100, 3)
-    out = kurtosis_value(x)
+    out = kurtosis_value(x, axis=0)
     assert out.shape == (3,)
 
 def test_sample_skewness_shape_multi():
     x = np.random.randn(100, 3)
-    out = sample_skewness(x)
+    out = sample_skewness(x, axis=0)
     assert out.shape == (3,)
 
 def test_rms_value_shape_multi():
@@ -229,9 +247,3 @@ def test_rms_value_shape_multi():
     out = rms_value(x, axis=0)
     assert out.shape == (3,)
 
-def test_signal__shape_multi():
-    x = np.random.randn(100, 3)
-    out = signal_stats(x, name="test", axis=0)
-    assert isinstance(out, dict)
-    expected_keys = {"test_max", "test_min", "test_mean", "test_median", "test_std", "test_var", "test_kurtosis", "test_skewness", "test_rms", "test_crest_factor", "test_signal_length"}
-    assert set(out.keys()) == expected_keys
