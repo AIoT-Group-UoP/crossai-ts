@@ -40,7 +40,7 @@ def test_spectrogram():
         n_fft=50,
         win_length=20,
         hop_length=10,
-        axis=1
+        axis=0
     )
 
     spec2 = spectrogram(
@@ -48,7 +48,7 @@ def test_spectrogram():
         n_fft=50,
         win_length=20,
         hop_length=10,
-        axis=0
+        axis=1
     )
 
     assert np.array_equal(spec1[0], spec2[0])
@@ -58,7 +58,7 @@ def test_stft():
     data = init_dataset(uni_dim=False)
 
     stft1 = stft(
-        y=data.T,
+        y=data,
         n_fft=50,
         hop_length=10,
         win_length=20,
@@ -66,7 +66,7 @@ def test_stft():
     )
 
     stft2 = stft(
-        y=data,
+        y=data.T,
         n_fft=50,
         hop_length=10,
         win_length=20,
@@ -79,7 +79,7 @@ def test_istft():
     data = init_dataset(uni_dim=False)
 
     stft1 = stft(
-        y=data.T,
+        y=data,
         n_fft=50,
         hop_length=10,
         win_length=20,
@@ -87,7 +87,7 @@ def test_istft():
     )
 
     stft2 = stft(
-        y=data,
+        y=data.T,
         n_fft=50,
         hop_length=10,
         win_length=20,
@@ -380,7 +380,7 @@ def test_stft_shape():
     y = np.random.randn(n_samples, n_channels)
     n_fft = 256
     hop_length = 64
-    S = stft(y, n_fft=n_fft, hop_length=hop_length, axis=1)
+    S = stft(y, n_fft=n_fft, hop_length=hop_length, axis=0)
     n_frames = 1 + (n_samples + 2 * (n_fft // 2) - n_fft) // hop_length
     assert S.shape[2] == n_frames
     assert S.shape[1] == 1 + n_fft // 2
@@ -392,8 +392,8 @@ def test_istft_shape():
     y = np.random.randn(n_samples, n_channels)
     n_fft = 256
     hop_length = 64
-    S = stft(y, n_fft=n_fft, hop_length=hop_length, axis=1)
-    y_rec = istft(S, n_fft=n_fft, hop_length=hop_length, length=n_samples, axis=1)
+    S = stft(y, n_fft=n_fft, hop_length=hop_length, axis=0)
+    y_rec = istft(S, n_fft=n_fft, hop_length=hop_length, length=n_samples, axis=0)
     assert y_rec.shape == (n_samples, n_channels)
 
 
@@ -401,7 +401,7 @@ def test_spectrogram_shape():
     n_samples, n_channels = 1024, 2
     y = np.random.randn(n_samples, n_channels)
     n_fft = 128
-    S, n_fft_out = spectrogram(y=y, n_fft=n_fft, axis=1)
+    S, n_fft_out = spectrogram(y=y, n_fft=n_fft, axis=0)
     assert S.shape[0] == n_channels
     assert S.shape[1] == 1 + n_fft // 2
     assert S.shape[2] == S.shape[2]
@@ -412,7 +412,7 @@ def test_melspectrogram_shape():
     n_samples, n_channels = 1024, 2
     y = np.random.randn(n_samples, n_channels)
     n_fft = 128
-    S = melspectrogram(y=y, n_fft=n_fft, sr=22050, axis=1)
+    S = melspectrogram(y=y, n_fft=n_fft, sr=22050, axis=0)
     assert S.shape[0] == n_channels  # n_frames, not checked directly
     assert S.shape[1] > 0
     assert S.shape[2] == S.shape[2]
@@ -422,7 +422,7 @@ def test_mfcc_shape():
     n_samples, n_channels = 1024, 2
     y = np.random.randn(n_samples, n_channels)
     n_mfcc = 13
-    M = mfcc(y=y, n_mfcc=n_mfcc, axis=1)
+    M = mfcc(y=y, n_mfcc=n_mfcc, axis=0)
     assert M.shape[0] == n_channels
     assert M.shape[1] == n_mfcc
     assert M.shape[2] == M.shape[2]

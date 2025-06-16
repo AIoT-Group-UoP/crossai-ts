@@ -35,7 +35,7 @@ def melspectrogram(
         center: bool = True,
         pad_mode: _PadModeSTFT = "constant",
         power: float = 2.0,
-        axis: int = 0,
+        axis: int = 1,
         **kwargs: Any,
 ) -> np.ndarray:
     """Computes a mel-scaled spectrogram.
@@ -351,7 +351,7 @@ def spectrogram(
     window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
-    axis: int = 0
+    axis: int = 1
 ) -> Tuple[np.ndarray, int]:
     """Retrieves a magnitude spectrogram.
 
@@ -438,16 +438,16 @@ def mfcc_stats(
     norm: Optional[str] = "ortho",
     lifter: float = 0,
     export: str = "array",
-    axis: int = 0,
+    axis: int = 1,
     **kwargs: Any,
 ) -> Union[np.ndarray, dict]:
     mfcc_arr = mfcc(y=y, sr=sr, S=S, n_mfcc=n_mfcc, dct_type=dct_type, norm=norm, lifter=lifter, axis=axis, **kwargs)
     delta_arr = delta(mfcc_arr)
 
-    mfcc_mean = np.mean(mfcc_arr, axis=1)
-    mfcc_std = np.std(mfcc_arr, axis=1)
-    delta_mean = np.mean(delta_arr, axis=1)
-    delta2_mean = np.mean(delta(mfcc_arr, order=2), axis=1)
+    mfcc_mean = np.mean(mfcc_arr, axis=axis)
+    mfcc_std = np.std(mfcc_arr, axis=axis)
+    delta_mean = np.mean(delta_arr, axis=axis)
+    delta2_mean = np.mean(delta(mfcc_arr, order=2), axis=axis)
 
     if export == "array":
         return np.concatenate([mfcc_mean, mfcc_std, delta_mean, delta2_mean], axis=1)
@@ -537,7 +537,7 @@ def mfcc(
     dct_type: int = 2,
     norm: Optional[str] = "ortho",
     lifter: float = 0,
-    axis: int = 0,
+    axis: int = 1,
     **kwargs: Any,
 ) -> np.ndarray:
     if S is None:
@@ -572,7 +572,7 @@ def stft(
         dtype: Optional[DTypeLike] = None,
         pad_mode: Union[str, Callable[..., Any]] = "constant",
         out: Optional[np.ndarray] = None,
-        axis: int = 0
+        axis: int = 1
 ) -> np.ndarray:
     """Short-time Fourier transform (STFT).
 
@@ -697,7 +697,7 @@ def stft(
         view: `D = out[..., :n_frames]`.
     """
 
-    _y = y.T if axis == 1 else y
+    _y = y.T if axis == 0 else y
 
     # By default, use the entire frame
     if win_length is None:
@@ -875,7 +875,7 @@ def istft(
         dtype: Optional[DTypeLike] = None,
         length: Optional[int] = None,
         out: Optional[np.ndarray] = None,
-        axis: int = 0
+        axis: int = 1
 ) -> np.ndarray:
     """Inverse short-time Fourier transform (ISTFT).
 
@@ -1077,7 +1077,7 @@ def istft(
 
     y[..., approx_nonzero_indices] /= ifft_window_sum[approx_nonzero_indices]
 
-    return y.T if axis == 1 else y
+    return y.T if axis == 0 else y
 
 
 def fft_frequencies(

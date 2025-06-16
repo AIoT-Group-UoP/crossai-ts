@@ -259,7 +259,7 @@ cython_debug/
 
 #folder for testings
 testings/
-#functionality-testing/
+#functionality_testing/
 
 # folders with data
 examples/data/AirQuality/
