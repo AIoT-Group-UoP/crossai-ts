@@ -35,7 +35,7 @@ def melspectrogram(
         center: bool = True,
         pad_mode: _PadModeSTFT = "constant",
         power: float = 2.0,
-        axis: int = 1,
+        axis: int = 0,
         **kwargs: Any,
 ) -> np.ndarray:
     """Computes a mel-scaled spectrogram.
@@ -351,7 +351,7 @@ def spectrogram(
     window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
-    axis: int = 1
+    axis: int = 0
 ) -> Tuple[np.ndarray, int]:
     """Retrieves a magnitude spectrogram.
 
@@ -438,7 +438,7 @@ def mfcc_stats(
     norm: Optional[str] = "ortho",
     lifter: float = 0,
     export: str = "array",
-    axis: int = 1,
+    axis: int = 0,
     **kwargs: Any,
 ) -> Union[np.ndarray, dict]:
     mfcc_arr = mfcc(y=y, sr=sr, S=S, n_mfcc=n_mfcc, dct_type=dct_type, norm=norm, lifter=lifter, axis=axis, **kwargs)
@@ -467,7 +467,7 @@ def delta(
     *,
     width: int = 9,
     order: int = 1,
-    axis: int = -1,
+    axis: int = 0,
     mode: str = "interp",
     **kwargs: Any,
 ) -> np.ndarray:
@@ -537,7 +537,7 @@ def mfcc(
     dct_type: int = 2,
     norm: Optional[str] = "ortho",
     lifter: float = 0,
-    axis: int = 1,
+    axis: int = 0,
     **kwargs: Any,
 ) -> np.ndarray:
     if S is None:
@@ -572,7 +572,7 @@ def stft(
         dtype: Optional[DTypeLike] = None,
         pad_mode: Union[str, Callable[..., Any]] = "constant",
         out: Optional[np.ndarray] = None,
-        axis: int = 1
+        axis: int = 0
 ) -> np.ndarray:
     """Short-time Fourier transform (STFT).
 
@@ -875,7 +875,7 @@ def istft(
         dtype: Optional[DTypeLike] = None,
         length: Optional[int] = None,
         out: Optional[np.ndarray] = None,
-        axis: int = 1
+        axis: int = 0
 ) -> np.ndarray:
     """Inverse short-time Fourier transform (ISTFT).
 
