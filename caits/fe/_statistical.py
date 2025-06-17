@@ -12,6 +12,7 @@ from ._spectrum import mfcc
 
 def std_value(
     array: np.ndarray,
+    ddof: int = 0,
     axis: int = 0
 ) -> float:
     """Computes the standard deviation of an audio signal.
@@ -24,11 +25,12 @@ def std_value(
     Returns:
         float: The standard deviation of the audio signal.
     """
-    return np.std(array, axis=axis)
+    return np.std(array, ddof=ddof, axis=axis)
 
 
 def variance_value(
     array: np.ndarray,
+    ddof: int = 0,
     axis: int = 0
 ) -> float:
     """Computes the variance of an audio signal.
@@ -41,7 +43,7 @@ def variance_value(
     Returns:
         float: The variance of the audio signal.
     """
-    return np.var(array, axis=axis)
+    return np.var(array, ddof=ddof, axis=axis)
 
 
 def mean_value(
@@ -186,7 +188,8 @@ def signal_length(
 
 def central_moments(
     array: np.ndarray,
-    export: str = "array"
+    export: str = "array",
+    axis: int = 0
 ) -> Union[np.ndarray, Dict[str, float]]:
     """
     Calculate the 0th, 1st, 2nd, 3rd, and 4th central moments of an array using
@@ -211,11 +214,11 @@ def central_moments(
     if len(array) == 0:
         raise ValueError("Input array is empty")
 
-    moment0 = moment(array, moment=0)
-    moment1 = moment(array, moment=1)
-    moment2 = moment(array, moment=2)
-    moment3 = moment(array, moment=3)
-    moment4 = moment(array, moment=4)
+    moment0 = moment(array, moment=0, axis=axis)
+    moment1 = moment(array, moment=1, axis=axis)
+    moment2 = moment(array, moment=2, axis=axis)
+    moment3 = moment(array, moment=3, axis=axis)
+    moment4 = moment(array, moment=4, axis=axis)
     if export == "array":
         return np.array([moment0, moment1, moment2, moment3, moment4])
     elif export == "dict":
