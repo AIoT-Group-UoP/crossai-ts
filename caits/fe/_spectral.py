@@ -2,7 +2,7 @@ from typing import Dict, List, Tuple, Union
 
 import numpy as np
 import scipy
-from scipy.integrate import simps
+from scipy.integrate import simpson
 
 
 def spectral_centroid(
@@ -371,12 +371,12 @@ def power_spectral_density(
         array, fs, nperseg=nperseg, noverlap=noverlap, axis=axis
     )
     dx_freq = freqs[1] - freqs[0]
-    total_power = simps(psd, dx=dx_freq)
+    total_power = simpson(psd, dx=dx_freq)
 
     band_powers = []
     for lf, hf in freq_cuts:
         idx_band = np.logical_and(freqs >= lf, freqs <= hf)
-        band_power = simps(psd[idx_band], dx=dx_freq)
+        band_power = simpson(psd[idx_band], dx=dx_freq)
         band_powers.append(band_power / total_power)
 
     # Handle export format
