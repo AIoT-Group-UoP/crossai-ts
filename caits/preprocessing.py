@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def normalize_signal(sig: np.ndarray) -> np.ndarray:
+def normalize_signal(sig: np.ndarray, axis: int = 0) -> np.ndarray:
     """Normalizes a signal to the proper range.
 
     Args:
@@ -18,7 +18,7 @@ def normalize_signal(sig: np.ndarray) -> np.ndarray:
             return sig / max(intinfo.max, -intinfo.min)
 
         except ValueError:  # array is not integer dtype
-            return sig / max(sig.max(), -sig.min())
+            return sig / np.max((sig.max(axis=axis), -sig.min(axis=axis)), axis=axis)
 
 
 def resample_signal(
