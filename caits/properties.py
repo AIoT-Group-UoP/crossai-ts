@@ -46,13 +46,13 @@ def instantaneous_frequency_hbt(
         numpy.ndarray: The instantaneous frequency of the input signal.
     """
     analytic_signal = hilbert(x=signal, N=N, axis=axis)
-    instantaneous_phase = np.unwrap(np.angle(analytic_signal))
-    instant_freq = np.diff(instantaneous_phase) / (2.0 * np.pi) * fs
+    instantaneous_phase = np.unwrap(np.angle(analytic_signal), axis=axis)
+    instant_freq = np.diff(instantaneous_phase, axis=axis) / (2.0 * np.pi) * fs
 
     return instant_freq
 
 
-def instantaneous_amplitude_hbt(signal: np.ndarray) -> np.ndarray:
+def instantaneous_amplitude_hbt(signal: np.ndarray, axis: int = 0) -> np.ndarray:
     """Calculates the instantaneous amplitude of a signal by computing first
     the analytic signal using the Hilbert transform.
 
@@ -62,12 +62,12 @@ def instantaneous_amplitude_hbt(signal: np.ndarray) -> np.ndarray:
     Returns:
         numpy.ndarray: The instantaneous amplitude of the input signal.
     """
-    analytic_signal = hilbert(signal)
+    analytic_signal = hilbert(signal, axis=axis)
     ia = np.abs(analytic_signal)
     return ia
 
 
-def sma_signal(signal) -> np.ndarray:
+def sma_signal(signal, axis: int = 0) -> np.ndarray:
     """Calculates the rolling Simple Moving Average (SMA) between the axes
     of a multi-axis signal in time-domain.
         Formula: sum(abs(signal))
@@ -78,10 +78,10 @@ def sma_signal(signal) -> np.ndarray:
     Returns:
         numpy.ndarray: The SMA of the input signal.
     """
-    return np.sum(np.abs(signal), axis=1)
+    return np.sum(np.abs(signal), axis=axis)
 
 
-def magnitude_signal(signal: np.ndarray) -> np.ndarray:
+def magnitude_signal(signal: np.ndarray, axis: int = 0) -> np.ndarray:
     """Calculates the Magnitude between the axes of a multi-axis signal in
     time-domain.
         Formula: sqrt(sum(signal^2))
@@ -92,7 +92,7 @@ def magnitude_signal(signal: np.ndarray) -> np.ndarray:
     Returns:
         numpy.ndarray: The magnitude of the input signal.
     """
-    return np.sqrt(np.sum(signal**2, axis=1))
+    return np.sqrt(np.sum(signal**2, axis=axis))
 
 
 def rolling_rms(
