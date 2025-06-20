@@ -130,7 +130,8 @@ def windowing_df(
 def frame_signal(
     array: np.ndarray,
     frame_length: int,
-    hop_length: int
+    hop_length: int,
+    axis: int = 0
 ) -> np.ndarray:
     """Distinguishes a signal into overlapping frames.
 
@@ -144,7 +145,7 @@ def frame_signal(
             (frame_length x num_frames).
     """
     # Number of frames
-    num_frames = 1 + int(np.floor((len(array) - frame_length) / hop_length))
+    num_frames = 1 + int(np.floor((array.shape[axis] - frame_length) / hop_length))
     # Row indices
     rows = np.arange(frame_length)[:, None]
     # Column indices
