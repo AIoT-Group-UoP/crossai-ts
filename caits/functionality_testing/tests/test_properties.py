@@ -18,7 +18,7 @@ def test_instantaneous_frequency_hbt_shape():
     freq = prop.instantaneous_frequency_hbt(x, fs)
     assert freq.shape == (x.shape[0] - 1,)
     x2d = np.random.randn(1000, 2)
-    freq2d = prop.instantaneous_frequency_hbt(x2d, fs)
+    freq2d = prop.instantaneous_frequency_hbt(x2d, fs, axis=0)
     assert freq2d.shape == (x2d.shape[0] - 1, x2d.shape[1])
 
 
@@ -27,26 +27,26 @@ def test_instantaneous_amplitude_hbt_shape():
     ia = prop.instantaneous_amplitude_hbt(x)
     assert ia.shape == x.shape
     x2d = np.random.randn(1000, 2)
-    ia2d = prop.instantaneous_amplitude_hbt(x2d)
+    ia2d = prop.instantaneous_amplitude_hbt(x2d, axis=0)
     assert ia2d.shape == x2d.shape
 
 
 def test_sma_signal_shape():
     x = np.random.randn(100)
     sma = prop.sma_signal(x.reshape(-1, 1))
-    assert sma.shape == (100,)
+    assert sma.shape == (1,)
     x2d = np.random.randn(100, 3)
-    sma2d = prop.sma_signal(x2d)
-    assert sma2d.shape == (100,)
+    sma2d = prop.sma_signal(x2d, axis=0)
+    assert sma2d.shape == (3,)
 
 
 def test_magnitude_signal_shape():
     x = np.random.randn(100)
     mag = prop.magnitude_signal(x.reshape(-1, 1))
-    assert mag.shape == (100,)
+    assert mag.shape == (1,)
     x2d = np.random.randn(100, 3)
-    mag2d = prop.magnitude_signal(x2d)
-    assert mag2d.shape == (100,)
+    mag2d = prop.magnitude_signal(x2d, axis=0)
+    assert mag2d.shape == (3,)
 
 
 def test_rolling_rms_shape():
@@ -57,8 +57,8 @@ def test_rolling_rms_shape():
     expected_frames = 1 + (len(x) + frame_length // 2 * 2 - frame_length) // hop_length
     assert rms.shape == (expected_frames,)
     x2d = np.random.randn(1000, 2)
-    rms2d = prop.rolling_rms(x2d, frame_length, hop_length)
-    assert rms2d.shape == (expected_frames,)
+    rms2d = prop.rolling_rms(x2d, frame_length, hop_length, axis=0)
+    assert rms2d.shape == (expected_frames,2)
 
 
 def test_rolling_zcr_shape():
@@ -69,5 +69,5 @@ def test_rolling_zcr_shape():
     expected_frames = 1 + (len(x) + frame_length // 2 * 2 - frame_length) // hop_length
     assert zcr.shape == (expected_frames,)
     x2d = np.random.randn(1000, 2)
-    zcr2d = prop.rolling_zcr(x2d, frame_length=frame_length, hop_length=hop_length)
-    assert zcr2d.shape == (expected_frames,)
+    zcr2d = prop.rolling_zcr(x2d, frame_length=frame_length, hop_length=hop_length, axis=0)
+    assert zcr2d.shape == (expected_frames,2)
