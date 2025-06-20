@@ -99,7 +99,8 @@ def rolling_rms(
     signal: np.ndarray,
     frame_length: float,
     hop_length: float,
-    padding_mode: str = "constant"
+    padding_mode: str = "constant",
+    axis: int = 0
 ) -> np.ndarray:
     """Calculates the rolling Root Mean Square (RMS) of a signal in
     time-domain.
@@ -118,18 +119,41 @@ def rolling_rms(
     """
     # Pad the signal on both sides
     pad_width = frame_length // 2
-    padded_signal = np.pad(signal, pad_width, mode=padding_mode)
+
+    if signal.ndim > 1:
+        if axis == 0:
+            padded_signal = np.pad(signal, ((pad_width, pad_width), (0, 0)), mode=padding_mode)
+        else:
+            padded_signal = np.pad(signal, ((0, 0), (pad_width, pad_width)), mode=padding_mode)
+    else:
+        padded_signal = np.pad(signal, pad_width, mode=padding_mode)
 
     # Calculate the number of frames
     num_frames = 1 + (len(padded_signal) - frame_length) // hop_length
 
     # Initialize an array to store the RMS values
-    rms_values = np.zeros(num_frames)
+    if signal.ndim == 1:
+        rms_values = np.zeros(num_frames)
+    else:
+        if axis == 0:
+            # rms_values = np.zeros((signal.shape[axis], num_frames))
+            rms_values = np.zeros((num_frames, signal.shape[1]))
+        else:
+            rms_values = np.zeros((signal.shape[axis], num_frames))
 
     # Calculate RMS for each frame
     for i in range(int(num_frames)):
-        frame = padded_signal[i * hop_length : i * hop_length + frame_length]
-        rms_values[i] = np.sqrt(np.mean(frame**2))
+        if signal.ndim == 1:
+            frame = padded_signal[i * hop_length : i * hop_length + frame_length]
+            rms_values[i] = np.sqrt(np.mean(frame ** 2))
+        else:
+            if axis == 0:
+                frame = padded_signal[i * hop_length : i * hop_length + frame_length, :]
+                rms_values[i, :] = np.sqrt(np.mean(frame ** 2, axis=axis))
+            else:
+                frame = padded_signal[:, i * hop_length : i * hop_length + frame_length]
+                rms_values[:, i] = np.sqrt(np.mean(frame ** 2, axis=axis))
+
 
     return rms_values
 
@@ -139,7 +163,8 @@ def rolling_zcr(
     frame_length: int = 2048,
     hop_length: int = 512,
     center: bool = True,
-    padding_mode: str = "edge"
+    padding_mode: str = "edge",
+    axis: int = 0
 ) -> np.ndarray:
     """Calculates the rolling Zero Crossing Rate (ZCR) of a signal in
     time-domain. Implementation based on:
@@ -163,14 +188,21 @@ def rolling_zcr(
     if center:
         # Reflect padding on both sides for centering frames
         pad_length = frame_length // 2
-        sig = np.pad(array, pad_length, mode=padding_mode)
+
+        if array.ndim > 1:
+            if axis == 0:
+                sig = np.pad(array, ((pad_length, pad_length), (0, 0)), mode=padding_mode)
+            else:
+                sig = np.pad(array, ((0, 0), (pad_length, pad_length)), mode=padding_mode)
+        else:
+            sig = np.pad(array, pad_length, mode=padding_mode)
 
     frames = frame_signal(sig, frame_length, hop_length)
 
     # Calculate zero crossings
     # Check where adjacent samples in the frame have different signs and
     # count these occurrences.
-    zero_crossings = np.abs(np.diff(np.signbit(frames), axis=0))
-    zcr = np.sum(zero_crossings, axis=0) / float(frame_length)
+    zero_crossings = np.abs(np.diff(np.signbit(frames), axis=axis))
+    zcr = np.sum(zero_crossings, axis=axis) / float(frame_length)
 
     return zcr
