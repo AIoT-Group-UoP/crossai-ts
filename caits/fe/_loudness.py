@@ -19,7 +19,7 @@ def dBFS(
         float: The decibels relative to full scale (dBFS) of an audio signal.
     """
     rms = rms_value(array)
-    if not rms:
+    if rms.size == 0:
         return -float("infinity")
     return ratio_to_db(rms / max_possible_amplitude(sample_width))
 
@@ -56,17 +56,17 @@ def ratio_to_db(
     Returns:
         float: The ratio in dB.
     """
-    ratio = float(ratio)
+    ratio = ratio.astype(float)
 
     # accept 2 values and use the ratio of val1 to val2
     if val2 is not None:
         ratio = ratio / val2
 
     # special case for multiply-by-zero (convert to silence)
-    if ratio == 0:
+    if np.sum(ratio) == 0:
         return -float("inf")
 
     if using_amplitude:
-        return 20 * math.log(ratio, 10)
+        return 20 * np.log10(ratio)
     else:  # using power
-        return 10 * math.log(ratio, 10)
+        return 10 * np.log10(ratio)
