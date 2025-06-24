@@ -11,7 +11,7 @@ from ..fe.core_spectrum import phase_vocoder
 
 def add_white_noise(
     array: np.ndarray,
-    noise_factor: float
+    noise_factor: float,
 ) -> np.ndarray:
     """Adds white noise to a signal.
 
@@ -22,7 +22,7 @@ def add_white_noise(
     Returns:
         ndarray: Noisy signal.
     """
-    noise = np.random.normal(0, array.std(), array.size)
+    noise = np.random.normal(0, array.std(), array.shape)
     return array + noise_factor * noise
 
 
@@ -228,13 +228,19 @@ def crop_ts(
     """
     from tsaug import Crop
 
+    if array.ndim == 2:
+        _array = array[np.newaxis, ...]
+
     arr = Crop(size=size, resize=resize, repeats=repeats, prob=prob,
                seed=seed
-               ).augment(array)
+               ).augment(_array)
 
     if repeats > 1 and array.ndim > 1:
-        length = array.shape[0]
+        length = _array.shape[0]
         arr = arr_splitter(arr, length, repeats)
+
+    if array.ndim == 2:
+        arr = arr[0, ...]
 
     if export_as_list:
         return return_listed_augmentations(arr, repeats)
@@ -507,12 +513,18 @@ def resize_ts(
     """
     from tsaug import Resize
 
+    if array.ndim == 2:
+        _array = array[np.newaxis, ...]
+
     arr = Resize(size=size, repeats=repeats, prob=prob, seed=seed
-                 ).augment(array)
+                 ).augment(_array)
 
     if repeats > 1 and array.ndim > 1:
         length = array.shape[0]
         arr = arr_splitter(arr, length, repeats)
+
+    if array.ndim == 2:
+        arr = arr[0, ...]
 
     if export_as_list:
         return return_listed_augmentations(arr, repeats)
@@ -545,11 +557,19 @@ def reverse_ts(
     """
     from tsaug import Reverse
 
-    arr = Reverse(repeats=repeats, prob=prob, seed=seed).augment(array)
+    if array.ndim == 2:
+        _array = array[np.newaxis, ...]
+    else:
+        _array = array
+
+    arr = Reverse(repeats=repeats, prob=prob, seed=seed).augment(_array)
 
     if repeats > 1 and array.ndim > 1:
         length = array.shape[0]
         arr = arr_splitter(arr, length, repeats)
+
+    if array.ndim == 2:
+        arr = arr[0, ...]
 
     if export_as_list:
         return return_listed_augmentations(arr, repeats)
