@@ -20,7 +20,7 @@ def spectral_centroid(
     """
     magnitudes, freqs, sum_mag = underlying_spectral(array, fs)
 
-    return np.sum(magnitudes * freqs) / sum_mag
+    return (magnitudes.T @ freqs) / sum_mag
 
 
 def spectral_rolloff(
@@ -113,6 +113,7 @@ def spectral_kurtosis(
 def underlying_spectral(
     array: np.ndarray,
     fs: Union[int, float],
+    axis: int = 0
 ) -> Tuple[np.ndarray, np.ndarray, float]:
     """Calculates the magnitudes and frequencies of the positive side of the
     Fourier Transform of a signal, along with the total sum of the magnitudes.
@@ -136,11 +137,12 @@ def underlying_spectral(
         raise TypeError("Input array must be of type np.float32 or np.float64")
 
     # Ensure correct data type for output arrays
-    magnitudes = np.abs(np.fft.rfft(array)).astype(array.dtype)
-    length = len(array)
+    magnitudes = np.abs(np.fft.rfft(array, axis=axis)).astype(array.dtype)
+    length = array.shape[axis]
+
     freqs = np.abs(np.fft.fftfreq(length, 1.0 / fs)[: length // 2 + 1]).astype(array.dtype)
 
-    sum_mag = np.sum(magnitudes)
+    sum_mag = np.sum(magnitudes, axis=axis)
     return magnitudes, freqs, sum_mag
 
 
