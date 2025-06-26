@@ -52,12 +52,16 @@ def instantaneous_frequency_hbt(
     return instant_freq
 
 
-def instantaneous_amplitude_hbt(signal: np.ndarray, axis: int = 0) -> np.ndarray:
+def instantaneous_amplitude_hbt(
+    signal: np.ndarray,
+    axis: int = 0
+) -> np.ndarray:
     """Calculates the instantaneous amplitude of a signal by computing first
     the analytic signal using the Hilbert transform.
 
     Args:
         signal: The input signal as a numpy.ndarray.
+        axis: Axis along which to do the transformation. Default: 0.
 
     Returns:
         numpy.ndarray: The instantaneous amplitude of the input signal.
@@ -67,13 +71,17 @@ def instantaneous_amplitude_hbt(signal: np.ndarray, axis: int = 0) -> np.ndarray
     return ia
 
 
-def sma_signal(signal, axis: int = 0) -> np.ndarray:
-    """Calculates the rolling Simple Moving Average (SMA) between the axes
+def sma_signal(
+    signal,
+    axis: int = 1
+) -> np.ndarray:
+    """Calculates the Simple Moving Average (SMA) between the axes
     of a multi-axis signal in time-domain.
         Formula: sum(abs(signal))
 
     Args:
         signal: The input signal as a numpy.ndarray.
+        axis: The axis along which to calculate the SMA. Default:  1.
 
     Returns:
         numpy.ndarray: The SMA of the input signal.
@@ -81,13 +89,17 @@ def sma_signal(signal, axis: int = 0) -> np.ndarray:
     return np.sum(np.abs(signal), axis=axis)
 
 
-def magnitude_signal(signal: np.ndarray, axis: int = 0) -> np.ndarray:
+def magnitude_signal(
+    signal: np.ndarray,
+    axis: int = 1
+) -> np.ndarray:
     """Calculates the Magnitude between the axes of a multi-axis signal in
     time-domain.
         Formula: sqrt(sum(signal^2))
 
     Args:
         signal: The input signal as a numpy.ndarray.
+        axis: The axis along which to calculate the magnitude. Default: 1.
 
     Returns:
         numpy.ndarray: The magnitude of the input signal.
@@ -113,6 +125,7 @@ def rolling_rms(
             signal. Defaults to "constant". Check numpy.pad for more
             information about the relevant padding modes.
             https://numpy.org/doc/stable/reference/generated/numpy.pad.html
+        axis: The axis along which to calculate the RMS. Default: 0.
 
     Returns:
         numpy.ndarray: The RMS of the input signal.
@@ -180,6 +193,7 @@ def rolling_zcr(
             signal. Defaults to "edge". Check numpy.pad for more
             information about the relevant padding modes.
             https://numpy.org/doc/stable/reference/generated/numpy.pad.html
+        axis: The axis along which to calculate the ZCR. Default: 0.
 
     Returns:
         numpy.ndarray: The rolling ZCR of the input signal.
