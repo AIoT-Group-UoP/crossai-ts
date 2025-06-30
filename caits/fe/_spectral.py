@@ -26,7 +26,8 @@ def spectral_centroid(
 def spectral_rolloff(
     array: np.ndarray,
     fs: Union[int, float],
-    perc: float = 0.95
+    perc: float = 0.95,
+    axis: int = 0
 ) -> float:
     """Computes the spectral rolloff of a signal, meaning the frequency below
     which a certain percentage of the total spectral energy, e.g. 85%, is
@@ -40,14 +41,24 @@ def spectral_rolloff(
     Returns:
         float: The spectral rolloff of the signal.
     """
-    magnitudes, _, sum_mag = underlying_spectral(array, fs)
-    cumsum_mag = np.cumsum(magnitudes)
-    return float(np.min(np.where(cumsum_mag >= perc * sum_mag)[0]))
+    magnitudes, _, sum_mag = underlying_spectral(array, fs, axis=axis)
+    cumsum_mag = np.cumsum(magnitudes, axis=axis)
+
+    if array.ndim == 1:
+        return np.min(np.where(cumsum_mag >= perc * sum_mag)).astype(float)
+    else:
+        idxs = np.where(cumsum_mag >= perc * sum_mag)
+        tmp = [[] for i in range(array.shape[1 if axis == 0 else 0])]
+        for row, col in zip(*idxs):
+            tmp[col].append(row)
+
+        return np.array([min(l) for l in tmp]).astype(float)
 
 
 def spectral_spread(
     array: np.ndarray,
-    fs: Union[int, float]
+    fs: Union[int, float],
+    axis: int = 0
 ) -> float:
     """Computes the spectral spread of a signal, meaning the weighted
     standard deviation of frequencies wrt FFT value.
@@ -59,16 +70,22 @@ def spectral_spread(
     Returns:
         float: The spectral spread of the signal.
     """
-    magnitudes, freqs, sum_mag = underlying_spectral(array, fs)
+    magnitudes, freqs, sum_mag = underlying_spectral(array, fs, axis=axis)
     spec_centroid = spectral_centroid(array, fs)
 
-    return np.sqrt(np.sum(((freqs - spec_centroid) ** 2) * magnitudes)
+    if array.ndim == 1:
+        return np.sqrt(np.sum(((freqs - spec_centroid) ** 2) * magnitudes, axis=axis)
+                       / sum_mag)
+    else:
+        tmp = np.array([freqs - c for c in spec_centroid])
+        return np.sqrt(np.sum((tmp ** 2).T * magnitudes, axis=axis)
                    / sum_mag)
 
 
 def spectral_skewness(
     array: np.ndarray,
-    fs: Union[int, float]
+    fs: Union[int, float],
+    axis: int = 0
 ) -> float:
     """Computes the spectral skewness of a signal, meaning the distribution
     of the spectrum around its mean.
@@ -80,17 +97,24 @@ def spectral_skewness(
     Returns:
         float: The spectral skewness of the signal.
     """
-    magnitudes, freqs, sum_mag = underlying_spectral(array, fs)
+    magnitudes, freqs, sum_mag = underlying_spectral(array, fs, axis=axis)
     spec_centroid = spectral_centroid(array, fs)
-    spec_spread = spectral_spread(array, fs)
+    spec_spread = spectral_spread(array, fs, axis=axis)
 
-    return (np.sum(((freqs - spec_centroid) ** 3) * magnitudes) /
-            ((spec_spread**3) * sum_mag))
+    if array.ndim == 1:
+        return (np.sum(((freqs - spec_centroid) ** 3) * magnitudes) /
+                ((spec_spread**3) * sum_mag))
+    else:
+        tmp = np.array([freqs - c for c in spec_centroid])
+        return (np.sum((tmp ** 3).T * magnitudes, axis=axis) /
+                ((spec_spread**3) * sum_mag))
+
 
 
 def spectral_kurtosis(
     array: np.ndarray,
-    fs: Union[int, float]
+    fs: Union[int, float],
+    axis: int = 0
 ) -> float:
     """Computes the spectral kurtosis of a signal, meaning the distribution
     of the spectrum around its mean.
@@ -102,12 +126,17 @@ def spectral_kurtosis(
     Returns:
         float: The spectral kurtosis of the signal.
     """
-    magnitudes, freqs, sum_mag = underlying_spectral(array, fs)
+    magnitudes, freqs, sum_mag = underlying_spectral(array, fs, axis=axis)
     spec_centroid = spectral_centroid(array, fs)
-    spec_spread = spectral_spread(array, fs)
+    spec_spread = spectral_spread(array, fs, axis=axis)
 
-    return (np.sum(((freqs - spec_centroid) ** 4) * magnitudes)
-            / ((spec_spread**4) * sum_mag))
+    if array.ndim == 1:
+        return (np.sum(((freqs - spec_centroid) ** 4) * magnitudes)
+                / ((spec_spread**4) * sum_mag))
+    else:
+        tmp = np.array([freqs - c for c in spec_centroid])
+        return (np.sum((tmp ** 4).T * magnitudes, axis=axis)
+                / ((spec_spread**4) * sum_mag))
 
 
 def underlying_spectral(
@@ -148,7 +177,8 @@ def underlying_spectral(
 
 def spectral_bandwidth(
     array: np.ndarray,
-    fs: Union[int, float]
+    fs: Union[int, float],
+    axis: int = 0
 ) -> float:
     """Calculates the spectral bandwidth of a given signal using its p
     ower spectrum.
@@ -175,28 +205,53 @@ def spectral_bandwidth(
         >>> print(f"Spectral Bandwidth: {bw} Hz")
     """
     # Compute the FFT
-    fft_result = np.fft.fft(array)
+    fft_result = np.fft.fft(array, axis=axis)
 
     # Calculate the two-sided power spectrum
     power_spectrum = np.abs(fft_result) ** 2
 
     # Consider only the positive frequencies (single-sided spectrum)
-    if array.size % 2 == 0:
-        power_spectrum = power_spectrum[: array.size // 2] * 2
+    if array.ndim == 1:
+        if array.size % 2 == 0:
+            power_spectrum = power_spectrum[: array.size // 2] * 2
+        else:
+            power_spectrum = power_spectrum[: (array.size - 1) // 2] * 2
     else:
-        power_spectrum = power_spectrum[: (array.size - 1) // 2] * 2
+        if array.shape[axis] % 2 == 0:
+            if axis == 0:
+                power_spectrum = power_spectrum[:array.shape[axis] // 2, :] * 2
+            else:
+                power_spectrum = power_spectrum[:, :array.shape[axis] // 2] * 2
+        else:
+            if axis == 0:
+                power_spectrum = power_spectrum[:(array.shape[axis] - 1) // 2, :] * 2
+            else:
+                power_spectrum = power_spectrum[:, :(array.shape[axis] - 1) // 2] * 2
+
 
     # Normalize power spectrum
-    power_spectrum /= np.sum(power_spectrum)
+    power_spectrum /= np.sum(power_spectrum, axis=axis)
 
     # Frequency vector
-    freqs = np.fft.fftfreq(array.size, d=1 / fs)[: array.size // 2]
+    freqs = np.fft.fftfreq(array.shape[axis], d=1 / fs)[: array.shape[axis] // 2]
 
-    # Mean frequency (center of gravity)
-    mean_freq = np.sum(freqs * power_spectrum)
+    print(freqs.shape, power_spectrum.shape)
 
-    # Spectral bandwidth (standard deviation)
-    spectral_bw = np.sqrt(np.sum(((freqs - mean_freq) ** 2) * power_spectrum))
+
+    if array.ndim == 1:
+        # Mean frequency (center of gravity)
+        mean_freq = np.sum(freqs * power_spectrum, axis=axis)
+
+        # Spectral bandwidth (standard deviation)
+        spectral_bw = np.sqrt(np.sum(((freqs - mean_freq) ** 2) * power_spectrum))
+    else:
+        if axis == 0:
+            tmp = np.tile(freqs[..., np.newaxis], (1, array.shape[1]))
+        else:
+            tmp = np.tile(freqs[np.newaxis, ...], (array.shape[0], 1))
+
+        mean_freq = np.sum(tmp * power_spectrum, axis=axis)
+        spectral_bw = np.sqrt(np.sum(((tmp - mean_freq) ** 2) * power_spectrum, axis=axis))
 
     return spectral_bw
 
@@ -205,7 +260,8 @@ def spectral_flatness(
     array: np.ndarray,
     fs: Union[int, float],
     nperseg_th: int = 900,
-    noverlap_th: int = 600
+    noverlap_th: int = 600,
+    axis: int = 0
 ) -> float:
     """Calculates the spectral flatness of a signal.
 
@@ -220,12 +276,12 @@ def spectral_flatness(
     Returns:
         float: The spectral flatness of the signal.
     """
-    nperseg = min(nperseg_th, len(array))
+    nperseg = min(nperseg_th, array.shape[axis])
     noverlap = min(noverlap_th, int(nperseg / 2))
-    freqs, psd = scipy.signal.welch(array, fs, nperseg=nperseg, noverlap=noverlap)
-    psd_len = len(psd)
-    gmean = np.exp((1 / psd_len) * np.sum(np.log(psd + 1e-17)))
-    amean = (1 / psd_len) * np.sum(psd)
+    freqs, psd = scipy.signal.welch(array, fs, nperseg=nperseg, noverlap=noverlap, axis=axis)
+    psd_len = psd.shape[axis]
+    gmean = np.exp((1 / psd_len) * np.sum(np.log(psd + 1e-17), axis=axis))
+    amean = (1 / psd_len) * np.sum(psd, axis=axis)
 
     return gmean / amean
 
@@ -234,7 +290,9 @@ def spectral_std(
     array: np.ndarray,
     fs: Union[int, float],
     nperseg_th: int = 900,
-    noverlap_th: int = 600
+    noverlap_th: int = 600,
+    ddof: int = 1,
+    axis: int = 0
 ) -> float:
     """Calculates the standard deviation of the power spectral density (PSD)
 
@@ -249,18 +307,19 @@ def spectral_std(
     Returns:
         float: The standard deviation of the PSD of the signal.
     """
-    nperseg = min(nperseg_th, len(array))
+    nperseg = min(nperseg_th, array.shape[axis])
     noverlap = min(noverlap_th, int(nperseg / 2))
-    _, psd = scipy.signal.welch(array, fs, nperseg=nperseg, noverlap=noverlap)
+    _, psd = scipy.signal.welch(array, fs, nperseg=nperseg, noverlap=noverlap, axis=axis)
 
-    return np.std(psd)
+    return np.std(psd, ddof=ddof, axis=axis)
 
 
 def spectral_slope(
     array: np.ndarray,
     fs: Union[int, float],
     b1_th: int = 0,
-    b2_th: int = 8000
+    b2_th: int = 8000,
+    axis: int = 0
 ) -> float:
     """Calculates the spectral slope of a signal.
 
@@ -276,14 +335,38 @@ def spectral_slope(
     b1 = b1_th
     b2 = b2_th
 
-    s = np.absolute(np.fft.fft(array))
-    s = s[: s.shape[0] // 2]
-    muS = np.mean(s)
-    f = np.linspace(0, fs / 2, s.shape[0])
+    s = np.absolute(np.fft.fft(array, axis=axis))
+    if array.ndim == 1:
+        s = s[: s.shape[axis] // 2]
+    else:
+        if axis == 0:
+            s = s[:s.shape[0] // 2, :]
+        else:
+            s = s[:, :s.shape[1] // 2]
+    muS = np.mean(s, axis=axis)
+    f = np.linspace(0, fs / 2, s.shape[axis])
     muF = np.mean(f)
 
     bidx = np.where(np.logical_and(b1 <= f, f <= b2))
-    slope = np.sum(((f - muF) * (s - muS))[bidx]) / np.sum((f[bidx] - muF) ** 2)
+    # print(f.shape, muF.shape, s.shape, muS.shape, len(bidx))
+
+    if array.ndim == 1:
+        slope = np.sum(((f - muF) * (s - muS))[bidx]) / np.sum((f[bidx] - muF) ** 2)
+    else:
+        if axis == 0:
+            tmp1 = f - muF
+            tmp1 = np.tile(tmp1[:, np.newaxis], (1, s.shape[1]))
+            tmp2 = s - np.tile(muS[np.newaxis, ...], (s.shape[0], 1))
+            tmp = tmp1 * tmp2
+            tmp = tmp[bidx[0], :]
+        else:
+            tmp1 = f - muF
+            tmp1 = np.tile(tmp1[:, np.newaxis], (1, s.shape[0]))
+            tmp2 = s - np.tile(muS[np.newaxis, ...], (s.shape[1], 1))
+            tmp = tmp1 * tmp2
+            tmp = tmp[:, bidx[0]]
+
+        slope = np.sum(tmp, axis=axis) / np.sum((f[bidx] - muF) ** 2, axis=axis)
 
     return slope
 
@@ -292,7 +375,8 @@ def spectral_decrease(
     array: np.ndarray,
     fs: Union[int, float],
     b1_th: int = 0,
-    b2_th: int = 8000
+    b2_th: int = 8000,
+    axis: int = 0
 ) -> float:
     """Calculates the spectral decrease of a signal.
 
@@ -308,15 +392,36 @@ def spectral_decrease(
     b1 = b1_th
     b2 = b2_th
 
-    s = np.absolute(np.fft.fft(array))
-    s = s[: s.shape[0] // 2]
-    f = np.linspace(0, fs / 2, s.shape[0])
+    s = np.absolute(np.fft.fft(array, axis=axis))
+    if array.ndim == 1:
+        s = s[: s.shape[0] // 2]
+    else:
+        if axis == 0:
+            s = s[:s.shape[0] // 2, :]
+        else:
+            s = s[:, :s.shape[1] // 2]
 
-    bidx = np.where(np.logical_and(b1 <= f, f <= b2))
+    f = np.linspace(0, fs / 2, s.shape[axis])
 
-    k = bidx[0][1:]
-    sb1 = s[bidx[0][0]]
-    decrease = np.sum((s[k] - sb1) / (f[k] - 1 + 1e-17)) / (np.sum(s[k]) + 1e-17)
+    bidx = np.where(np.logical_and(b1 <= f, f <= b2))[0]
+    k = bidx[1:]
+
+    if array.ndim == 1:
+        sb1 = s[bidx[0]]
+        decrease = np.sum((s[k] - sb1) / (f[k] - 1 + 1e-17)) / (np.sum(s[k]) + 1e-17)
+    else:
+        if axis == 0:
+            sb1 = s[bidx[0], :]
+            tmp1 = s[k, :]
+            tmp2 = np.tile(f[k][..., np.newaxis], (1, s.shape[1]))
+
+        else:
+            sb1 = s[:, bidx[0]]
+            tmp1 = s[:, k]
+            tmp2 = np.tile(f[k][np.newaxis, ...], (s.shape[0], 1))
+
+        decrease = np.sum((tmp1 - sb1) / (tmp2 - 1 + 1e-17), axis=axis) / (np.sum(tmp1, axis=axis) + 1e-17)
+
 
     return decrease
 
@@ -398,7 +503,8 @@ def spectral_values(
     nperseg_th: int = 900,
     noverlap_th: int = 600,
     b1_th: int = 0,
-    b2_th: int = 8000
+    b2_th: int = 8000,
+    axis: int = 0
 ) -> Dict[str, float]:
     """Computes the underlying spectral values of a signal.
 
@@ -420,14 +526,14 @@ def spectral_values(
     """
     return {
         "spectral_centroid": spectral_centroid(array, fs),
-        "spectral_rolloff": spectral_rolloff(array, fs, perc),
-        "spectral_spread": spectral_spread(array, fs),
-        "spectral_skewness": spectral_skewness(array, fs),
-        "spectral_kurtosis": spectral_kurtosis(array, fs),
-        "spectral_bandwidth": spectral_bandwidth(array, fs),
+        "spectral_rolloff": spectral_rolloff(array, fs, perc, axis=axis),
+        "spectral_spread": spectral_spread(array, fs, axis=axis),
+        "spectral_skewness": spectral_skewness(array, fs, axis=axis),
+        "spectral_kurtosis": spectral_kurtosis(array, fs, axis=axis),
+        "spectral_bandwidth": spectral_bandwidth(array, fs, axis=axis),
         "spectral_flatness": spectral_flatness(array, fs, nperseg_th,
-                                               noverlap_th),
-        "spectral_std": spectral_std(array, fs, nperseg_th, noverlap_th),
-        "spectral_slope": spectral_slope(array, fs, b1_th, b2_th),
-        "spectral_decrease": spectral_decrease(array, fs, b1_th, b2_th),
+                                               noverlap_th, axis=axis),
+        "spectral_std": spectral_std(array, fs, nperseg_th, noverlap_th, axis=axis),
+        "spectral_slope": spectral_slope(array, fs, b1_th, b2_th, axis=axis),
+        "spectral_decrease": spectral_decrease(array, fs, b1_th, b2_th, axis=axis),
     }
