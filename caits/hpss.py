@@ -23,6 +23,8 @@ def hpss(
         percussion_factor (Optional[float]): Factor to apply to the percussive
             component for enhanced audio. If None, harmonic and percussive
             components are returned. Default is None.
+        axis (int): Axis to apply to the harmonic and percussive components.
+            Default is 0.
         **kwargs (Any): Additional keyword arguments for
             `librosa.decompose.hpss`.
 
