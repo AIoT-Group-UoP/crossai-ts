@@ -62,3 +62,46 @@ def csv_loader(
         return pd.DataFrame({"X": all_features, "y": all_y, "id": all_id})
     elif export == "dict":
         return {"X": all_features, "y": all_y, "id": all_id}
+
+
+def csv_loader2(
+        dataset_path: str,
+        header: Union[None, int, str] = "infer",
+        input_channels: Union[List[str], None] = None,
+        output_channels: Union[List[str], None] = None,
+        export: Literal["df", "dict"] = "dict",
+) -> Union[pd.DataFrame, Dict[str, List]]:
+    """Loads CSV files from a directory into a DataFrame or dictionary.
+
+    Args:
+        dataset_path: Path to the dataset directory containing CSV files.
+        channels: List of column names to use. If None, all columns are used.
+        export: Format to export the loaded data, "dict" or "df" for DataFrame.
+        classes: Optional list of directory names to include;
+                 if None, all directories are included.
+
+    Returns:
+        pd.DataFrame or dict: Loaded CSV data.
+    """
+    all_features = []
+    all_y = []
+
+    try:
+        read_csv_kwargs = {"header": header}
+        if input_channels is not None:
+            read_csv_kwargs["usecols"] = input_channels + output_channels
+
+        df = pd.read_csv(dataset_path, **read_csv_kwargs)
+
+        all_features.append(df[input_channels])
+        all_y.append(df[output_channels])
+
+    except Exception as e:
+        print(f"Error loading file {dataset_path}: {e}")
+
+    # Export the loaded data as a DataFrame or
+    # dictionary based on the 'export' argument
+    if export == "df":
+        return pd.DataFrame({"X": all_features, "y": all_y})
+    elif export == "dict":
+        return {"X": all_features, "y": all_y}
