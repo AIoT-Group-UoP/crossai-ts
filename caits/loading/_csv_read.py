@@ -66,7 +66,7 @@ def csv_loader(
 
 def csv_loader_regression(
         dataset_path: str,
-        x_cols: Union[List[str], None] = None,
+        X_cols: Union[List[str], None] = None,
         y_cols: Union[List[str], None] = None,
         header: Union[None, int, str] = "infer",
         export: Literal["df", "dict"] = "dict",
@@ -76,7 +76,7 @@ def csv_loader_regression(
 
     Args:
         dataset_path: Path to the dataset directory containing CSV files.
-        x_cols: List of column names to use as input. If None, all columns except those defined by y_cols are used.
+        X_cols: List of column names to use as input. If None, all columns except those defined by y_cols are used.
         y_cols: List of column names to use as output. If None, the last column is used.
         header: Specifies the row(s) to use as the column names.
                 Defaults to "infer".
@@ -89,8 +89,8 @@ def csv_loader_regression(
     y = pd.DataFrame()
 
     try:
-        if x_cols is not None:
-            kwargs["usecols"] = x_cols
+        if X_cols is not None:
+            kwargs["usecols"] = X_cols
             if y_cols is not None:
                 kwargs["usecols"].extend(y_cols)
 

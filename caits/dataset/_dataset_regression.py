@@ -13,7 +13,7 @@ class RegressionDataset:
 
         # Check that all inputs have the same length
         if not (len(X) == len(y)):
-            raise ValueError("All input lists must have the same length.")
+            raise ValueError(f"All input lists must have the same length. (len(X) = {len(X)}, len(y) = {len(y)})")
 
         self.X = X
         self.y = y
@@ -75,8 +75,8 @@ class RegressionDataset:
         """
 
         Nx = int( len(self.X) * (1 - test_size) )
-        X_train, X_test = self.X.loc[:Nx], self.X.loc[Nx:]
-        y_train, y_test = self.y.loc[:Nx], self.y.loc[Nx:]
+        X_train, X_test = self.X.loc[:(Nx-1)], self.X.loc[Nx:]
+        y_train, y_test = self.y.loc[:(Nx-1)], self.y.loc[Nx:]
 
         # Convert back to Dataset objects if requested
         train_dataset = RegressionDataset(X_train, y_train)
@@ -94,7 +94,7 @@ class RegressionDataset:
         return train_dataset, test_dataset
 
 
-def ArrayToRegressionDataset(
+def TrainTestArraysToRegressionDataset(
         X: np.ndarray,
         y: np.ndarray,
         X_labels: Optional[List[str]] = None,
@@ -125,6 +125,36 @@ def ArrayToRegressionDataset(
     )
 
 
+def DataFrameToRegressionDataset(
+        df: DataFrame,
+        X_cols: Optional[List[str]] = None,
+        y_cols: Optional[List[str]] = None,
+) -> RegressionDataset:
+    """Converts a NumPy array, in which each row is a DataFrame, to a
+    CrossAI Dataset object. The features and labels are in
+    the form (n_samples, features), (n_samples, output_columns).
+
+    Args:
+        X: np.ndarray of timeseries of X.
+        y: np.ndarray of timeseries of y.
+        X_labels: column names of timeseries of X.
+        y_labels: column names of timeseries of y.
+
+    Returns:
+        Dataset: The CrossAI RegressionDataset object.
+    """
+    if X_cols is None:
+        X_cols = df.columns
+    if y_cols is None:
+        y_cols = df.columns[-1]
+    X_cols = list(set(X_cols).difference(set(y_cols)))
+
+    X = df[X_cols]
+    y = df[y_cols]
+
+    return RegressionDataset(X=X, y=y)
+
+
 def ListToRegressionDataset(
         X,
         y,
@@ -147,3 +177,27 @@ def ListToRegressionDataset(
         X=pd.DataFrame(list(zip(*X)), columns=X_labels),
         y=pd.DataFrame(list(zip(*y)), columns=y_labels)
     )
+
+
+def ArrayToRegressionDataset(
+        array: np.ndarray,
+        X_idxs: Optional[List[int]] = None,
+        y_idxs: Optional[List[int]] = None,
+        X_labels: Optional[List[str]] = None,
+        y_labels: Optional[List[str]] = None,
+) -> RegressionDataset:
+
+    if X_idxs is None and y_idxs is None:
+        X_idxs = [i for i in range(array.shape[1] - 1)]
+        y_idxs = [array.shape[1] - 1]
+    elif X_idxs is None and y_idxs is not None:
+        X_idxs = list(set(range(array.shape[1])).difference(set(y_idxs)))
+    elif X_idxs is not None and y_idxs is None:
+        y_idxs = list(set(range(array.shape[1])).difference(X_idxs))[-1]
+
+    X_array = array[:, X_idxs]
+    y_array = array[:, y_idxs]
+
+    return TrainTestArraysToRegressionDataset(X=X_array, y=y_array, X_labels=X_labels, y_labels=y_labels)
+
+
