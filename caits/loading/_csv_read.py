@@ -80,7 +80,7 @@ def csv_loader_regression(
         y_cols: List of column names to use as output. If None, the last column is used.
         header: Specifies the row(s) to use as the column names.
                 Defaults to "infer".
-        export: Format to export the loaded data, "dict" or "df" for DataFrame.
+        export: Format to export the loaded data, "dict" or "df" for DataFrame. Defaults to "dict".
 
     Returns:
         pd.DataFrame or dict: Loaded CSV data.
