@@ -6,6 +6,8 @@ from ._feature_extractor_2d import FeatureExtractor2D
 from ._func_transformer import FunctionTransformer
 from ._sliding_window import SlidingWindow
 from ._func_transformer_2d import FunctionTransformer2D
+from ._multi_axis_feature_extractor import RegressionFeatureExtractor
+from ._multi_axis_function_transformer import RegressionFunctionTransformer
 
 __all__ = [
     "Augmenter1D",
@@ -16,4 +18,5 @@ __all__ = [
     "FunctionTransformer",
     "LE",
     "SlidingWindow",
-]
+    "RegressionFeatureExtractor",
+    "RegressionFunctionTransformer"]

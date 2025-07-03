@@ -1,5 +1,5 @@
 from ._dataset import ArrayToDataset, Dataset, ListToDataset
-from ._dataset_regression import ArrayToRegressionDataset, RegressionDataset, ListToRegressionDataset
+from ._dataset_regression import DataFrameToRegressionDataset, RegressionDataset, ListToRegressionDataset
 from ._loader import DataLoader
 
 __all__ = [
@@ -7,6 +7,6 @@ __all__ = [
     "ArrayToDataset",
     "ListToDataset",
     "RegressionDataset",
-    "ArrayToRegressionDataset",
+    "DataFrameToRegressionDataset",
     "ListToRegressionDataset",
     "DataLoader"]
