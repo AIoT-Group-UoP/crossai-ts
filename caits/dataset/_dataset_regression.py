@@ -6,30 +6,30 @@ from pandas import DataFrame
 
 
 class RegressionDataset:
-    def __init__(self, X: DataFrame, y: DataFrame) -> None:
+    def __init__(self, X: List[DataFrame], y: List[DataFrame]) -> None:
         # Check if X and y are DataFrames.
-        if not all(isinstance(data, DataFrame) for data in [X, y]):
+        if not all(isinstance(data, List) for data in [X, y]):
             raise TypeError("X and y must be DataFrames.")
 
         # Check that all inputs have the same length
-        if not (len(X) == len(y)):
-            raise ValueError(f"All input lists must have the same length. (len(X) = {len(X)}, len(y) = {len(y)})")
+        if len(set([len(tmp) for tmp in X] + [len(tmp) for tmp in y])) != 1:
+            raise ValueError("X and y must have the same number of columns.")
 
         self.X = X
         self.y = y
 
     def __len__(self) -> int:
         """Return the number of samples in the dataset."""
-        return len(self.X)
+        return len(self.X[0])
 
     def __getitem__(self, idx):
         """Allows for dataset indexing/slicing to get a specific data point."""
         if isinstance(idx, slice):
             # Handle slicing
-            return RegressionDataset(self.X.loc[idx], self.y.loc[idx])
+            return RegressionDataset(X=[tmp.loc[idx] for tmp in self.X], y=[tmp.loc[idx] for tmp in self.y])
         elif isinstance(idx, int):
             # Handle single item selection
-            return self.X.loc[idx], self.y.loc[idx]
+            return [tmp.loc[idx] for tmp in self.X], [tmp.loc[idx] for tmp in self.y]
         else:
             raise TypeError("Invalid argument type.")
 
@@ -41,7 +41,7 @@ class RegressionDataset:
     def __next__(self):
         """Returns the next item from the dataset."""
         if self._current < len(self):
-            result = (self.X.loc[self._current], self.y.loc[self._current])
+            result = (tuple([tmp.loc[self._current] for tmp in self.X]), tuple([tmp.loc[self._current] for tmp in self.y]))
             self._current += 1
             return result
         else:
@@ -49,15 +49,18 @@ class RegressionDataset:
 
     def __repr__(self) -> str:
         """Provide a string representation of the CAI object."""
-        return f"RegressionDataset with {len(self)} instances"
+        return f"RegressionDataset with {len(self.X[0])} instances"
 
 
     def to_numpy(self, dtype=None):
         """Converts data to NumPy arrays, ensuring X_np has shape (k, n, m)."""
 
         # Convert to list of 2D arrays
-        X_np = self.X.to_numpy(dtype=self.X.dtypes)
-        y_np = self.y.to_numpy(dtype=self.y.dtypes)
+        X_arrays = [tmp.to_numpy(dtype=tmp.dtypes)[:, 0] for tmp in self.X]
+        y_arrays = [tmp.to_numpy(dtype=tmp.dtypes)[:, 0] for tmp in self.y]
+
+        X_np = np.stack(X_arrays, axis=1)
+        y_np = np.stack(y_arrays, axis=1)
 
         return X_np, y_np
 
@@ -65,18 +68,29 @@ class RegressionDataset:
         """Converts data to Dictionary."""
         return {"X": self.X, "y": self.y}
 
-    def unify(self):
-        """Converts data to Pandas DataFrames."""
-        return pd.concat([self.X, self.y])
+    def unify(self, other):
+        return RegressionDataset(X=[self.X[i] + other.X[i] for i in range(len(self.X))],
+                                 y=[self.y[i] + other.y[i] for i in range(len(self.y))])
 
-    def train_test_split(self, test_size=0.2, as_numpy=False):
+    def train_test_split(self, test_size=0.2, as_numpy=False, random_state=None):
         """Splits the dataset into training and testing subsets,
         with an option to stratify the split.
         """
+        Nx = int( len(self.X[0]) * (1 - test_size) )
 
-        Nx = int( len(self.X) * (1 - test_size) )
-        X_train, X_test = self.X.loc[:(Nx-1)], self.X.loc[Nx:]
-        y_train, y_test = self.y.loc[:(Nx-1)], self.y.loc[Nx:]
+        all_idxs = np.arange(len(self.X[0]))
+
+        if random_state is not None:
+            train_idxs = np.random.RandomState(random_state).choice(all_idxs, size=Nx, replace=False)
+        else:
+            train_idxs = np.arange(Nx)
+
+        test_idxs = np.array(list(set(np.arange(len(self.X[0]))).difference(set(train_idxs))))
+
+        X_train = [tmp.loc[train_idxs] for tmp in self.X]
+        X_test = [tmp.loc[test_idxs] for tmp in self.X]
+        y_train = [tmp.loc[train_idxs] for tmp in self.y]
+        y_test = [tmp.loc[test_idxs] for tmp in self.y]
 
         # Convert back to Dataset objects if requested
         train_dataset = RegressionDataset(X_train, y_train)
@@ -94,7 +108,7 @@ class RegressionDataset:
         return train_dataset, test_dataset
 
 
-def TrainTestArraysToRegressionDataset(
+def ArrayToRegressionDataset(
         X: np.ndarray,
         y: np.ndarray,
         X_labels: Optional[List[str]] = None,
@@ -120,39 +134,9 @@ def TrainTestArraysToRegressionDataset(
         raise ValueError("Number of columns in `y` and `y_labels` do not match.")
 
     return RegressionDataset(
-        X=DataFrame(X, columns=X_labels),
-        y=DataFrame(y, columns=y_labels)
+        X=[pd.DataFrame(X[:, i], columns=[X_labels[i]]) for i in range(X.shape[1])],
+        y=[pd.DataFrame(y[:, i], columns=[y_labels[i]]) for i in range(y.shape[1])],
     )
-
-
-def DataFrameToRegressionDataset(
-        df: DataFrame,
-        X_cols: Optional[List[str]] = None,
-        y_cols: Optional[List[str]] = None,
-) -> RegressionDataset:
-    """Converts a NumPy array, in which each row is a DataFrame, to a
-    CrossAI Dataset object. The features and labels are in
-    the form (n_samples, features), (n_samples, output_columns).
-
-    Args:
-        X: np.ndarray of timeseries of X.
-        y: np.ndarray of timeseries of y.
-        X_labels: column names of timeseries of X.
-        y_labels: column names of timeseries of y.
-
-    Returns:
-        Dataset: The CrossAI RegressionDataset object.
-    """
-    if X_cols is None:
-        X_cols = df.columns
-    if y_cols is None:
-        y_cols = df.columns[-1]
-    X_cols = list(set(X_cols).difference(set(y_cols)))
-
-    X = df[X_cols]
-    y = df[y_cols]
-
-    return RegressionDataset(X=X, y=y)
 
 
 def ListToRegressionDataset(
@@ -174,30 +158,6 @@ def ListToRegressionDataset(
     """
 
     return RegressionDataset(
-        X=pd.DataFrame(list(zip(*X)), columns=X_labels),
-        y=pd.DataFrame(list(zip(*y)), columns=y_labels)
+        X=[pd.DataFrame(X[i], columns=[X_labels[i]]) for i in range(len(X))],
+        y=[pd.DataFrame(y[i], columns=[y_labels[i]]) for i in range(len(y))]
     )
-
-
-def ArrayToRegressionDataset(
-        array: np.ndarray,
-        X_idxs: Optional[List[int]] = None,
-        y_idxs: Optional[List[int]] = None,
-        X_labels: Optional[List[str]] = None,
-        y_labels: Optional[List[str]] = None,
-) -> RegressionDataset:
-
-    if X_idxs is None and y_idxs is None:
-        X_idxs = [i for i in range(array.shape[1] - 1)]
-        y_idxs = [array.shape[1] - 1]
-    elif X_idxs is None and y_idxs is not None:
-        X_idxs = list(set(range(array.shape[1])).difference(set(y_idxs)))
-    elif X_idxs is not None and y_idxs is None:
-        y_idxs = list(set(range(array.shape[1])).difference(X_idxs))[-1]
-
-    X_array = array[:, X_idxs]
-    y_array = array[:, y_idxs]
-
-    return TrainTestArraysToRegressionDataset(X=X_array, y=y_array, X_labels=X_labels, y_labels=y_labels)
-
-

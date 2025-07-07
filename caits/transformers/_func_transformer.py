@@ -1,6 +1,7 @@
+from typing import Union
 from sklearn.base import BaseEstimator, TransformerMixin
 
-from ..dataset import Dataset
+from ..dataset import Dataset, RegressionDataset
 
 
 class FunctionTransformer(BaseEstimator, TransformerMixin):
@@ -27,7 +28,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         """
         return self
 
-    def transform(self, X: Dataset) -> Dataset:
+    def transform(self, X: Union[Dataset, RegressionDataset]) -> Union[Dataset, RegressionDataset]:
         """Applies the transformation function column-wise to the data.
 
         Args:
@@ -43,7 +44,12 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
             transformed_X.append(transformed_df)
 
         # Return a new CAI object with the transformed data
-        return Dataset(transformed_X, X.y, X._id)
+        if isinstance(X, Dataset):
+            return Dataset(transformed_X, X.y, X._id)
+        elif isinstance(X, RegressionDataset):
+            return RegressionDataset(transformed_X, X.y)
+        else:
+            raise NotImplementedError("Transformer not implemented.")
 
     def get_params(self, deep=True):
         """Overrides get_params to include func_kwargs.

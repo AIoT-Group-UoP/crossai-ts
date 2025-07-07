@@ -341,8 +341,8 @@ def db_to_amplitude(
 
 
 def spectrogram(
-    *,
     y: Optional[np.ndarray] = None,
+    *,
     S: Optional[np.ndarray] = None,
     n_fft: Optional[int] = 2048,
     hop_length: Optional[int] = 512,

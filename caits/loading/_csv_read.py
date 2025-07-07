@@ -97,10 +97,13 @@ def csv_loader_regression(
         X = pd.read_csv(dataset_path, header=header, **kwargs)
 
         if y_cols is None:
-            y_cols = X.columns[-1]
+            y_cols = [X.columns[-1]]
 
         y = X[y_cols]
         X = X.drop(columns=y_cols)
+
+        X = [X[[col]] for col in X.columns]
+        y = [y[[col]] for col in y.columns ]
 
     except Exception as e:
         print(f"Error loading file {dataset_path}: {e}")
