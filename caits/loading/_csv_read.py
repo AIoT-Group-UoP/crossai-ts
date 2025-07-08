@@ -103,7 +103,7 @@ def csv_loader_regression(
         X = X.drop(columns=y_cols)
 
         X = [X[[col]] for col in X.columns]
-        y = [y[[col]] for col in y.columns ]
+        y = [y[[col]] for col in y.columns]
 
     except Exception as e:
         print(f"Error loading file {dataset_path}: {e}")

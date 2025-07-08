@@ -12,8 +12,10 @@ class RegressionDataset:
             raise TypeError("X and y must be DataFrames.")
 
         # Check that all inputs have the same length
-        if len(set([len(tmp) for tmp in X] + [len(tmp) for tmp in y])) != 1:
-            raise ValueError("X and y must have the same number of columns.")
+        # if len(set([len(tmp) for tmp in X] + [len(tmp) for tmp in y])) != 1:
+        #     raise ValueError("X and y must have the same number of columns.")
+        if not len(X) == len(y):
+            raise ValueError("X and y must have the same length.")
 
         self.X = X
         self.y = y
