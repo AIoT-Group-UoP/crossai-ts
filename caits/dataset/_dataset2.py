@@ -19,7 +19,8 @@ class Dataset2:
             if len({len(v) for v in d.values()}) != 1:
                 raise ValueError("Arrays must have the same length in each dictionary.\t")
 
-        self.X = X
+        self._data = {"X": X}
+        self.X = self._data["X"]
 
     def __len__(self) -> int:
         """Return the number of items in the dataset."""
@@ -27,15 +28,13 @@ class Dataset2:
 
     def __getitem__(self, idx):
         """Allows for dataset indexing/slicing to get a specific data point."""
-        data = self.to_dict()
-
         if isinstance(idx, slice):
             # Handle slicing
-            tmp = {k: v[idx] for k, v in data.items()}
+            tmp = {k: v[idx] for k, v in self._data.items()}
             return self.__class__(**tmp)
         elif isinstance(idx, int):
             # Handle single item selection
-            tmp = tuple(data[k][idx] for k in data.keys())
+            tmp = tuple(self._data[k][idx] for k in self._data.keys())
             return tmp
         else:
             raise TypeError("Invalid argument type.")
@@ -47,10 +46,9 @@ class Dataset2:
 
     def __next__(self):
         """Returns the next item from the dataset."""
-        data = self.to_dict()
         if self._current < len(self):
             # result = self.X[self._current]
-            result = {k: v[self._current] for k, v in data.items()}
+            result = {k: v[self._current] for k, v in self._data.items()}
             self._current += 1
             return result
         else:
@@ -62,14 +60,12 @@ class Dataset2:
 
     def to_dict(self) -> Dict[str, List[Dict[str, np.ndarray]]]:
         """Return a dictionary representation of the CAI object."""
-        return {"X": self.X}
+        return self._data
 
     def batch(self, batch_size=1):
         """Yields data instances or batches from the dataset."""
-        data = self.to_dict()
-
         for i in range(0, len(self), batch_size):
-            batch = {k: v[i : i + batch_size] for k, v in data.items()}
+            batch = {k: v[i : i + batch_size] for k, v in self._data.items()}
             yield batch
 
     def unify(self: T, other: T) -> T:
@@ -123,12 +119,10 @@ class DatasetCLF(Dataset2):
         if not all(isinstance(data, str) for data in y):
             raise TypeError("Items in y must be dicts.")
 
-        # Check that all inputs have the same length
-        for d in y:
-            if len({len(v) for v in d.values()}) != 1:
-                raise ValueError("Arrays must have the same length in each dictionary.\t")
-
-        self.y = y
+        self._data["y"] = y
+        self._data["id"] = id
+        self.y = self._data["y"]
+        self.id = self._data["id"]
 
 
 
@@ -150,12 +144,13 @@ class DatasetRGR(Dataset2):
             if len({len(v) for v in d.values()}) != 1:
                 raise ValueError("Arrays must have the same length in each dictionary.\t")
 
-        self.y = y
+        self._data["y"] = y
+        self.y = self._data["y"]
 
-    def to_dict(self) -> Dict[str, List[Dict[str, np.ndarray]]]:
-        """Return a dictionary representation of the CAI object."""
-        return {"X": self.X, "y": self.y}
 
+class DatasetCLS(Dataset2):
+    def __init__(self, X: List[Dict[str, np.ndarray]]) -> None:
+        super().__init__(X)
 
 # def ArrayToDataset(X: np.ndarray, y: np.ndarray, _id: Optional[np.ndarray] = None) -> Dataset:
 #     """Converts a 1D NumPy array, in which each row is a DataFrame, to a
