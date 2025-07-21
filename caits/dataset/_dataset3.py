@@ -9,11 +9,11 @@ class Dataset3(ABC):
     def __init__(self, X: Union[DataFrame, List[DataFrame]], y: Optional[DataFrame] = None):
         if y is None:
             self.y = DataFrame([[None] for _ in range(X.shape[0])], columns=['y_Channel_0'])
-        elif len(X) != len(y):
-            raise ValueError('X and y must have same number of rows')
-        else:
-            self.X = X
-            self.y = y
+        # elif len(X) != len(y):
+        #     raise ValueError('X and y must have same number of rows')
+        # else:
+        self.X = X
+        self.y = y
 
     @abstractmethod
     def __len__(self):
@@ -65,7 +65,11 @@ class Dataset3(ABC):
         pass
 
     @abstractmethod
-    def to_dataset(self, X):
+    def numpy_to_dataset(self, X):
+        pass
+
+    @abstractmethod
+    def dict_to_dataset(self, X):
         pass
 
     @abstractmethod
@@ -129,10 +133,14 @@ class DatasetArray(Dataset3):
     def to_list(self):
         pass
 
-    def to_dataset(self, X):
+    def numpy_to_dataset(self, X):
         dfX = pd.DataFrame(X, columns=self.X.columns)
         return DatasetArray(X=dfX, y=self.y)
 
+    def dict_to_dataset(self, X):
+        vals = np.stack([row for row in X.values()])
+        dfX = pd.DataFrame(vals, columns=self.X.columns, index=X.keys())
+        return dfX
 
     def train_test_split(self, random_state: Optional[int]=None, test_size: float=0.2):
         all_idxs = np.arange(self.X.shape[0])
@@ -157,10 +165,10 @@ class DatasetArray(Dataset3):
 class DatasetList(Dataset3):
     def __init__(self, X: List[DataFrame], y=List[Union[str, int]], id=List[str]) -> None:
         super().__init__(X, y)
-        if len(X) != len(id):
-            raise ValueError('X and id must have same number of rows')
-        else:
-            self.id = id
+        # if len(X) != len(id):
+        #     raise ValueError('X and id must have same number of rows')
+        # else:
+        self.id = id
 
     def __len__(self):
         return len(self.X)
@@ -214,8 +222,13 @@ class DatasetList(Dataset3):
     def to_list(self):
         pass
 
-    def to_dataset(self, X):
+    def numpy_to_dataset(self, X):
         listDfX = [pd.DataFrame(x, columns=self.X[0].columns) for x in X]
+        return DatasetList(X=listDfX, y=self.y, id=self.id)
+
+    def dict_to_dataset(self, X):
+        vals = [np.stack([X[k][i] for k in X.keys()]) for i in range(len(X[list(X.keys())[0]]))]
+        listDfX = [pd.DataFrame(x, columns=self.X[0].columns, index=X.keys()) for x in vals]
         return DatasetList(X=listDfX, y=self.y, id=self.id)
 
     def train_test_split(self, random_state: Optional[int]=None, test_size: float=0.2):
