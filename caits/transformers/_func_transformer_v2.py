@@ -1,10 +1,11 @@
 from typing import Union, TypeVar
+
+import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 
-from ..dataset import Dataset2
+from caits.dataset._dataset3 import Dataset3
 
-T = TypeVar('T', bound="Dataset2")
-
+T = TypeVar('T', bound="Dataset3")
 
 class FunctionTransformer(BaseEstimator, TransformerMixin):
     def __init__(self, func, **func_kwargs):
@@ -39,18 +40,8 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         Returns:
             Dataset: A new Dataset object with the transformed data.
         """
-        transformed_X = []
-        for d in data.X:
-            transformed_X.append({})
-            for k, ts in d.items():
-                # Apply the function column-wise
-                transformed_X[-1][k] = self.func(ts, **self.func_kwargs)
-
-        tmp = data.to_dict()
-        tmp["X"] = transformed_X
-
-        # Return a new CAI object with the transformed data
-        return data.__class__(**tmp)
+        transformed_data = data.apply(self.func, **self.func_kwargs)
+        return data.to_dataset(transformed_data)
 
     def get_params(self, deep=True):
         """Overrides get_params to include func_kwargs.
