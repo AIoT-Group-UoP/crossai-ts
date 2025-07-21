@@ -243,5 +243,5 @@ class DatasetList(Dataset3):
         return self.__class__(train_X, train_y, train_id), self.__class__(test_X, test_y, test_id)
 
     def apply(self, func, *args, **kwargs):
-        return [func(df, *args, **kwargs) for df in self.X]
+        return [func(df.values, *args, **kwargs) for df in self.X]
 
