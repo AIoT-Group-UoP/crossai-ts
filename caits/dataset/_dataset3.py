@@ -1,17 +1,81 @@
 from abc import ABC, abstractmethod
+from copy import deepcopy
+
 import numpy as np
-import pandas as pd
-from pandas import DataFrame, concat
 from typing import Optional, Union, List, Dict
+import copy
+
+
+class CaitsArray:
+    class _iLocIndexer:
+        def __init__(self, parent) -> None:
+            self.parent = parent
+
+        def __getitem__(self, index):
+            if len(index) != self.parent.ndim:
+                raise ValueError(f'Index must be {self.parent.ndim} dimensional')
+            else:
+                return self.parent.values[index]
+
+    class _LocIndexer:
+        def __init__(self, parent, indexer):
+            self.parent = parent
+            self.indexer = indexer
+
+        def __getitem__(self, index):
+            if len(index) != self.parent.ndim:
+                raise ValueError(f'Index must be {self.parent.parent.values.ndim} dimensional')
+            else:
+                idxs = []
+                for i, t in enumerate(index):
+                    if isinstance(t, str):
+                        idxs.append(self.parent.axis_names[f"axis_{i}"][t])
+                    elif isinstance(t, list):
+                        idxs.append([self.parent.axis_names[f"axis_{i}"][j] for j in t])
+                    elif isinstance(t, slice):
+                        idxs.append(
+                            slice(
+                                self.parent.axis_names[f"axis_{i}"][t.start] if t.start is not None else None,
+                                self.parent.axis_names[f"axis_{i}"][t.stop] if t.stop is not None else None,
+                                t.step
+                            )
+                        )
+                    else:
+                        raise IndexError("Unsupported index type")
+
+                return self.parent.values[*idxs]
+
+
+    def __init__(self, values: np.ndarray, axis_names=Optional[Dict]):
+        self.values = values
+        self.axis_names = {f"axis_{i}": {} for i in range(values.ndim)}
+        self.shape = values.shape
+        self.ndim = values.ndim
+
+        if len(axis_names) > values.ndim:
+            raise ValueError("Axis names must not exceed number of dimensions")
+        for i, axis in enumerate([f"axis_{j}" for j in range(values.ndim)]):
+            if axis in axis_names.keys():
+                if len(axis_names[axis]) != values.shape[i]:
+                    raise ValueError(
+                        f"Shapes {[len(axis) for axis in axis_names.values()]} "
+                        f"and {list(values.shape)} don't match.")
+                else:
+                    self.axis_names[axis] = copy.deepcopy(axis_names[axis])
+            else:
+                self.axis_names[axis] = {j: j for j in range(values.shape[i])}
+
+        self.loc = self._LocIndexer(self, self.axis_names)
+        self.iloc = self._iLocIndexer(self)
+
+    def __len__(self):
+        return self.values.shape[0]
 
 
 class Dataset3(ABC):
-    def __init__(self, X: Union[DataFrame, List[DataFrame]], y: Optional[DataFrame] = None):
+    def __init__(self, X: Union[CaitsArray, List[CaitsArray]], y: Optional[Union[CaitsArray, List]] = None):
         if y is None:
-            self.y = DataFrame([[None] for _ in range(X.shape[0])], columns=['y_Channel_0'])
-        # elif len(X) != len(y):
-        #     raise ValueError('X and y must have same number of rows')
-        # else:
+            self.y = CaitsArray(np.array([[None] for _ in range(X.shape[0])]), axis_names={"axis_1": "y_Channel_0"})
         self.X = X
         self.y = y
 
@@ -82,7 +146,7 @@ class Dataset3(ABC):
 
 
 class DatasetArray(Dataset3):
-    def __init__(self, X: DataFrame, y: Optional[DataFrame] = None):
+    def __init__(self, X: CaitsArray, y: Optional[CaitsArray] = None):
         super().__init__(X, y)
 
     def __len__(self):
@@ -115,7 +179,20 @@ class DatasetArray(Dataset3):
 
     def unify(self, other):
         if self.X.shape[1] == other.X.shape[1] and self.y.shape[1] == other.y.shape[1]:
-            return self.__class__(X=concat([self.X, other.X], axis=0), y=concat([self.y, other.y], axis=0))
+            axis_0_names = {
+                i: i for i in range(
+                    len(self.X.axis_names["axis_0"]) + len(other.X.axis_names["axis_0"])
+                )
+            }
+            axis_names_X = copy.deepcopy(self.X.axis_names)
+            axis_names_y = copy.deepcopy(self.y.axis_names)
+            axis_names_X["axis_0"] = axis_0_names
+            axis_names_y["axis_0"] = axis_0_names
+
+            X = CaitsArray(np.concatenate([self.X.values, other.X.values], axis=0), axis_names=axis_names_X)
+            y = CaitsArray(np.concatenate([self.y.values, other.y.values], axis=0), axis_names=axis_names_y)
+
+            return self.__class__(X=X, y=y)
         elif self.X.shape[1] != other.X.shape[1]:
             raise ValueError("self.X and other.X must have the same number of columns.")
         else:
@@ -134,12 +211,14 @@ class DatasetArray(Dataset3):
         pass
 
     def numpy_to_dataset(self, X):
-        dfX = pd.DataFrame(X, columns=self.X.columns)
+        dfX = CaitsArray(X, axis_names=self.X.axis_names)
         return DatasetArray(X=dfX, y=self.y)
 
     def dict_to_dataset(self, X):
         vals = np.stack([row for row in X.values()])
-        dfX = pd.DataFrame(vals, columns=self.X.columns, index=X.keys())
+        axis_names = copy.deepcopy(self.X.axis_names)
+        axis_names["axis_0"] = {key: i for i, key in enumerate(X.keys())}
+        dfX = CaitsArray(vals, axis_names=axis_names)
         return dfX
 
     def train_test_split(self, random_state: Optional[int]=None, test_size: float=0.2):
@@ -153,8 +232,20 @@ class DatasetArray(Dataset3):
             train_idxs = all_idxs[:Nx]
             test_idxs = all_idxs[Nx:]
 
-        train_X, test_X = self.X.iloc[train_idxs, :], self.X.iloc[test_idxs, :]
-        train_y, test_y = self.y.iloc[train_idxs, :], self.y.iloc[test_idxs, :]
+        train_axis_names_X = copy.deepcopy(self.X.axis_names)
+        train_axis_names_X["axis_0"] = {j: i for i, j in enumerate(train_idxs)}
+        test_axis_names_X = copy.deepcopy(self.X.axis_names)
+        test_axis_names_X["axis_0"] = {j: i for i, j in enumerate(test_idxs)}
+
+        train_axis_names_y = copy.deepcopy(self.y.axis_names)
+        train_axis_names_y["axis_0"] = {i: i for i in train_idxs}
+        test_axis_names_y = copy.deepcopy(self.y.axis_names)
+        test_axis_names_y["axis_0"] = {i: i for i in test_idxs}
+
+        train_X = CaitsArray(self.X.iloc[train_idxs, :], axis_names=train_axis_names_X)
+        test_X = CaitsArray(self.X.iloc[test_idxs, :], axis_names=test_axis_names_X)
+        train_y = CaitsArray(self.y.iloc[train_idxs, :], axis_names=train_axis_names_y)
+        test_y = CaitsArray(self.y.iloc[test_idxs, :], axis_names=test_axis_names_y)
 
         return self.__class__(train_X, train_y), self.__class__(test_X, test_y)
 
@@ -163,18 +254,15 @@ class DatasetArray(Dataset3):
 
 
 class DatasetList(Dataset3):
-    def __init__(self, X: List[DataFrame], y=List[Union[str, int]], id=List[str]) -> None:
+    def __init__(self, X: List[CaitsArray], y=List[Union[str, int]], id=List[str]) -> None:
         super().__init__(X, y)
-        # if len(X) != len(id):
-        #     raise ValueError('X and id must have same number of rows')
-        # else:
-        self.id = id
+        self._id = id
 
     def __len__(self):
         return len(self.X)
 
     def __getitem__(self, idx: int):
-        return self.X[idx], self.y[idx], self.id[idx]
+        return self.X[idx], self.y[idx], self._id[idx]
 
     def __iter__(self):
         self._current = 0
@@ -182,7 +270,7 @@ class DatasetList(Dataset3):
 
     def __next__(self):
         if self._current < len(self):
-            res = self.X[self._current], self.y[self._current], self.id[self._current]
+            res = self.X[self._current], self.y[self._current], self._id[self._current]
             self._current += 1
             return res
         else:
@@ -196,14 +284,14 @@ class DatasetList(Dataset3):
 
     def batch(self, batch_size: int):
         for i in range(0, len(self.X), batch_size):
-            yield self.X[i : i + batch_size], self.y[i : i + batch_size], self.id[i : i + batch_size]
+            yield self.X[i : i + batch_size], self.y[i : i + batch_size], self._id[i : i + batch_size]
 
     # TODO: Add check for columns
     def unify(self, other):
         return self.__class__(
             X=self.X + other.X,
             y=self.y + other.y,
-            id=self.id + other.id,
+            id=self._id + other._id,
             )
 
     def to_numpy(self):
@@ -216,20 +304,24 @@ class DatasetList(Dataset3):
         return {
             "X": self.X,
             "y": self.y,
-            "id": self.id
+            "_id": self._id
         }
 
     def to_list(self):
         pass
 
     def numpy_to_dataset(self, X):
-        listDfX = [pd.DataFrame(x, columns=self.X[0].columns) for x in X]
-        return DatasetList(X=listDfX, y=self.y, id=self.id)
+        axis_names = copy.deepcopy(self.X[0].axis_names)
+        del axis_names["axis_0"]
+        listDfX = [CaitsArray(x, axis_names=axis_names) for x in X]
+        return DatasetList(X=listDfX, y=self.y, id=self._id)
 
     def dict_to_dataset(self, X):
         vals = [np.stack([X[k][i] for k in X.keys()]) for i in range(len(X[list(X.keys())[0]]))]
-        listDfX = [pd.DataFrame(x, columns=self.X[0].columns, index=X.keys()) for x in vals]
-        return DatasetList(X=listDfX, y=self.y, id=self.id)
+        axis_names = copy.deepcopy(self.X[0].axis_names)
+        axis_names["axis_0"] = {col: i for i, col in enumerate(X.keys())}
+        listDfX = [CaitsArray(x, axis_names=axis_names) for x in vals]
+        return DatasetList(X=listDfX, y=self.y, id=self._id)
 
     def train_test_split(self, random_state: Optional[int]=None, test_size: float=0.2):
         all_idxs = np.arange(len(self.X))
@@ -246,12 +338,12 @@ class DatasetList(Dataset3):
         for idx in train_idxs:
             train_X.append(self.X[idx])
             train_y.append(self.y[idx])
-            train_id.append(self.id[idx])
+            train_id.append(self._id[idx])
 
         for idx in test_idxs:
             test_X.append(self.X[idx])
             test_y.append(self.y[idx])
-            test_id.append(self.id[idx])
+            test_id.append(self._id[idx])
 
         return self.__class__(train_X, train_y, train_id), self.__class__(test_X, test_y, test_id)
 
