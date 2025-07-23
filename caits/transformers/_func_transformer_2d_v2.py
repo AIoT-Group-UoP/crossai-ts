@@ -43,23 +43,10 @@ class FunctionTransformer2D(BaseEstimator, TransformerMixin):
         Returns:
             Dataset: A new Dataset object with the transformed data.
         """
-        # transformed_X = []
-        # for d in data.X:
-        #     transformed_X.append({})
-        #     for col_name, col_values in d.items():
-        #         # Apply the function directly to the entire 2D matrix
-        #         transformed_array = self.func(col_values, **self.kw_args)
-        #         # Convert the transformed array back to a DataFrame
-        #         transformed_X[-1][col_name] = transformed_array
-        #
-        # tmp = data.to_dict()
-        # tmp["X"] = transformed_X
-        #
-        # # Return a new Dataset object with the transformed data
-        # return data.__class__(**tmp)
-
         res = data.apply(self.func, **self.kw_args)
-        return res
+        axis_names = data.get_axis_names_X()["axis_0"]
+        dfX = data.numpy_to_dataset(res, axis_names={"axis_1": axis_names})
+        return dfX
 
     def get_params(self, deep=True):
         """Overrides get_params to include func_kwargs.
