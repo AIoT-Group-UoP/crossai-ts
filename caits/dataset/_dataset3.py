@@ -129,7 +129,11 @@ class Dataset3(ABC):
         pass
 
     @abstractmethod
-    def numpy_to_dataset(self, X):
+    def get_axis_names_X(self):
+        pass
+
+    @abstractmethod
+    def numpy_to_dataset(self, X, axis_names: Optional[Dict[str, Dict[Union[str, int], int]]] = None):
         pass
 
     @abstractmethod
@@ -210,8 +214,11 @@ class DatasetArray(Dataset3):
     def to_list(self):
         pass
 
-    def numpy_to_dataset(self, X):
-        dfX = CaitsArray(X, axis_names=self.X.axis_names)
+    def get_axis_names_X(self):
+        return self.X.axis_names
+
+    def numpy_to_dataset(self, X, axis_names: Optional[Dict[str, Dict[Union[str, int], int]]] = None):
+        dfX = CaitsArray(X, axis_names=(axis_names if axis_names is not None else self.X.axis_names))
         return DatasetArray(X=dfX, y=self.y)
 
     def dict_to_dataset(self, X):
@@ -310,10 +317,15 @@ class DatasetList(Dataset3):
     def to_list(self):
         pass
 
-    def numpy_to_dataset(self, X):
-        axis_names = copy.deepcopy(self.X[0].axis_names)
-        del axis_names["axis_0"]
+    def get_axis_names_X(self):
+        return self.X[0].axis_names
+
+    def numpy_to_dataset(self, X, axis_names: Optional[Dict[str, Dict[Union[str, int], int]]] = None):
+        axis_names = copy.deepcopy(self.X[0].axis_names) if axis_names is None else axis_names
+        if "axis_0" in axis_names:
+            del axis_names["axis_0"]
         listDfX = [CaitsArray(x, axis_names=axis_names) for x in X]
+
         return DatasetList(X=listDfX, y=self.y, id=self._id)
 
     def dict_to_dataset(self, X):
