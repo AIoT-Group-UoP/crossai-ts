@@ -398,8 +398,8 @@ class DatasetList(Dataset3):
 
     def stack(self, data):
         X = sum(data, [])
-        y = [self.y[i] for i, x in enumerate(X) for _ in x]
-        id = [self._id[i] for i, x in enumerate(X) for _ in x]
+        y = [self.y[i] for i, x in enumerate(data) for _ in x]
+        id = [self._id[i] for i, x in enumerate(data) for _ in x]
         caitsX = [CaitsArray(values=x, axis_names={"axis_1": self.X[0].axis_names["axis_1"]}) for x in X]
         return DatasetList(X=caitsX, y=y, id=id)
 
