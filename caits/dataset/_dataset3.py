@@ -67,12 +67,10 @@ class CaitsArray:
 
         self.loc = self._LocIndexer(self, self.axis_names)
         self.iloc = self._iLocIndexer(self)
+        self.dtypes = self.values.dtype
 
     def __len__(self):
         return self.values.shape[0]
-
-    def dtypes(self):
-        return self.values.dtype
 
 
 class Dataset3(ABC):
