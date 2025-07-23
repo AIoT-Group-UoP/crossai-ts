@@ -46,11 +46,14 @@ class CaitsArray:
                 return self.parent.values[*idxs]
 
 
-    def __init__(self, values: np.ndarray, axis_names=Optional[Dict]):
+    def __init__(self, values: np.ndarray, axis_names: Optional[Dict]=None):
         self.values = values
         self.axis_names = {f"axis_{i}": {} for i in range(values.ndim)}
         self.shape = values.shape
         self.ndim = values.ndim
+
+        if axis_names is None:
+            axis_names = {}
 
         if len(axis_names) > values.ndim:
             raise ValueError("Axis names must not exceed number of dimensions")
@@ -74,9 +77,11 @@ class CaitsArray:
 
 
 class Dataset3(ABC):
-    def __init__(self, X: Union[CaitsArray, List[CaitsArray]], y: Optional[Union[CaitsArray, List]] = None):
-        if y is None:
-            self.y = CaitsArray(np.array([[None] for _ in range(X.shape[0])]), axis_names={"axis_1": "y_Channel_0"})
+    def __init__(
+            self,
+            X: Union[CaitsArray, List[CaitsArray]],
+            y: Union[CaitsArray, List]
+    ):
         self.X = X
         self.y = y
 
@@ -149,10 +154,18 @@ class Dataset3(ABC):
     def apply(self, func, *args, **kwargs):
         pass
 
+    @abstractmethod
+    def stack(self, data: List):
+        pass
+
 
 class DatasetArray(Dataset3):
     def __init__(self, X: CaitsArray, y: Optional[CaitsArray] = None):
-        super().__init__(X, y)
+        if y is None:
+            _y = CaitsArray(np.array([[None] for _ in range(len(X))]))
+        else:
+            _y = y
+        super().__init__(X, _y)
 
     def __len__(self):
         return self.X.shape[0]
@@ -260,11 +273,31 @@ class DatasetArray(Dataset3):
     def apply(self, func, *args, **kwargs):
         return func(self.X.values, *args, **kwargs)
 
+    # TODO: Correct handling of y
+    def stack(self, data: List[np.ndarray]):
+        return DatasetList(
+            X=[CaitsArray(values=x, axis_names={"axis_1": self.X.axis_names["axis_1"]}) for x in data]
+        )
+
 
 class DatasetList(Dataset3):
-    def __init__(self, X: List[CaitsArray], y=List[Union[str, int]], id=List[str]) -> None:
-        super().__init__(X, y)
-        self._id = id
+    def __init__(
+            self,
+            X: List[CaitsArray],
+            y: Optional[List[Union[str, int]]]=None,
+            id: Optional[List[str]]=None
+    ) -> None:
+        if y is None:
+            _y = [None for _ in range(len(X))]
+        else:
+            _y = y
+        if id is None:
+            _id = [None for _ in range(len(X))]
+        else:
+            _id = id
+
+        super().__init__(X, _y)
+        self._id = _id
 
     def __len__(self):
         return len(self.X)
@@ -362,4 +395,9 @@ class DatasetList(Dataset3):
 
     def apply(self, func, *args, **kwargs):
         return [func(df.values, *args, **kwargs) for df in self.X]
+
+    def stack(self, data):
+        X = sum(data, [])
+        caitsX = [CaitsArray(values=x, axis_names={"axis_1": self.X[0].axis_names["axis_1"]}) for x in X]
+        return DatasetList(X=caitsX, y=self.y, id=self._id)
 
