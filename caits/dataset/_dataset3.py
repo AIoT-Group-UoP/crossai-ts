@@ -336,7 +336,7 @@ class DatasetList(Dataset3):
             )
 
     def to_numpy(self):
-        return [x.values for x in self.X], self.y, self._id
+        return np.array([x.values for x in self.X]), np.array(self.y), np.array(self._id)
 
     def to_df(self):
         pass
