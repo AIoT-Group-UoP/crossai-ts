@@ -71,6 +71,9 @@ class CaitsArray:
     def __len__(self):
         return self.values.shape[0]
 
+    def dtypes(self):
+        return self.values.dtype
+
 
 class Dataset3(ABC):
     def __init__(self, X: Union[CaitsArray, List[CaitsArray]], y: Optional[Union[CaitsArray, List]] = None):
@@ -302,7 +305,7 @@ class DatasetList(Dataset3):
             )
 
     def to_numpy(self):
-        pass
+        return [x.values for x in self.X], self.y, self._id
 
     def to_df(self):
         pass
