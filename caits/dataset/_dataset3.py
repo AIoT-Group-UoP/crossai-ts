@@ -308,6 +308,7 @@ class DatasetArray(Dataset3):
         self._current = 0
         return self
 
+    # TODO: Make more generic
     def __getitem__(self, idx: int):
         return self.X.iloc[idx, ...], self.y.iloc[idx, ...]
 
@@ -371,9 +372,12 @@ class DatasetArray(Dataset3):
 
     def dict_to_dataset(self, X):
         vals = np.stack([row for row in X.values()])
-        axis_names = copy.deepcopy(self.X.axis_names)
-        axis_names["axis_0"] = {key: i for i, key in enumerate(X.keys())}
-        dfX = CaitsArray(vals, axis_names=axis_names)
+        dfX = CaitsArray(
+            vals,
+            axis_names={
+                axis: names for axis, names in X.axis_names.items() if axis != "axis_0"
+            }
+        )
         return dfX
 
     def train_test_split(self, random_state: Optional[int]=None, test_size: float=0.2):
@@ -386,16 +390,6 @@ class DatasetArray(Dataset3):
         else:
             train_idxs = all_idxs[:Nx]
             test_idxs = all_idxs[Nx:]
-
-        train_axis_names_X = copy.deepcopy(self.X.axis_names)
-        train_axis_names_X["axis_0"] = {j: i for i, j in enumerate(train_idxs)}
-        test_axis_names_X = copy.deepcopy(self.X.axis_names)
-        test_axis_names_X["axis_0"] = {j: i for i, j in enumerate(test_idxs)}
-
-        train_axis_names_y = copy.deepcopy(self.y.axis_names)
-        train_axis_names_y["axis_0"] = {i: i for i in train_idxs}
-        test_axis_names_y = copy.deepcopy(self.y.axis_names)
-        test_axis_names_y["axis_0"] = {i: i for i in test_idxs}
 
         train_X = self.X.iloc[train_idxs, ...]
         test_X = self.X.iloc[test_idxs, ...]
@@ -410,7 +404,7 @@ class DatasetArray(Dataset3):
     # TODO: Correct handling of y
     def stack(self, data: List[np.ndarray]):
         return DatasetList(
-            X=[CaitsArray(values=x, axis_names={"axis_1": self.X.axis_names["axis_1"]}) for x in data]
+            X=[CaitsArray(values=x, axis_names={"axis_1": self.X.axis_names["axis_1"]}) for x in data[0]]
         )
 
 
@@ -436,6 +430,7 @@ class DatasetList(Dataset3):
     def __len__(self):
         return len(self.X)
 
+    # TODO: Make more generic
     def __getitem__(self, idx: int):
         return self.X[idx], self.y[idx], self._id[idx]
 
@@ -489,18 +484,24 @@ class DatasetList(Dataset3):
         return self.X[0].axis_names
 
     def numpy_to_dataset(self, X, axis_names: Optional[Dict[str, Dict[Union[str, int], int]]] = None):
-        axis_names = copy.deepcopy(self.X[0].axis_names) if axis_names is None else axis_names
-        if "axis_0" in axis_names:
-            del axis_names["axis_0"]
-        listDfX = [CaitsArray(x, axis_names=axis_names) for x in X]
+        listDfX = [
+            CaitsArray(
+                x,
+                axis_names={axis: names for axis, names in axis_names.items() if axis != "axis_0"}
+            ) for x in X
+        ]
 
         return DatasetList(X=listDfX, y=self.y, id=self._id)
 
     def dict_to_dataset(self, X):
         vals = [np.stack([X[k][i] for k in X.keys()]) for i in range(len(X[list(X.keys())[0]]))]
-        axis_names = copy.deepcopy(self.X[0].axis_names)
-        axis_names["axis_0"] = {col: i for i, col in enumerate(X.keys())}
-        listDfX = [CaitsArray(x, axis_names=axis_names) for x in vals]
+        listDfX = [
+            CaitsArray(
+                x,
+                axis_names={axis: names for axis, names in self.X.axis_names.items() if axis != "axis_0"}
+            ) for x in vals
+        ]
+
         return DatasetList(X=listDfX, y=self.y, id=self._id)
 
     def train_test_split(self, random_state: Optional[int]=None, test_size: float=0.2):
