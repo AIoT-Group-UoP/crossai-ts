@@ -5,33 +5,33 @@ import numpy as np
 from typing import Optional, Union, List, Dict
 import copy
 
+DISPLAY_NUM_ROWS = 5
+DISPLAY_NUM_COLS = 6
+DISPLAY_VECTOR_NUM_ROWS = 60
 
 class CaitsArray:
     class _iLocIndexer:
         def __init__(self, parent) -> None:
             self.parent = parent
 
-        # TODO: Make more efficient
         def __getitem__(self, index):
             if len(index) != self.parent.ndim:
                 raise ValueError(f'Index must be {self.parent.ndim} dimensional')
             else:
                 vals = self.parent.values[index]
-                axis_names_arr = {axis: np.array(list(v.keys())) for axis, v in self.parent.axis_names.items()}
-                axis_names_arr_indexed = {axis: v[index[i]] for i, (axis, v) in enumerate(axis_names_arr.items())}
-                axis_names = {axis: {v: i for i, v in enumerate(names)} for axis, names in axis_names_arr_indexed.items()}
+                if not isinstance(vals, np.ndarray):
+                    return vals
+                else:
+                    axis_names_arr = {axis: np.array(list(v.keys())) for axis, v in self.parent.axis_names.items()}
+                    axis_names_arr_indexed = {axis: v[index[i]] for i, (axis, v) in enumerate(axis_names_arr.items())}
+                    axis_names = {
+                        axis: {v: i for i, v in enumerate(names)}
+                        for j, (axis, names) in enumerate(axis_names_arr_indexed.items())
+                        if not isinstance(index[j], int)
+                    }
+                    axis_names = {f"axis_{i}": names for i, names in enumerate(axis_names.values())}
 
-                resulting_shape = [
-                    1
-                    if isinstance(idx, int)
-                    else (
-                        idx.stop - idx.start
-                        if isinstance(idx, slice)
-                        else len(idx)
-                    ) for idx in index
-                ]
-
-                return CaitsArray(np.reshape(np.array(vals), resulting_shape), axis_names=axis_names)
+                    return CaitsArray(vals, axis_names=axis_names)
 
 
     class _LocIndexer:
@@ -39,14 +39,15 @@ class CaitsArray:
             self.parent = parent
             self.indexer = indexer
 
-        # TODO: Make it return a CaitsArray object
         def __getitem__(self, index):
             if len(index) != self.parent.ndim:
                 raise ValueError(f'Index must be {self.parent.parent.values.ndim} dimensional')
             else:
                 idxs = []
+                axis_names = {axis: np.array(list(names.keys())) for axis, names in self.parent.axis_names.items()}
+
                 for i, t in enumerate(index):
-                    if isinstance(t, str):
+                    if isinstance(t, str) or isinstance(t, int):
                         idxs.append(self.parent.axis_names[f"axis_{i}"][t])
                     elif isinstance(t, list):
                         idxs.append([self.parent.axis_names[f"axis_{i}"][j] for j in t])
@@ -61,7 +62,18 @@ class CaitsArray:
                     else:
                         raise IndexError("Unsupported index type")
 
-                return self.parent.values[*idxs]
+                vals = self.parent.values[*idxs]
+                if not isinstance(vals, np.ndarray):
+                    return vals
+                else:
+                    axis_names = {
+                        axis: {n: i for i, n in enumerate(names[idxs[i]])}
+                        for i, (axis, names) in enumerate(axis_names.items())
+                        if not isinstance(index[i], int) and not isinstance(index[i], int)
+                    }
+                    axis_names = {f"axis_{i}": names for i, names in enumerate(axis_names.values())}
+
+                    return CaitsArray(self.parent.values[*idxs], axis_names=axis_names)
 
 
     def __init__(self, values: np.ndarray, axis_names: Optional[Dict]=None):
@@ -96,13 +108,28 @@ class CaitsArray:
     def __repr__(self):
         res = ""
         if self.ndim > 2:
-            # TODO: fix for numpy.arrays with ndim > 2
             for idx in np.ndindex(*self.shape[:-2]):
-                print(idx)
-                res += f"----------------------------- FOLD {idx} -----------------------------"
+                res += f"----------------------------- FOLD {idx} -----------------------------\n"
                 res += self.__repr_single_frame(idx)
-        else:
+        elif self.ndim == 2:
             res += self.__repr_single_frame()
+        else:
+            if len(self.values) <= DISPLAY_VECTOR_NUM_ROWS:
+                column_names = [str(s) for s in list(self.axis_names["axis_0"].keys())]
+                value_strs = [str(x) for x in self.values]
+            else:
+                column_names = [str(s) for s in list(self.axis_names["axis_0"].keys())[:DISPLAY_NUM_ROWS]]
+                column_names.append("...")
+                column_names.extend([str(s) for s in list(self.axis_names["axis_0"].keys())[(-DISPLAY_NUM_ROWS):]])
+                value_strs = [str(s) for s in list(self.values)[:DISPLAY_NUM_ROWS]]
+                value_strs.append("...")
+                value_strs.extend([str(s) for s in list(self.values)[-DISPLAY_NUM_ROWS:]])
+
+            widths = [max([len(s) for s in column_names]), max([len(s) for s in value_strs])]
+            names = [f"{col:>{widths[0]}}  " for col in column_names]
+            values = [f"{val:>{widths[1]}}" for val in value_strs]
+            res += "\n".join([n+v for n, v in zip(names, values)]) + "\n\n"
+
 
         res += f"CaitsArray with shape {self.shape}\n"
         return res
@@ -112,16 +139,17 @@ class CaitsArray:
         row_names = self.axis_names[list(self.axis_names.keys())[-2]]
         col_widths = [0 for _ in range(self.shape[-1])]
         num_rows = min(11, self.shape[-2])
-        if num_rows > 10:
-            row_idxs = [0,1,2,3,4,-5,-4,-3,-2,-1]
+        if num_rows > 2 * DISPLAY_NUM_ROWS:
+            tmp = [i for i in range(DISPLAY_NUM_ROWS)]
+            row_idxs = tmp + [-(i+1) for i in tmp[::-1]]
         else:
             row_idxs = [i for i in range(num_rows)]
 
         for i, col in enumerate(column_names):
             if comb is not None:
-                all_col_strs = [col] + [str(x) for x in self.values[*comb, row_idxs, i]]
+                all_col_strs = [str(col)] + [str(x) for x in self.values[*comb, row_idxs, i]]
             else:
-                all_col_strs = [col] + [str(x) for x in self.values[row_idxs, i]]
+                all_col_strs = [str(col)] + [str(x) for x in self.values[row_idxs, i]]
             width = max([len(s) for s in all_col_strs])
             col_widths[i] = width
 
@@ -140,25 +168,25 @@ class CaitsArray:
 
         final_ret = []
 
-        if num_rows > 10:
+        if num_rows > 2 * DISPLAY_NUM_ROWS:
             sep = [f"{'...':>{width}}  " for width in col_widths]
 
         index_width = max([len(str(i)) for i in row_names])
         index = [str(i) for i in row_names]
-        if num_rows > 10:
+        if num_rows > 2 * DISPLAY_NUM_ROWS:
             index = ([" " * (index_width + 2)] +
-                     [f"{i:>{index_width}}  " for i in index[:5]] +
+                     [f"{i:>{index_width}}  " for i in index[:DISPLAY_NUM_ROWS]] +
                      [f"{'...':>{index_width}}  "] +
-                     [f"{i:>{index_width}}  " for i in index[-5:]])
+                     [f"{i:>{index_width}}  " for i in index[-DISPLAY_NUM_ROWS:]])
         else:
             index = [" " * (index_width + 2)] + [f"{i:>{index_width}}  " for i in index]
 
-        if len(col_widths) > 5:
-            for i in range(0, len(col_widths), 5):
-                tmp_header = header[i:i+5]
-                tmp = [tmp_header] + [ret[j][i:i+5] for j in range(len(ret))]
-                if num_rows > 10:
-                    tmp = tmp[:6] + [sep[i:i+5]] + tmp[6:]
+        if len(col_widths) > DISPLAY_NUM_COLS:
+            for i in range(0, len(col_widths), DISPLAY_NUM_COLS):
+                tmp_header = header[i:i+DISPLAY_NUM_COLS]
+                tmp = [tmp_header] + [ret[j][i:i+DISPLAY_NUM_COLS] for j in range(len(ret))]
+                if num_rows > 2 * DISPLAY_NUM_ROWS:
+                    tmp = tmp[:(DISPLAY_NUM_ROWS+1)] + [sep[i:i+DISPLAY_NUM_COLS]] + tmp[(DISPLAY_NUM_ROWS+1):]
 
                 final_ret.append(tmp)
 
