@@ -194,7 +194,10 @@ class CaitsArray:
                 final_ret[i][0].append("\\")
 
         else:
-            final_ret = [[header] + ret]
+            tmp = [header] + ret
+            if num_rows > 2 * DISPLAY_NUM_ROWS:
+                tmp = tmp[:(DISPLAY_NUM_ROWS + 1)] + [sep[:len(tmp[0])]] + tmp[(DISPLAY_NUM_ROWS + 1):]
+            final_ret = [tmp]
 
         result = ""
         for part_idx in range(len(final_ret)):
@@ -205,9 +208,6 @@ class CaitsArray:
             result += "".join(tmp) + "\n"
 
         return result
-
-
-
 
 
 class Dataset3(ABC):
@@ -309,11 +309,11 @@ class DatasetArray(Dataset3):
         return self
 
     def __getitem__(self, idx: int):
-        return self.X.iloc[idx, :]
+        return self.X.iloc[idx, ...], self.y.iloc[idx, ...]
 
     def __next__(self):
         if self._current < len(self):
-            res = self.X.iloc[self._current, :], self.y.iloc[self._current, :]
+            res = self.X.iloc[self._current, ...], self.y.iloc[self._current, ...]
             self._current += 1
             return res
         else:
@@ -327,7 +327,7 @@ class DatasetArray(Dataset3):
 
     def batch(self, batch_size: int):
         for i in range(0, self.X.shape[0], batch_size):
-            yield self.X.iloc[i : i + batch_size, :], self.y.iloc[i : i + batch_size, :]
+            yield self.X.iloc[i : i + batch_size, ...], self.y.iloc[i : i + batch_size, ...]
 
     def unify(self, other):
         if self.X.shape[1] == other.X.shape[1] and self.y.shape[1] == other.y.shape[1]:
@@ -397,10 +397,10 @@ class DatasetArray(Dataset3):
         test_axis_names_y = copy.deepcopy(self.y.axis_names)
         test_axis_names_y["axis_0"] = {i: i for i in test_idxs}
 
-        train_X = CaitsArray(self.X.iloc[train_idxs, :], axis_names=train_axis_names_X)
-        test_X = CaitsArray(self.X.iloc[test_idxs, :], axis_names=test_axis_names_X)
-        train_y = CaitsArray(self.y.iloc[train_idxs, :], axis_names=train_axis_names_y)
-        test_y = CaitsArray(self.y.iloc[test_idxs, :], axis_names=test_axis_names_y)
+        train_X = self.X.iloc[train_idxs, ...]
+        test_X = self.X.iloc[test_idxs, ...]
+        train_y = self.y.iloc[train_idxs, ...]
+        test_y = self.y.iloc[test_idxs, ...]
 
         return self.__class__(train_X, train_y), self.__class__(test_X, test_y)
 
