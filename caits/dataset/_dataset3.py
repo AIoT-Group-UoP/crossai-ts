@@ -579,11 +579,12 @@ class DatasetList(Dataset3):
     def get_axis_names_X(self):
         return self.X[0].axis_names
 
+    # TODO: Correct handling of axis_names
     def numpy_to_dataset(self, X, axis_names: Optional[Dict[str, Dict[Union[str, int], int]]] = None):
         listDfX = [
             CaitsArray(
                 x,
-                axis_names={axis: names for axis, names in axis_names.items() if axis != "axis_0"}
+                axis_names={axis: names for axis, names in axis_names.items() if axis != "axis_0"} if axis_names is not None else None,
             ) for x in X
         ]
 
