@@ -36,7 +36,7 @@ class DatasetToArray(BaseEstimator, TransformerMixin):
 
         if self.flatten:
             # Reshape to a 2D array by merging window and channel dimensions
-            return X.flatten()
+            return X.flatten().reshape(-1, 1)
         else:
             return tmp[0]  # Keep the 3D shape
 
@@ -47,7 +47,7 @@ class DatasetToArray(BaseEstimator, TransformerMixin):
             dim1 = sum([s[0] for s in self.shapes])
             dim2 = self.shapes[0][1]
 
-            tmp = X.reshape((dim1, dim2))
+            tmp = X[:, 0].reshape((dim1, dim2))
             _X = []
             i = 0
             for s in self.shapes:
