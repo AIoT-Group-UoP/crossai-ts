@@ -293,6 +293,10 @@ class Dataset3(ABC):
     def stack(self, data: List):
         pass
 
+    @abstractmethod
+    def flatten(self):
+        pass
+
 
 class DatasetArray(Dataset3):
     def __init__(self, X: CaitsArray, y: Optional[CaitsArray] = None):
@@ -410,6 +414,9 @@ class DatasetArray(Dataset3):
         return DatasetList(
             X=[CaitsArray(values=x, axis_names={"axis_1": self.X.axis_names["axis_1"]}) for x in data[0]]
         )
+
+    def flatten(self):
+        pass
 
 
 class DatasetList(Dataset3):
@@ -569,7 +576,7 @@ class DatasetList(Dataset3):
             raise ValueError("Invalid axis argument.")
 
     def to_numpy(self):
-        return np.array([x.values for x in self.X]), np.array(self.y), np.array(self._id)
+        return [np.array(x.values) for x in self.X], np.array(self.y), np.array(self._id)
 
     def to_df(self):
         pass
@@ -643,3 +650,5 @@ class DatasetList(Dataset3):
         caitsX = [CaitsArray(values=x, axis_names={"axis_1": self.X[0].axis_names["axis_1"]}) for x in X]
         return DatasetList(X=caitsX, y=y, id=id)
 
+    def flatten(self):
+        return np.concatenate([x.values for x in self.X], axis=0).flatten()
