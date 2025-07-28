@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import List, Tuple
 from copy import deepcopy
 
 import numpy as np
@@ -55,7 +56,7 @@ class CaitsArray:
                         idxs.append(
                             slice(
                                 self.parent.axis_names[f"axis_{i}"][t.start] if t.start is not None else None,
-                                self.parent.axis_names[f"axis_{i}"][t.stop] if t.stop is not None else None,
+                                (self.parent.axis_names[f"axis_{i}"][t.stop] + 1) if t.stop is not None else None,
                                 t.step
                             )
                         )
@@ -69,7 +70,7 @@ class CaitsArray:
                     axis_names = {
                         axis: {n: i for i, n in enumerate(names[idxs[i]])}
                         for i, (axis, names) in enumerate(axis_names.items())
-                        if not isinstance(index[i], int) and not isinstance(index[i], int)
+                        if not isinstance(idxs[i], int) and not isinstance(idxs[i], int)
                     }
                     axis_names = {f"axis_{i}": names for i, names in enumerate(axis_names.values())}
 
@@ -224,7 +225,7 @@ class Dataset3(ABC):
         return len(self.X)
 
     @abstractmethod
-    def __getitem__(self, idx: int):
+    def __getitem__(self, idx: Union[int, slice, tuple, List]):
         pass
 
     @abstractmethod
@@ -249,7 +250,7 @@ class Dataset3(ABC):
         pass
 
     @abstractmethod
-    def unify(self, other):
+    def unify(self, other, axis: int=0):
         pass
 
     @abstractmethod
@@ -330,7 +331,8 @@ class DatasetArray(Dataset3):
         for i in range(0, self.X.shape[0], batch_size):
             yield self.X.iloc[i : i + batch_size, ...], self.y.iloc[i : i + batch_size, ...]
 
-    def unify(self, other):
+    # TODO: Adjust using axis argument
+    def unify(self, other, axis: int=0):
         if self.X.shape[1] == other.X.shape[1] and self.y.shape[1] == other.y.shape[1]:
             axis_0_names = {
                 i: i for i in range(
@@ -430,9 +432,73 @@ class DatasetList(Dataset3):
     def __len__(self):
         return len(self.X)
 
-    # TODO: Make more generic
-    def __getitem__(self, idx: int):
-        return self.X[idx], self.y[idx], self._id[idx]
+    def __getitem__(self, idx: Union[int, slice, List, Tuple]):
+        if not isinstance(idx, tuple):
+            return DatasetList(*self.__get_single(idx))
+        else:
+            ret = self.__get_single(idx[0])
+
+            if isinstance(idx[1], int):
+                return DatasetList(
+                    X=[x.iloc[:, idx[1]] for x in ret[0]],
+                    y=ret[1],
+                    id=ret[2]
+                )
+            elif isinstance(idx[1], slice):
+                if idx[1].start is None and idx[1].stop is None:
+                    return DatasetList(
+                        X=[x.iloc[:, idx[1]] for x in ret[0]],
+                        y=ret[1],
+                        id=ret[2]
+                    )
+                elif isinstance(idx[1].start, str) or isinstance(idx[1].stop, str):
+                    return DatasetList(
+                        X=[x.loc[:, idx[1]] for x in ret[0]],
+                        y=ret[1],
+                        id=ret[2]
+                    )
+                elif isinstance(idx[1].start, int) or isinstance(idx[1].stop, int):
+                    return DatasetList(
+                        X=[x.iloc[:, idx[1]] for x in ret[0]],
+                        y=ret[1],
+                        id=ret[2]
+                    )
+
+            elif isinstance(idx[1], list):
+                if all([isinstance(k, int) for k in idx[1]]):
+                    return DatasetList(
+                        X=[x.iloc[:, idx[1]] for x in ret[0]],
+                        y=ret[1],
+                        id=ret[2]
+                    )
+                elif all([isinstance(k, str) for k in idx[1]]):
+                    return DatasetList(
+                        X=[x.loc[:, idx[1]] for x in ret[0]],
+                        y=ret[1],
+                        id=ret[2]
+                    )
+                else:
+                    raise ValueError
+            elif isinstance(idx[1], str):
+                return DatasetList(
+                    X=[x.loc[:, idx[1]] for x in ret[0]],
+                    y=ret[1],
+                    id=ret[2]
+                )
+
+    def __get_single(self, idx: Union[int, slice, List]):
+        if isinstance(idx, int):
+            return [self.X[idx]], [self.y[idx]], [self._id[idx]]
+
+        elif isinstance(idx, slice):
+            return self.X[idx], self.y[idx], self._id[idx]
+
+        elif isinstance(idx, list) and all([isinstance(k, int) for k in idx]):
+            return [self.X[i] for i in idx], [self.y[i] for i in idx], [self._id[i] for i in idx]
+
+        else:
+            raise ValueError
+
 
     def __iter__(self):
         self._current = 0
@@ -457,12 +523,42 @@ class DatasetList(Dataset3):
             yield self.X[i : i + batch_size], self.y[i : i + batch_size], self._id[i : i + batch_size]
 
     # TODO: Add check for columns
-    def unify(self, other):
-        return self.__class__(
-            X=self.X + other.X,
-            y=self.y + other.y,
-            id=self._id + other._id,
-            )
+    def unify(self, other, axis: int=0):
+        if axis == 0:
+            return self.__class__(
+                X=self.X + other.X,
+                y=self.y + other.y,
+                id=self._id + other._id,
+                )
+        elif axis == 1:
+            if self.X[0].shape != other.X[0].shape:
+                pass
+            if self.y != other.y:
+                pass
+            if self._id != other._id:
+                pass
+            if self.X[0].axis_names["axis_0"] != other.X[0].axis_names["axis_0"]:
+                pass
+
+            caitsX = []
+            for i in range(len(self.X)):
+                axis_names1 = deepcopy(self.X[i].axis_names)
+                axis_names2 = deepcopy(other.X[i].axis_names)
+                axis_names2["axis_1"] = {k: v + len(axis_names1["axis_1"]) for k, v in axis_names2["axis_1"].items()}
+                axis_names1["axis_1"] = {**axis_names1["axis_1"], **axis_names2["axis_1"]}
+
+                caitsX.append(
+                    CaitsArray(
+                        values=np.concatenate([self.X[i].values, other.X[i].values], axis=1),
+                        axis_names=axis_names1
+                    )
+                )
+
+            caitsY = self.y
+            caitsId = self._id
+            return DatasetList(X=caitsX, y=caitsY, id=caitsId)
+        else:
+            raise ValueError("Invalid axis argument.")
 
     def to_numpy(self):
         return np.array([x.values for x in self.X]), np.array(self.y), np.array(self._id)
