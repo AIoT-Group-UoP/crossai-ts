@@ -250,7 +250,7 @@ class Dataset3(ABC):
         pass
 
     @abstractmethod
-    def unify(self, other, axis: int=0):
+    def unify(self, others, axis_names: Optional = None, axis: int=0):
         pass
 
     @abstractmethod
@@ -324,6 +324,7 @@ class DatasetArray(Dataset3):
     def __repr__(self):
         return f"DatasetArray object with {len(self.X)} instances."
 
+    # TODO: Adjust with new unify method
     def __add__(self, other):
         return self.unify(other)
 
@@ -332,11 +333,12 @@ class DatasetArray(Dataset3):
             yield self.X.iloc[i : i + batch_size, ...], self.y.iloc[i : i + batch_size, ...]
 
     # TODO: Adjust using axis argument
-    def unify(self, other, axis: int=0):
-        if self.X.shape[1] == other.X.shape[1] and self.y.shape[1] == other.y.shape[1]:
+    # TODO: Adjust with list of DatasetArrays
+    def unify(self, others, axis_names: Optional = None, axis: int=0):
+        if self.X.shape[1] == others.X.shape[1] and self.y.shape[1] == others.y.shape[1]:
             axis_0_names = {
                 i: i for i in range(
-                    len(self.X.axis_names["axis_0"]) + len(other.X.axis_names["axis_0"])
+                    len(self.X.axis_names["axis_0"]) + len(others.X.axis_names["axis_0"])
                 )
             }
             axis_names_X = copy.deepcopy(self.X.axis_names)
@@ -344,11 +346,11 @@ class DatasetArray(Dataset3):
             axis_names_X["axis_0"] = axis_0_names
             axis_names_y["axis_0"] = axis_0_names
 
-            X = CaitsArray(np.concatenate([self.X.values, other.X.values], axis=0), axis_names=axis_names_X)
-            y = CaitsArray(np.concatenate([self.y.values, other.y.values], axis=0), axis_names=axis_names_y)
+            X = CaitsArray(np.concatenate([self.X.values, others.X.values], axis=0), axis_names=axis_names_X)
+            y = CaitsArray(np.concatenate([self.y.values, others.y.values], axis=0), axis_names=axis_names_y)
 
             return self.__class__(X=X, y=y)
-        elif self.X.shape[1] != other.X.shape[1]:
+        elif self.X.shape[1] != others.X.shape[1]:
             raise ValueError("self.X and other.X must have the same number of columns.")
         else:
             raise ValueError("self.X and other.y must have the same number of columns.")
@@ -515,6 +517,7 @@ class DatasetList(Dataset3):
     def __repr__(self):
         return f"DatasetList object with {len(self.X)} instances."
 
+    # TODO: Adjust with new unify method
     def __add__(self, other):
         return self.unify(other)
 
@@ -523,34 +526,39 @@ class DatasetList(Dataset3):
             yield self.X[i : i + batch_size], self.y[i : i + batch_size], self._id[i : i + batch_size]
 
     # TODO: Add check for columns
-    def unify(self, other, axis: int=0):
+    def unify(self, others, axis_names: Optional = None, axis: int=0):
         if axis == 0:
             return self.__class__(
-                X=self.X + other.X,
-                y=self.y + other.y,
-                id=self._id + other._id,
+                X=self.X + others.X,
+                y=self.y + others.y,
+                id=self._id + others._id,
                 )
         elif axis == 1:
-            if self.X[0].shape != other.X[0].shape:
+            if not all([self.X[0].shape == d.X[0].shape for d in others]):
                 pass
-            if self.y != other.y:
+            if not all([self.y == d.y for d in others]):
                 pass
-            if self._id != other._id:
+            if not all([self._id == d._id for d in others]):
                 pass
-            if self.X[0].axis_names["axis_0"] != other.X[0].axis_names["axis_0"]:
+            if not all([self.X[0].axis_names["axis_0"] != d.X[0].axis_names["axis_0"] for d in others]):
                 pass
 
             caitsX = []
             for i in range(len(self.X)):
-                axis_names1 = deepcopy(self.X[i].axis_names)
-                axis_names2 = deepcopy(other.X[i].axis_names)
-                axis_names2["axis_1"] = {k: v + len(axis_names1["axis_1"]) for k, v in axis_names2["axis_1"].items()}
-                axis_names1["axis_1"] = {**axis_names1["axis_1"], **axis_names2["axis_1"]}
+                if axis_names is None:
+                    _axis_names = deepcopy(self.X[i].axis_names)
+                    axis_1 = list(_axis_names["axis_1"].keys())
+                    axis_1 += sum([list(d.X[i].axis_names["axis_1"].keys()) for d in others], [])
+                    _axis_names["axis_1"] = {name: i for i, name in enumerate(axis_1)}
+                else:
+                    _axis_names = axis_names
+
+                values = np.concatenate([self.X[i].values] + [d.X[i].values for d in others], axis=1)
 
                 caitsX.append(
                     CaitsArray(
-                        values=np.concatenate([self.X[i].values, other.X[i].values], axis=1),
-                        axis_names=axis_names1
+                        values=values,
+                        axis_names=_axis_names
                     )
                 )
 
