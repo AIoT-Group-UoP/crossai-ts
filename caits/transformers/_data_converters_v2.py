@@ -14,13 +14,9 @@ class DatasetToArray(BaseEstimator, TransformerMixin):
         """
         self.flatten = flatten
         self.dtype = dtype
-        self.shapes = []
-        self.datasetList = None
 
     def fit(self, X, y=None):
         """Fit method (no-op since nothing is learned)."""
-        self.shapes = [x.shape for x in X.X]
-        self.datasetList = X
         return self
 
     def transform(self, X):
@@ -32,32 +28,29 @@ class DatasetToArray(BaseEstimator, TransformerMixin):
         Returns:
             numpy.ndarray: Either a 2D (flattened) or 3D array.
         """
-        tmp = X.to_numpy()
-
         if self.flatten:
             # Reshape to a 2D array by merging window and channel dimensions
             return X.flatten().reshape(-1, 1)
         else:
-            return tmp[0]  # Keep the 3D shape
+            return X.to_numpy()
 
-    # TODO: Maybe axis names should be handled internally
-    def inverse_transform(self, X):
-        """Transforms the numpy array into a Dataset."""
-        if self.flatten:
-            dim1 = sum([s[0] for s in self.shapes])
-            dim2 = self.shapes[0][1]
+class ArrayToDataset(BaseEstimator, TransformerMixin):
+    def __init__(self, shape, data_class_fun, dtype=None, axis_names=None):
+        """Initializes the ArrayToDataset transformer.
+        """
+        self.shape = shape
+        self.dtype = dtype
+        self.data_class_fun = data_class_fun
+        self.axis_names = axis_names
 
-            tmp = X[:, 0].reshape((dim1, dim2))
-            _X = []
-            i = 0
-            for s in self.shapes:
-                _X.append(tmp[i:i + s[0], :])
-                i += s[0]
-        else:
-            _X = X
+    def fit(self, X, y=None):
+        return self
 
-        return self.datasetList.numpy_to_dataset(_X, axis_names={"axis_1": self.datasetList.X[0].axis_names["axis_1"]})
+    def transform(self, X):
+        """Transforms the Dataset into a numpy array."""
+        tmp = X.reshape(-1, self.shape[1])
+        _X = []
+        for i in range(0, len(tmp), self.shape[0]):
+            _X.append(tmp[i:i + self.shape[0], :])
 
-
-
-
+        return self.data_class_fun(_X, axis_names=self.axis_names)
