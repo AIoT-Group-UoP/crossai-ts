@@ -28,6 +28,7 @@ class FunctionTransformer2D(BaseEstimator, TransformerMixin):
         Returns:
             self: Returns the instance itself.
         """
+        self.fitted_ = True
         return self
 
     def transform(self, data: T) -> T:

@@ -13,6 +13,7 @@ class FeatureExtractor2D(BaseEstimator, TransformerMixin):
         self.kw_args = kw_args
 
     def fit(self, X, y=None):
+        self.fitted_ = True
         return self
 
     def transform(self, data: T) -> T:

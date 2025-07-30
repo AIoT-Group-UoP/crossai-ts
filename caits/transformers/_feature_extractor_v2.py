@@ -15,6 +15,7 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
         self.feature_extractors = feature_extractors
 
     def fit(self, X, y=None):
+        self.fitted_ = True
         return self
 
     def transform(self, data: T) -> T:

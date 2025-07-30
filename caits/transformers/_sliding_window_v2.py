@@ -24,6 +24,7 @@ class SlidingWindow(BaseEstimator, TransformerMixin):
             X: The input data.
             y: The target variables (not used).
         """
+        self.fitted_ = True
         return self
 
     def transform(self, data: Dataset3) -> Dataset3:
