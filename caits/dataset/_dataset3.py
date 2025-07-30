@@ -651,4 +651,5 @@ class DatasetList(Dataset3):
         return DatasetList(X=caitsX, y=y, id=id)
 
     def flatten(self):
-        return np.concatenate([x.values for x in self.X], axis=0).flatten()
+        # return np.concatenate([x.values for x in self.X], axis=0).flatten()
+        return np.stack([x.values.flatten() for x in self.X], axis=0)

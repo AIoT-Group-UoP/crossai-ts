@@ -15,8 +15,10 @@ class DatasetToArray(BaseEstimator, TransformerMixin):
         self.flatten = flatten
         self.dtype = dtype
 
+
     def fit(self, X, y=None):
         """Fit method (no-op since nothing is learned)."""
+        self.fitted_ = True
         return self
 
     def transform(self, X):
@@ -30,9 +32,27 @@ class DatasetToArray(BaseEstimator, TransformerMixin):
         """
         if self.flatten:
             # Reshape to a 2D array by merging window and channel dimensions
-            return X.flatten().reshape(-1, 1)
+            # return X.flatten().reshape(-1, 1)
+            return X.flatten()
         else:
             return X.to_numpy()
+
+    def get_params(self, deep=True):
+        """Returns the parameters of the transformer."""
+        params = super().get_params(deep=deep)
+        params.update(
+            {
+                "flatten": self.flatten,
+                "dtype": self.dtype
+            }
+        )
+        return params
+
+    def set_params(self, **params):
+        self.flatten = params.get("flatten", False)
+        self.dtype = params.get("dtype", None)
+        return self
+
 
 class ArrayToDataset(BaseEstimator, TransformerMixin):
     def __init__(self, shape, data_class_fun, dtype=None, axis_names=None):
@@ -44,13 +64,36 @@ class ArrayToDataset(BaseEstimator, TransformerMixin):
         self.axis_names = axis_names
 
     def fit(self, X, y=None):
+        self.fitted_ = True
         return self
 
     def transform(self, X):
         """Transforms the Dataset into a numpy array."""
-        tmp = X.reshape(-1, self.shape[1])
-        _X = []
-        for i in range(0, len(tmp), self.shape[0]):
-            _X.append(tmp[i:i + self.shape[0], :])
+        # tmp = X.reshape(-1, self.shape[1])
+        # _X = []
+        # for i in range(0, len(tmp), self.shape[0]):
+        #     _X.append(tmp[i:i + self.shape[0], :])
+
+        _X = [X[i, :].reshape(self.shape) for i in range(X.shape[0])]
 
         return self.data_class_fun(_X, axis_names=self.axis_names)
+
+    def get_params(self, deep=True):
+        """Returns the parameters of the transformer."""
+        params = super().get_params(deep=deep)
+        params.update(
+            {
+                "shape_": self.shape,
+                "dtype_": self.dtype,
+                "axis_names_": self.axis_names,
+                "data_class_fun_": self.data_class_fun
+            }
+        )
+        return params
+
+    def set_params(self, **params):
+        self.shape = params.get("shape", None)
+        self.dtype = params.get("dtype", None)
+        self.axis_names = params.get("axis_names", None)
+        self.data_class_fun = params.get("data_class_fun", lambda x: x)
+        return self
