@@ -546,9 +546,9 @@ class DatasetList(Dataset3):
     def unify(self, others, axis_names: Optional = None, axis: int=0):
         if axis == 0:
             return self.__class__(
-                X=self.X + others.X,
-                y=self.y + others.y,
-                id=self._id + others._id,
+                X=self.X + sum([o.X for o in others], []),
+                y=self.y + sum([o.y for o in others], []),
+                id=self._id + sum([o._id for o in others], []),
                 )
         elif axis == 1:
             if not all([self.X[0].shape == d.X[0].shape for d in others]):

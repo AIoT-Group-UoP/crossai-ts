@@ -33,19 +33,23 @@ class AugmentSignal(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X: Dataset3) -> Dataset3:
-        transformed_x = X
+        _X = [X]
 
-        for augmentation in self.augmentations:
-            _callable = augmentation['func']
-            _params = augmentation['params']
+        for _ in range(self.repeats):
+            transformed_x = _X[0]
+            for augmentation in self.augmentations:
+                _callable = augmentation['func']
+                _params = augmentation['params']
 
-            for _ in range(self.repeats):
                 transformed_x_vals = transformed_x.apply(_callable, **_params)
                 transformed_x = transformed_x.numpy_to_dataset(
                     transformed_x_vals,
                     axis_names={"axis_1": transformed_x.X[0].axis_names["axis_1"]},
                 )
 
-        return X + transformed_x
+            _X.append(transformed_x)
+
+
+        return _X[0].unify(_X[1:])
 
 
