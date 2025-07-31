@@ -11,20 +11,34 @@ T = TypeVar('T', bound="Dataset3")
 
 
 class FeatureExtractor(BaseEstimator, TransformerMixin):
-    def __init__(self, feature_extractors: List[Dict]):
+    def __init__(self, feature_extractors: List[Dict], axis: int=0, to_dataset: bool = True):
         self.feature_extractors = feature_extractors
+        self.axis = axis
+        self.to_dataset = to_dataset
 
     def fit(self, X, y=None):
         self.fitted_ = True
         return self
 
-    def transform(self, data: T) -> T:
+    def transform(self, data: T) -> Union[T, Dict]:
         features = {}
 
         for extractor in self.feature_extractors:
             func = extractor["func"]
             params = extractor.get("params", {})
+            params["axis"] = self.axis
             feature = data.apply(func, **params)
             features[f"{func.__name__}"] = feature
 
-        return features
+        if self.to_dataset:
+            axis_names = {f"axis_{self.axis}": {name: i for i, name in enumerate(features.keys())}}
+            values = [
+                np.concatenate(
+                    [feat[i] for feat in features.values()],
+                    axis=self.axis,
+                ) for i in range(len(list(features.values())[0]))
+            ]
+
+            return data.numpy_to_dataset(values, axis_names)
+        else:
+            return features
