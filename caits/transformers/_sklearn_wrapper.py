@@ -1,4 +1,4 @@
-from typing import Union, TypeVar, List, Dict
+from typing import Union, TypeVar, List, Dict, Optional
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import FunctionTransformer
 
@@ -7,7 +7,7 @@ from caits.dataset._dataset3 import Dataset3
 T = TypeVar('T', bound="Dataset3")
 
 class SklearnWrapper(BaseEstimator, TransformerMixin):
-    def __init__(self, transformer, **transformer_kwargs):
+    def __init__(self, transformer, transformer_kwargs: Optional[Dict]=None):
         """Initializes the Transformer class.
 
         Args:
@@ -16,6 +16,9 @@ class SklearnWrapper(BaseEstimator, TransformerMixin):
             **func_kwargs: Keyword arguments to be passed to the function.
         """
         self.transformer = transformer
+
+        if transformer_kwargs is None:
+            transformer_kwargs = {}
         self.transformer_kwargs = transformer_kwargs
 
     def fit(self, X, y=None):

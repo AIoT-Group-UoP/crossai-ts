@@ -11,7 +11,7 @@ class Augmentation(TypedDict):
     params: Dict
 
 
-class AugmenterSignal(BaseEstimator, TransformerMixin):
+class AugmentSignal(BaseEstimator, TransformerMixin):
     """Augmenter Transformer that applies a list of augmentation functions,
     each with its parameters, to each DataFrame within the Dataset.X list,
     while retaining original instances and repeating the augmentation process
@@ -22,6 +22,7 @@ class AugmenterSignal(BaseEstimator, TransformerMixin):
                        of an augmentation function under the key 'func' and
                        a dictionary of its parameters under the key 'params'.
         repeats: The number of times each augmentation should be applied.
+                 This is different from the "repeats" argument of Tsaug.
     """
 
     def __init__(self, augmentations: List[Augmentation], repeats: int = 1):
@@ -37,12 +38,13 @@ class AugmenterSignal(BaseEstimator, TransformerMixin):
         for augmentation in self.augmentations:
             _callable = augmentation['func']
             _params = augmentation['params']
-            _params["repeats"] = self.repeats
-            transformed_x_vals = transformed_x.apply(_callable, **_params)
-            transformed_x = transformed_x.numpy_to_dataset(
-                transformed_x_vals,
-                axis_names={"axis_1": transformed_x.X[0].axis_names["axis_1"]},
-            )
+
+            for _ in range(self.repeats):
+                transformed_x_vals = transformed_x.apply(_callable, **_params)
+                transformed_x = transformed_x.numpy_to_dataset(
+                    transformed_x_vals,
+                    axis_names={"axis_1": transformed_x.X[0].axis_names["axis_1"]},
+                )
 
         return X + transformed_x
 
