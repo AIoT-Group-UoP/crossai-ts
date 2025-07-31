@@ -86,7 +86,7 @@ def sma_signal(
     Returns:
         numpy.ndarray: The SMA of the input signal.
     """
-    return np.sum(np.abs(signal), axis=axis)
+    return np.sum(np.abs(signal), axis=axis)[:, np.newaxis]
 
 
 def magnitude_signal(
@@ -104,7 +104,7 @@ def magnitude_signal(
     Returns:
         numpy.ndarray: The magnitude of the input signal.
     """
-    return np.sqrt(np.sum(signal**2, axis=axis))
+    return np.sqrt(np.sum(signal**2, axis=axis))[:, np.newaxis]
 
 
 def rolling_rms(
