@@ -35,7 +35,7 @@ class DatasetToArray(BaseEstimator, TransformerMixin):
             # return X.flatten().reshape(-1, 1)
             return X.flatten()
         else:
-            return X.to_numpy()
+            return X
 
     def get_params(self, deep=True):
         """Returns the parameters of the transformer."""
@@ -55,12 +55,11 @@ class DatasetToArray(BaseEstimator, TransformerMixin):
 
 
 class ArrayToDataset(BaseEstimator, TransformerMixin):
-    def __init__(self, shape, data_class_fun, dtype=None, axis_names=None):
+    def __init__(self, shape, dtype=None, axis_names=None):
         """Initializes the ArrayToDataset transformer.
         """
         self.shape = shape
         self.dtype = dtype
-        self.data_class_fun = data_class_fun
         self.axis_names = axis_names
 
     def fit(self, X, y=None):
@@ -74,9 +73,9 @@ class ArrayToDataset(BaseEstimator, TransformerMixin):
         # for i in range(0, len(tmp), self.shape[0]):
         #     _X.append(tmp[i:i + self.shape[0], :])
 
-        _X = [X[i, :].reshape(self.shape) for i in range(X.shape[0])]
+        _X = [X.X.values[i, :].reshape(self.shape) for i in range(X.X.shape[0])]
 
-        return self.data_class_fun(_X, axis_names=self.axis_names)
+        return X.numpy_to_dataset(_X, axis_names=self.axis_names)
 
     def get_params(self, deep=True):
         """Returns the parameters of the transformer."""
@@ -86,7 +85,6 @@ class ArrayToDataset(BaseEstimator, TransformerMixin):
                 "shape_": self.shape,
                 "dtype_": self.dtype,
                 "axis_names_": self.axis_names,
-                "data_class_fun_": self.data_class_fun
             }
         )
         return params
@@ -95,5 +93,4 @@ class ArrayToDataset(BaseEstimator, TransformerMixin):
         self.shape = params.get("shape", None)
         self.dtype = params.get("dtype", None)
         self.axis_names = params.get("axis_names", None)
-        self.data_class_fun = params.get("data_class_fun", lambda x: x)
         return self

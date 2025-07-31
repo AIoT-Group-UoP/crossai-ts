@@ -274,7 +274,12 @@ class Dataset3(ABC):
         pass
 
     @abstractmethod
-    def numpy_to_dataset(self, X, axis_names: Optional[Dict[str, Dict[Union[str, int], int]]] = None):
+    def numpy_to_dataset(
+            self,
+            X,
+            axis_names: Optional[Dict[str, Dict[Union[str, int], int]]] = None,
+            split: bool=True
+    ):
         pass
 
     @abstractmethod
@@ -374,7 +379,12 @@ class DatasetArray(Dataset3):
     def get_axis_names_X(self):
         return self.X.axis_names
 
-    def numpy_to_dataset(self, X, axis_names: Optional[Dict[str, Dict[Union[str, int], int]]] = None):
+    def numpy_to_dataset(
+            self,
+            X,
+            axis_names: Optional[Dict[str, Dict[Union[str, int], int]]] = None,
+            split: bool = True
+    ):
         dfX = CaitsArray(X, axis_names=(axis_names if axis_names is not None else self.X.axis_names))
         return DatasetArray(X=dfX, y=self.y)
 
@@ -595,15 +605,24 @@ class DatasetList(Dataset3):
         return self.X[0].axis_names
 
     # TODO: Correct handling of axis_names
-    def numpy_to_dataset(self, X, axis_names: Optional[Dict[str, Dict[Union[str, int], int]]] = None):
-        listDfX = [
-            CaitsArray(
-                x,
-                axis_names={axis: names for axis, names in axis_names.items() if axis != "axis_0"} if axis_names is not None else None,
-            ) for x in X
-        ]
+    def numpy_to_dataset(
+            self,
+            X,
+            axis_names: Optional[Dict[str, Dict[Union[str, int], int]]] = None,
+            split: bool = True
+    ):
 
-        return DatasetList(X=listDfX, y=self.y, id=self._id)
+        if split:
+            _X = [
+                CaitsArray(
+                    x,
+                    axis_names={axis: names for axis, names in axis_names.items() if axis != "axis_0"} if axis_names is not None else None,
+                ) for x in X
+            ]
+        else:
+            _X = CaitsArray(X)
+
+        return DatasetList(X=_X, y=self.y, id=self._id)
 
     def dict_to_dataset(self, X):
         vals = [np.stack([X[k][i] for k in X.keys()]) for i in range(len(X[list(X.keys())[0]]))]
@@ -652,4 +671,8 @@ class DatasetList(Dataset3):
 
     def flatten(self):
         # return np.concatenate([x.values for x in self.X], axis=0).flatten()
-        return np.stack([x.values.flatten() for x in self.X], axis=0)
+        return DatasetList(
+            X=CaitsArray(np.stack([x.values.flatten() for x in self.X], axis=0)),
+            y=self.y,
+            id=self._id
+        )
