@@ -302,6 +302,10 @@ class Dataset3(ABC):
     def flatten(self):
         pass
 
+    @abstractmethod
+    def shuffle(self, seed: int=42):
+        pass
+
 
 class DatasetArray(Dataset3):
     def __init__(self, X: CaitsArray, y: Optional[CaitsArray] = None):
@@ -427,6 +431,15 @@ class DatasetArray(Dataset3):
 
     def flatten(self):
         pass
+
+    def shuffle(self, seed: int=42):
+        idxs = np.arange(len(self.X))
+        np.random.shuffle(idxs)
+        return DatasetArray(
+            self.X.iloc[idxs, ...],
+            self.y.iloc[idxs, ...],
+        )
+
 
 
 class DatasetList(Dataset3):
@@ -676,3 +689,13 @@ class DatasetList(Dataset3):
             y=self.y,
             id=self._id
         )
+
+    def shuffle(self, seed: int=42):
+        idxs = np.arange(len(self.X))
+        np.random.RandomState(seed).shuffle(idxs)
+        return DatasetList(
+            X=[self.X[i] for i in idxs],
+            y=[self.y[i] for i in idxs],
+            id=[self._id[i] for i in idxs]
+        )
+
