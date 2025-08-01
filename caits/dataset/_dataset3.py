@@ -6,6 +6,8 @@ import numpy as np
 from typing import Optional, Union, List, Dict
 import copy
 
+import pandas as pd
+
 DISPLAY_NUM_ROWS = 5
 DISPLAY_NUM_COLS = 6
 DISPLAY_VECTOR_NUM_ROWS = 60
@@ -376,7 +378,21 @@ class DatasetArray(Dataset3):
         return self.X.values, self.y.values
 
     def to_df(self):
-        pass
+        if self.X.ndim == 2:
+            return {
+                "X": pd.DataFrame(
+                    self.X.values,
+                    columns=list(self.X.axis_names["axis_1"].keys()),
+                    index=list(self.X.axis_names["axis_0"].keys())
+                ),
+                "y": pd.DataFrame(
+                    self.y.values,
+                    columns=list(self.y.axis_names["axis_1"].keys()),
+                    index=list(self.y.axis_names["axis_0"].keys())
+                )
+            }
+        else:
+            raise NotImplementedError("Not implemented for ndim != 2 yet.")
 
     def to_dict(self):
         return {"X": self.X, "y": self.y}
@@ -444,11 +460,10 @@ class DatasetArray(Dataset3):
         y = func(self.y.values, *args, **kwargs)
         return X, y
 
-    # TODO: Correct handling of y
     def stack(self, X: List[np.ndarray]):
         return DatasetList(
             X=[CaitsArray(values=x, axis_names={"axis_1": self.X.axis_names["axis_1"]}) for x in X[0]],
-            y=[CaitsArray(values=y) for y in X[1]]
+            y=[CaitsArray(values=y, axis_names={"axis_1": self.y.axis_names["axis_1"]}) for y in X[1]]
         )
 
     def flatten(self):
@@ -569,7 +584,6 @@ class DatasetList(Dataset3):
     def __repr__(self):
         return f"DatasetList object with {len(self.X)} instances."
 
-    # TODO: Adjust with new unify method
     def __add__(self, other):
         return self.unify([other])
 
