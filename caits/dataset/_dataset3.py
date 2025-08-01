@@ -608,7 +608,7 @@ class DatasetList(Dataset3):
         return {
             "X": self.X,
             "y": self.y,
-            "_id": self._id
+            "id": self._id
         }
 
     def to_list(self):
@@ -638,15 +638,7 @@ class DatasetList(Dataset3):
         return DatasetList(X=_X, y=self.y, id=self._id)
 
     def dict_to_dataset(self, X):
-        vals = [np.stack([X[k][i] for k in X.keys()]) for i in range(len(X[list(X.keys())[0]]))]
-        listDfX = [
-            CaitsArray(
-                x,
-                axis_names={axis: names for axis, names in self.X.axis_names.items() if axis != "axis_0"}
-            ) for x in vals
-        ]
-
-        return DatasetList(X=listDfX, y=self.y, id=self._id)
+        return DatasetList(**X)
 
     def train_test_split(self, random_state: Optional[int]=None, test_size: float=0.2):
         all_idxs = np.arange(len(self.X))
