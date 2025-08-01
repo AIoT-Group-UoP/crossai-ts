@@ -32,13 +32,7 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
 
         if self.to_dataset:
             axis_names = {f"axis_{self.axis}": {name: i for i, name in enumerate(features.keys())}}
-            values = [
-                np.concatenate(
-                    [feat[i] for feat in features.values()],
-                    axis=self.axis,
-                ) for i in range(len(list(features.values())[0]))
-            ]
+            return data.features_dict_to_dataset(features, axis_names, self.axis)
 
-            return data.numpy_to_dataset(values, axis_names)
         else:
             return features

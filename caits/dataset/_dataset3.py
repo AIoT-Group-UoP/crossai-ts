@@ -283,6 +283,10 @@ class Dataset3(ABC):
         pass
 
     @abstractmethod
+    def features_dict_to_dataset(self, features, axis_names, axis):
+        pass
+
+    @abstractmethod
     def dict_to_dataset(self, X):
         pass
 
@@ -383,14 +387,29 @@ class DatasetArray(Dataset3):
     def get_axis_names_X(self):
         return self.X.axis_names
 
+    # TODO: Correct handling of y column names
     def numpy_to_dataset(
             self,
             X,
             axis_names: Optional[Dict[str, Dict[Union[str, int], int]]] = None,
             split: bool = True
     ):
-        dfX = CaitsArray(X, axis_names=(axis_names if axis_names is not None else self.X.axis_names))
-        return DatasetArray(X=dfX, y=self.y)
+        dfX = CaitsArray(X[0], axis_names=(axis_names if axis_names is not None else self.X.axis_names))
+        dfY = CaitsArray(X[1])
+        return DatasetArray(X=dfX, y=dfY)
+
+    def features_dict_to_dataset(self, features, axis_names, axis):
+        features_X = np.stack([feat[0] for feat in features.values()], axis=axis)
+        features_y = np.stack([feat[1] for feat in features.values()], axis=axis)
+
+        axis_names_X = axis_names | {"axis_1": self.X.axis_names["axis_1"]}
+        axis_names_y = axis_names | {"axis_1": self.y.axis_names["axis_1"]}
+
+        return DatasetArray(
+            X=CaitsArray(features_X, axis_names=axis_names_X),
+            y=CaitsArray(features_y, axis_names=axis_names_y)
+        )
+
 
     def dict_to_dataset(self, X):
         vals = np.stack([row for row in X.values()])
@@ -421,12 +440,15 @@ class DatasetArray(Dataset3):
         return self.__class__(train_X, train_y), self.__class__(test_X, test_y)
 
     def apply(self, func, *args, **kwargs):
-        return func(self.X.values, *args, **kwargs)
+        X = func(self.X.values, *args, **kwargs)
+        y = func(self.y.values, *args, **kwargs)
+        return X, y
 
     # TODO: Correct handling of y
-    def stack(self, data: List[np.ndarray]):
+    def stack(self, X: List[np.ndarray]):
         return DatasetList(
-            X=[CaitsArray(values=x, axis_names={"axis_1": self.X.axis_names["axis_1"]}) for x in data[0]]
+            X=[CaitsArray(values=x, axis_names={"axis_1": self.X.axis_names["axis_1"]}) for x in X[0]],
+            y=[CaitsArray(values=y) for y in X[1]]
         )
 
     def flatten(self):
@@ -636,6 +658,19 @@ class DatasetList(Dataset3):
             _X = CaitsArray(X)
 
         return DatasetList(X=_X, y=self.y, id=self._id)
+
+    def features_dict_to_dataset(self, features, axis_names, axis):
+        for k, v in features.items():
+            print(f"{k}: {v}")
+
+        values = [
+            np.concatenate(
+                [feat[i] for feat in features.values()],
+                axis=axis,
+            ) for i in range(len(list(features.values())[0]))
+        ]
+
+        return self.numpy_to_dataset(values, axis_names)
 
     def dict_to_dataset(self, X):
         return DatasetList(**X)
