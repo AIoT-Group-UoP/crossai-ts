@@ -68,11 +68,6 @@ class ArrayToDataset(BaseEstimator, TransformerMixin):
 
     def transform(self, X):
         """Transforms the Dataset into a numpy array."""
-        # tmp = X.reshape(-1, self.shape[1])
-        # _X = []
-        # for i in range(0, len(tmp), self.shape[0]):
-        #     _X.append(tmp[i:i + self.shape[0], :])
-
         _X = [X.X.values[i, :].reshape(self.shape) for i in range(X.X.shape[0])]
 
         return X.numpy_to_dataset(_X, axis_names=self.axis_names)
@@ -82,9 +77,9 @@ class ArrayToDataset(BaseEstimator, TransformerMixin):
         params = super().get_params(deep=deep)
         params.update(
             {
-                "shape_": self.shape,
-                "dtype_": self.dtype,
-                "axis_names_": self.axis_names,
+                "shape": self.shape,
+                "dtype": self.dtype,
+                "axis_names": self.axis_names,
             }
         )
         return params

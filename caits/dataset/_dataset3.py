@@ -27,12 +27,21 @@ class CaitsArray:
                 else:
                     axis_names_arr = {axis: np.array(list(v.keys())) for axis, v in self.parent.axis_names.items()}
                     axis_names_arr_indexed = {axis: v[index[i]] for i, (axis, v) in enumerate(axis_names_arr.items())}
-                    axis_names = {
-                        axis: {v: i for i, v in enumerate(names)}
-                        for j, (axis, names) in enumerate(axis_names_arr_indexed.items())
-                        if not isinstance(index[j], int)
-                    }
-                    axis_names = {f"axis_{i}": names for i, names in enumerate(axis_names.values())}
+
+                    if all([isinstance(i, list) for i in index]):
+                        combs = axis_names_arr_indexed.values()
+                        axis_names = {
+                            "axis_0": {
+                                t: i for i, t in enumerate(zip(*combs))
+                            }
+                        }
+                    else:
+                        axis_names = {
+                            axis: {v: i for i, v in enumerate(names)}
+                            for j, (axis, names) in enumerate(axis_names_arr_indexed.items())
+                            if not isinstance(index[j], int)
+                        }
+                        axis_names = {f"axis_{i}": names for i, names in enumerate(axis_names.values())}
 
                     return CaitsArray(vals, axis_names=axis_names)
 
@@ -63,18 +72,25 @@ class CaitsArray:
                             )
                         )
                     else:
-                        raise IndexError("Unsupported index type")
+                        raise IndexError(f"Unsupported index type {index}")
 
                 vals = self.parent.values[*idxs]
                 if not isinstance(vals, np.ndarray):
                     return vals
                 else:
-                    axis_names = {
-                        axis: {n: i for i, n in enumerate(names[idxs[i]])}
-                        for i, (axis, names) in enumerate(axis_names.items())
-                        if not isinstance(idxs[i], int) and not isinstance(idxs[i], int)
-                    }
-                    axis_names = {f"axis_{i}": names for i, names in enumerate(axis_names.values())}
+                    if all([isinstance(i, list) for i in idxs]):
+                        axis_names = {
+                            "axis_0": {
+                                t: i for i, t in enumerate(zip(*index))
+                            }
+                        }
+                    else:
+                        axis_names = {
+                            axis: {n: i for i, n in enumerate(names[idxs[i]])}
+                            for i, (axis, names) in enumerate(axis_names.items())
+                            if not isinstance(idxs[i], int)
+                        }
+                        axis_names = {f"axis_{i}": names for i, names in enumerate(axis_names.values())}
 
                     return CaitsArray(self.parent.values[*idxs], axis_names=axis_names)
 
@@ -89,10 +105,14 @@ class CaitsArray:
             axis_names = {}
 
         if len(axis_names) > values.ndim:
+            print(axis_names)
+            print(values)
             raise ValueError("Axis names must not exceed number of dimensions")
         for i, axis in enumerate([f"axis_{j}" for j in range(values.ndim)]):
             if axis in axis_names.keys():
                 if len(axis_names[axis]) != values.shape[i]:
+                    print(values)
+                    print(axis_names[axis])
                     raise ValueError(
                         f"Shapes {[len(axis) for axis in axis_names.values()]} "
                         f"and {list(values.shape)} don't match.")
@@ -328,9 +348,78 @@ class DatasetArray(Dataset3):
         self._current = 0
         return self
 
-    # TODO: Make more generic
-    def __getitem__(self, idx: int):
-        return self.X.iloc[idx, ...], self.y.iloc[idx, ...]
+    def __getitem__(self, idx: Union[int, slice, list, Tuple]):
+        if isinstance(idx, int):
+            return self.X.iloc[idx, ...], self.y.iloc[idx, ...]
+        elif isinstance(idx, slice):
+            return self.X.iloc[idx, ...], self.y.iloc[idx, ...]
+        elif isinstance(idx, list):
+            return self.X.iloc[idx, ...], self.y.iloc[idx, ...]
+        elif isinstance(idx, tuple):
+            if isinstance(idx[0], int) and isinstance(idx[1], int):
+                return self.X.iloc[idx], (
+                    self.y.iloc[idx]
+                    if idx[1] < self.y.shape[1]
+                    else None
+                )
+            elif isinstance(idx[0], slice) and isinstance(idx[1], int):
+                return self.X.iloc[idx], (
+                    self.y.iloc[idx]
+                    if idx[1] < self.y.shape[1]
+                    else None
+                )
+            elif isinstance(idx[0], list) and isinstance(idx[1], int):
+                return self.X.iloc[idx], (
+                    self.y.iloc[idx]
+                    if idx[1] < self.y.shape[1]
+                    else None
+                )
+            elif (isinstance(idx[0], int) or isinstance(idx[0], slice) or isinstance(idx[0], list)) and isinstance(idx[1], slice):
+                if isinstance(idx[1].start, str):
+                    if idx[1].start in self.X.axis_names["axis_1"].keys():
+                        return self.X.loc[idx]
+                    elif idx[1].start in self.y.axis_names["axis_1"].keys():
+                        return self.y.loc[idx]
+                    else:
+                        raise IndexError
+                elif isinstance(idx[1].stop, str):
+                    if idx[1].stop in self.X.axis_names["axis_1"].keys():
+                        return self.X.loc[idx]
+                    elif idx[1].stop in self.y.axis_names["axis_1"].keys():
+                        return self.y.loc[idx]
+                    else:
+                        raise IndexError
+                else:
+                    return self.X.iloc[idx], self.y.iloc[idx]
+            elif isinstance(idx[1], list):
+                if all([isinstance(i, str) for i in idx[1]]):
+                    cols_map = {col: i for i, col in enumerate(idx[1])}
+                    cols = set(idx[1])
+                    colsX = list(cols.intersection(set(self.X.axis_names["axis_1"].keys())))
+                    colsY = list(cols.intersection(set(self.y.axis_names["axis_1"].keys())))
+                    if isinstance(idx[0], list):
+                        rowsX = [idx[0][cols_map[col]] for col in colsX]
+                        rowsY = [idx[0][cols_map[col]] for col in colsY]
+                        return self.X.loc[(rowsX, colsX)], self.y.loc[(rowsY, colsY)]
+                    elif isinstance(idx[0], slice):
+                        return self.X.loc[(idx[0], colsX)], self.y.loc[(idx[0], colsY)]
+                    else:
+                        raise IndexError
+                elif all([isinstance(i, int) for i in idx[1]]):
+                    return self.X.iloc[idx], self.y.iloc[idx]
+                else:
+                    raise IndexError
+            elif isinstance(idx[1], str):
+                if idx[1] in self.X.axis_names["axis_1"].keys():
+                    return self.X.loc[idx]
+                elif idx[1] in self.y.axis_names["axis_1"].keys():
+                    return self.y.loc[idx]
+                else:
+                    raise IndexError(f"Column name {idx[1]} not found in X or y.")
+            else:
+                raise IndexError(f"Column name {idx[1]} not found in X or y.")
+        else:
+            raise IndexError(f"Column name {idx} not found in X or y.")
 
     def __next__(self):
         if self._current < len(self):
@@ -343,33 +432,48 @@ class DatasetArray(Dataset3):
     def __repr__(self):
         return f"DatasetArray object with {len(self.X)} instances."
 
-    # TODO: Adjust with new unify method
     def __add__(self, other):
-        return self.unify(other)
+        return self.unify([other])
 
     def batch(self, batch_size: int):
         for i in range(0, self.X.shape[0], batch_size):
             yield self.X.iloc[i : i + batch_size, ...], self.y.iloc[i : i + batch_size, ...]
 
-    # TODO: Adjust using axis argument
-    # TODO: Adjust with list of DatasetArrays
     def unify(self, others, axis_names: Optional = None, axis: int=0):
-        if self.X.shape[1] == others.X.shape[1] and self.y.shape[1] == others.y.shape[1]:
-            axis_0_names = {
-                i: i for i in range(
-                    len(self.X.axis_names["axis_0"]) + len(others.X.axis_names["axis_0"])
+        _axis = 1 if axis == 0 else 0
+        if all(
+                [
+                    self.X.shape[_axis] == o.X.shape[_axis] and
+                    self.y.shape[_axis] == o.y.shape[_axis] and
+                    self.X.axis_names[f"axis_{axis}"] != o.X.axis_names[f"axis_{axis}"] and
+                    self.y.axis_names[f"axis_{axis}"] != o.y.axis_names[f"axis_{axis}"]
+                    for o in others
+                ]
+        ):
+            tmp_axis_names_X = {
+                (name if axis == 1 else i): i for i, name in enumerate(
+                    list(self.X.axis_names[f"axis_{axis}"].keys()) +
+                    sum([list(o.X.axis_names[f"axis_{axis}"].keys()) for o in others], [])
                 )
             }
+
+            tmp_axis_names_y = {
+                (name if axis == 1 else i): i for i, name in enumerate(
+                    list(self.y.axis_names[f"axis_{axis}"].keys()) +
+                    sum([list(o.y.axis_names[f"axis_{axis}"].keys()) for o in others], [])
+                )
+            }
+
             axis_names_X = copy.deepcopy(self.X.axis_names)
             axis_names_y = copy.deepcopy(self.y.axis_names)
-            axis_names_X["axis_0"] = axis_0_names
-            axis_names_y["axis_0"] = axis_0_names
+            axis_names_X[f"axis_{axis}"] = tmp_axis_names_X
+            axis_names_y[f"axis_{axis}"] = tmp_axis_names_y
 
-            X = CaitsArray(np.concatenate([self.X.values, others.X.values], axis=0), axis_names=axis_names_X)
-            y = CaitsArray(np.concatenate([self.y.values, others.y.values], axis=0), axis_names=axis_names_y)
+            X = CaitsArray(np.concatenate([self.X.values] + [o.X.values for o in others], axis=axis), axis_names=axis_names_X)
+            y = CaitsArray(np.concatenate([self.y.values] + [o.y.values for o in others], axis=axis), axis_names=axis_names_y)
 
             return self.__class__(X=X, y=y)
-        elif self.X.shape[1] != others.X.shape[1]:
+        elif all([self.X.shape[_axis] != o.X.shape[_axis] for o in others]):
             raise ValueError("self.X and other.X must have the same number of columns.")
         else:
             raise ValueError("self.X and other.y must have the same number of columns.")
@@ -403,15 +507,28 @@ class DatasetArray(Dataset3):
     def get_axis_names_X(self):
         return self.X.axis_names
 
-    # TODO: Correct handling of y column names
     def numpy_to_dataset(
             self,
             X,
             axis_names: Optional[Dict[str, Dict[Union[str, int], int]]] = None,
             split: bool = True
     ):
-        dfX = CaitsArray(X[0], axis_names=(axis_names if axis_names is not None else self.X.axis_names))
-        dfY = CaitsArray(X[1])
+        if axis_names is None:
+            _axis_names_X = self.X.axis_names
+            _axis_names_y = self.y.axis_names
+        elif all([isinstance(v, str) for v in axis_names.values()]):
+            _axis_names_X = {
+                to_axis: self.X.axis_names[from_axis] for to_axis, from_axis in axis_names.items()
+            }
+            _axis_names_y = {
+                to_axis: self.y.axis_names[from_axis] for to_axis, from_axis in axis_names.items()
+            }
+        elif all([isinstance(v, dict) for v in axis_names.values()]):
+            _axis_names_X = axis_names["X"]
+            _axis_names_y = axis_names["y"]
+
+        dfX = CaitsArray(X[0], axis_names=(_axis_names_X))
+        dfY = CaitsArray(X[1], axis_names=(_axis_names_y))
         return DatasetArray(X=dfX, y=dfY)
 
     def features_dict_to_dataset(self, features, axis_names, axis):
@@ -591,7 +708,6 @@ class DatasetList(Dataset3):
         for i in range(0, len(self.X), batch_size):
             yield self.X[i : i + batch_size], self.y[i : i + batch_size], self._id[i : i + batch_size]
 
-    # TODO: Add check for columns
     def unify(self, others, axis_names: Optional = None, axis: int=0):
         if axis == 0:
             return self.__class__(
@@ -601,13 +717,13 @@ class DatasetList(Dataset3):
                 )
         elif axis == 1:
             if not all([self.X[0].shape == d.X[0].shape for d in others]):
-                pass
+                raise ValueError
             if not all([self.y == d.y for d in others]):
-                pass
+                raise ValueError
             if not all([self._id == d._id for d in others]):
-                pass
+                raise ValueError
             if not all([self.X[0].axis_names["axis_0"] != d.X[0].axis_names["axis_0"] for d in others]):
-                pass
+                raise ValueError
 
             caitsX = []
             for i in range(len(self.X)):
@@ -653,32 +769,34 @@ class DatasetList(Dataset3):
     def get_axis_names_X(self):
         return self.X[0].axis_names
 
-    # TODO: Correct handling of axis_names
     def numpy_to_dataset(
             self,
             X,
             axis_names: Optional[Dict[str, Dict[Union[str, int], int]]] = None,
             split: bool = True
     ):
-
         if split:
-            _X = [
-                CaitsArray(
-                    x,
-                    axis_names={axis: names for axis, names in axis_names.items() if axis != "axis_0"} if axis_names is not None else None,
-                ) for x in X
-            ]
+            if axis_names is not None:
+                _axis_names = {}
+                for k, v in axis_names.items():
+                    if isinstance(v, str):
+                        _axis_names[k] = self.X[0].axis_names[v]
+                    elif isinstance(v, dict):
+                        _axis_names[k] = v
+                    else:
+                        raise ValueError
+            else:
+                _axis_names = {"axis_1": self.X[0].axis_names["axis_1"]}
+
+            _X = [CaitsArray(x, axis_names=_axis_names,) for x in X]
         else:
             _X = CaitsArray(X)
 
         return DatasetList(X=_X, y=self.y, id=self._id)
 
     def features_dict_to_dataset(self, features, axis_names, axis):
-        for k, v in features.items():
-            print(f"{k}: {v}")
-
         values = [
-            np.concatenate(
+            np.stack(
                 [feat[i] for feat in features.values()],
                 axis=axis,
             ) for i in range(len(list(features.values())[0]))

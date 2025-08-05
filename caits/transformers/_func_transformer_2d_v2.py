@@ -45,8 +45,9 @@ class FunctionTransformer2D(BaseEstimator, TransformerMixin):
             Dataset: A new Dataset object with the transformed data.
         """
         res = data.apply(self.func, **self.kw_args)
-        axis_names = data.get_axis_names_X()["axis_0"]
-        dfX = data.numpy_to_dataset(res, axis_names={"axis_1": axis_names})
+        # axis_names = data.get_axis_names_X()["axis_0"]
+        # dfX = data.numpy_to_dataset(res, axis_names={"axis_1": axis_names})
+        dfX = data.numpy_to_dataset(res, axis_names={"axis_1": "axis_0"})
         return dfX
 
     def get_params(self, deep=True):
