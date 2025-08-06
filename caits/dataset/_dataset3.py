@@ -276,6 +276,10 @@ class Dataset3(ABC):
         pass
 
     @abstractmethod
+    def replace(self, other):
+        pass
+
+    @abstractmethod
     def to_numpy(self):
         pass
 
@@ -350,47 +354,41 @@ class DatasetArray(Dataset3):
 
     def __getitem__(self, idx: Union[int, slice, list, Tuple]):
         if isinstance(idx, int):
-            return self.X.iloc[idx, ...], self.y.iloc[idx, ...]
+            return DatasetArray(self.X.iloc[idx, ...], self.y.iloc[idx, ...])
         elif isinstance(idx, slice):
-            return self.X.iloc[idx, ...], self.y.iloc[idx, ...]
+            return DatasetArray(self.X.iloc[idx, ...], self.y.iloc[idx, ...])
         elif isinstance(idx, list):
-            return self.X.iloc[idx, ...], self.y.iloc[idx, ...]
+            return DatasetArray(self.X.iloc[idx, ...], self.y.iloc[idx, ...])
         elif isinstance(idx, tuple):
             if isinstance(idx[0], int) and isinstance(idx[1], int):
-                return self.X.iloc[idx], (
-                    self.y.iloc[idx]
-                    if idx[1] < self.y.shape[1]
-                    else None
-                )
+                return (self.X.iloc[idx], self.y.iloc[idx] if idx[1] < self.y.shape[1] else None)
             elif isinstance(idx[0], slice) and isinstance(idx[1], int):
-                return self.X.iloc[idx], (
-                    self.y.iloc[idx]
-                    if idx[1] < self.y.shape[1]
-                    else None
+                return DatasetArray(
+                    self.X.iloc[idx],
+                    self.y.iloc[idx] if idx[1] < self.y.shape[1] else None
                 )
             elif isinstance(idx[0], list) and isinstance(idx[1], int):
-                return self.X.iloc[idx], (
-                    self.y.iloc[idx]
-                    if idx[1] < self.y.shape[1]
-                    else None
+                return DatasetArray(
+                    self.X.iloc[idx],
+                    self.y.iloc[idx] if idx[1] < self.y.shape[1] else None
                 )
             elif (isinstance(idx[0], int) or isinstance(idx[0], slice) or isinstance(idx[0], list)) and isinstance(idx[1], slice):
                 if isinstance(idx[1].start, str):
                     if idx[1].start in self.X.axis_names["axis_1"].keys():
-                        return self.X.loc[idx]
+                        return DatasetArray(self.X.loc[idx], self.y)
                     elif idx[1].start in self.y.axis_names["axis_1"].keys():
-                        return self.y.loc[idx]
+                        return DatasetArray(self.X, self.y.loc[idx])
                     else:
                         raise IndexError
                 elif isinstance(idx[1].stop, str):
                     if idx[1].stop in self.X.axis_names["axis_1"].keys():
-                        return self.X.loc[idx]
+                        return DatasetArray(self.X.loc[idx], self.y)
                     elif idx[1].stop in self.y.axis_names["axis_1"].keys():
-                        return self.y.loc[idx]
+                        return DatasetArray(self.X, self.y.loc[idx])
                     else:
                         raise IndexError
                 else:
-                    return self.X.iloc[idx], self.y.iloc[idx]
+                    return DatasetArray(self.X.iloc[idx], self.y.iloc[idx])
             elif isinstance(idx[1], list):
                 if all([isinstance(i, str) for i in idx[1]]):
                     cols_map = {col: i for i, col in enumerate(idx[1])}
@@ -400,20 +398,20 @@ class DatasetArray(Dataset3):
                     if isinstance(idx[0], list):
                         rowsX = [idx[0][cols_map[col]] for col in colsX]
                         rowsY = [idx[0][cols_map[col]] for col in colsY]
-                        return self.X.loc[(rowsX, colsX)], self.y.loc[(rowsY, colsY)]
+                        return DatasetArray(self.X.loc[(rowsX, colsX)], self.y.loc[(rowsY, colsY)])
                     elif isinstance(idx[0], slice):
-                        return self.X.loc[(idx[0], colsX)], self.y.loc[(idx[0], colsY)]
+                        return DatasetArray(self.X.loc[(idx[0], colsX)], self.y.loc[(idx[0], colsY)])
                     else:
                         raise IndexError
                 elif all([isinstance(i, int) for i in idx[1]]):
-                    return self.X.iloc[idx], self.y.iloc[idx]
+                    return DatasetArray(self.X.iloc[idx], self.y.iloc[idx])
                 else:
                     raise IndexError
             elif isinstance(idx[1], str):
                 if idx[1] in self.X.axis_names["axis_1"].keys():
-                    return self.X.loc[idx]
+                    return DatasetArray(self.X.loc[idx], self.y)
                 elif idx[1] in self.y.axis_names["axis_1"].keys():
-                    return self.y.loc[idx]
+                    return DatasetArray(self.X, self.y.loc[idx])
                 else:
                     raise IndexError(f"Column name {idx[1]} not found in X or y.")
             else:
@@ -444,9 +442,9 @@ class DatasetArray(Dataset3):
         if all(
                 [
                     self.X.shape[_axis] == o.X.shape[_axis] and
-                    self.y.shape[_axis] == o.y.shape[_axis] and
-                    self.X.axis_names[f"axis_{axis}"] != o.X.axis_names[f"axis_{axis}"] and
-                    self.y.axis_names[f"axis_{axis}"] != o.y.axis_names[f"axis_{axis}"]
+                    # self.y.shape[_axis] == o.y.shape[_axis] and
+                    self.X.axis_names[f"axis_{axis}"] != o.X.axis_names[f"axis_{axis}"]
+                    # self.y.axis_names[f"axis_{axis}"] != o.y.axis_names[f"axis_{axis}"]
                     for o in others
                 ]
         ):
@@ -457,26 +455,39 @@ class DatasetArray(Dataset3):
                 )
             }
 
-            tmp_axis_names_y = {
-                (name if axis == 1 else i): i for i, name in enumerate(
-                    list(self.y.axis_names[f"axis_{axis}"].keys()) +
-                    sum([list(o.y.axis_names[f"axis_{axis}"].keys()) for o in others], [])
-                )
-            }
+            # tmp_axis_names_y = {
+            #     (name if axis == 1 else i): i for i, name in enumerate(
+            #         list(self.y.axis_names[f"axis_{axis}"].keys()) +
+            #         sum([list(o.y.axis_names[f"axis_{axis}"].keys()) for o in others], [])
+            #     )
+            # }
 
-            axis_names_X = copy.deepcopy(self.X.axis_names)
-            axis_names_y = copy.deepcopy(self.y.axis_names)
-            axis_names_X[f"axis_{axis}"] = tmp_axis_names_X
-            axis_names_y[f"axis_{axis}"] = tmp_axis_names_y
+            if axis_names is None:
+                axis_names_X = copy.deepcopy(self.X.axis_names)
+                # axis_names_y = copy.deepcopy(self.y.axis_names)
+                axis_names_X[f"axis_{axis}"] = tmp_axis_names_X
+                # axis_names_y[f"axis_{axis}"] = tmp_axis_names_y
+            else:
+                axis_names_X = axis_names
 
             X = CaitsArray(np.concatenate([self.X.values] + [o.X.values for o in others], axis=axis), axis_names=axis_names_X)
-            y = CaitsArray(np.concatenate([self.y.values] + [o.y.values for o in others], axis=axis), axis_names=axis_names_y)
+            # y = CaitsArray(np.concatenate([self.y.values] + [o.y.values for o in others], axis=axis), axis_names=axis_names_y)
 
-            return self.__class__(X=X, y=y)
+            return self.__class__(X=X, y=self.y)
         elif all([self.X.shape[_axis] != o.X.shape[_axis] for o in others]):
             raise ValueError("self.X and other.X must have the same number of columns.")
         else:
             raise ValueError("self.X and other.y must have the same number of columns.")
+
+    def replace(self, other):
+        if len(set(self.X.axis_names["axis_1"].keys()).intersection(other.X.axis_names["axis_1"].keys())) == 0:
+            raise IndexError(f"Column names {other.X.axis_names['axis_names'].keys()} not found in X or y.")
+
+        column_names = list(other.X.axis_names["axis_1"].keys())
+        idxs = [self.X.axis_names["axis_1"][col] for col in column_names]
+
+        self.X.values[:, idxs] = other.X.values
+
 
     def to_numpy(self):
         return self.X.values, self.y.values
@@ -527,16 +538,22 @@ class DatasetArray(Dataset3):
             _axis_names_X = axis_names["X"]
             _axis_names_y = axis_names["y"]
 
-        dfX = CaitsArray(X[0], axis_names=(_axis_names_X))
-        dfY = CaitsArray(X[1], axis_names=(_axis_names_y))
+        if split:
+            dfX = CaitsArray(X[0], axis_names=(_axis_names_X))
+            dfY = CaitsArray(X[1], axis_names=(_axis_names_y))
+        else:
+            dfX = CaitsArray(X, axis_names=(_axis_names_X))
+            dfY = self.y
         return DatasetArray(X=dfX, y=dfY)
 
     def features_dict_to_dataset(self, features, axis_names, axis):
         features_X = np.stack([feat[0] for feat in features.values()], axis=axis)
         features_y = np.stack([feat[1] for feat in features.values()], axis=axis)
 
-        axis_names_X = axis_names | {"axis_1": self.X.axis_names["axis_1"]}
-        axis_names_y = axis_names | {"axis_1": self.y.axis_names["axis_1"]}
+        _axis = 1 if axis == 0 else 0
+
+        axis_names_X = axis_names | {f"axis_{_axis}": self.X.axis_names[f"axis_{_axis}"]}
+        axis_names_y = axis_names | {f"axis_{_axis}": self.y.axis_names[f"axis_{_axis}"]}
 
         return DatasetArray(
             X=CaitsArray(features_X, axis_names=axis_names_X),
@@ -584,7 +601,7 @@ class DatasetArray(Dataset3):
         )
 
     def flatten(self):
-        pass
+        return DatasetArray(CaitsArray(self.X.values.flatten()), self.y)
 
     def shuffle(self, seed: int=42):
         idxs = np.arange(len(self.X))
@@ -717,13 +734,17 @@ class DatasetList(Dataset3):
                 )
         elif axis == 1:
             if not all([self.X[0].shape == d.X[0].shape for d in others]):
-                raise ValueError
+                # raise ValueError
+                pass
             if not all([self.y == d.y for d in others]):
-                raise ValueError
+                # raise ValueError
+                pass
             if not all([self._id == d._id for d in others]):
-                raise ValueError
+                pass
+                # raise ValueError
             if not all([self.X[0].axis_names["axis_0"] != d.X[0].axis_names["axis_0"] for d in others]):
-                raise ValueError
+                # raise ValueError(f"{self.X[0].axis_names['axis_0']}  {self.X[0].axis_names['axis_0']}")
+                pass
 
             caitsX = []
             for i in range(len(self.X)):
@@ -749,6 +770,22 @@ class DatasetList(Dataset3):
             return DatasetList(X=caitsX, y=caitsY, id=caitsId)
         else:
             raise ValueError("Invalid axis argument.")
+
+    def replace(self, other):
+        if len(self.X) != len(other.X):
+            raise ValueError("self.X and other.X must have same length.")
+        if len(self.y) != len(other.y):
+            raise ValueError("self.y and other.y must have same length.")
+        if len(self._id) != len(other._id):
+            raise ValueError("self.id and other.id must have same length.")
+        if len(set(self.X[0].axis_names[f"axis_1"].keys()).intersection(other.X[0].axis_names[f"axis_1"].keys())) == 0:
+            raise ValueError("self.X[0] and other.X[0] must have same axis_name.")
+
+        idxs = [self.X[0].axis_names["axis_1"][o] for o in other.X[0].axis_names["axis_1"].keys()]
+
+        for i in range(len(self.X)):
+            self.X[i].values[:, idxs] = other.X[i].values
+
 
     def to_numpy(self):
         return [np.array(x.values) for x in self.X], np.array(self.y), np.array(self._id)
@@ -786,7 +823,8 @@ class DatasetList(Dataset3):
                     else:
                         raise ValueError
             else:
-                _axis_names = {"axis_1": self.X[0].axis_names["axis_1"]}
+                # _axis_names = {"axis_1": self.X[0].axis_names["axis_1"]}
+                _axis_names = None
 
             _X = [CaitsArray(x, axis_names=_axis_names,) for x in X]
         else:
