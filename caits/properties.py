@@ -104,7 +104,8 @@ def magnitude_signal(
     Returns:
         numpy.ndarray: The magnitude of the input signal.
     """
-    return np.sqrt(np.sum(signal**2, axis=axis))[:, np.newaxis]
+    # return np.sqrt(np.sum(signal**2, axis=axis))[:, np.newaxis]
+    return np.sqrt(np.sum(signal**2, axis=axis))
 
 
 def rolling_rms(
