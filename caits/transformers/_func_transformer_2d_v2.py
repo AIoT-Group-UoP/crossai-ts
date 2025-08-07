@@ -7,7 +7,7 @@ from caits.dataset._dataset3 import Dataset3
 T = TypeVar("T", bound="Dataset3")
 
 
-class FunctionTransformer2D(BaseEstimator, TransformerMixin):
+class FunctionTransformerSpectrum(BaseEstimator, TransformerMixin):
     def __init__(self, func: Callable, **kwargs: Dict[str, Any]):
         """Initializes the Transformer class.
 
