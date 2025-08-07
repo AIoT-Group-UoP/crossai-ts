@@ -1,0 +1,43 @@
+from collections import defaultdict
+from typing import Dict, List, Union, TypeVar
+
+import numpy as np
+from pandas import DataFrame
+from sklearn.base import BaseEstimator, TransformerMixin
+
+from caits.dataset._dataset3 import Dataset3, CaitsArray
+
+T = TypeVar('T', bound="Dataset3")
+
+
+class FeatureExtractorScalar(BaseEstimator, TransformerMixin):
+    def __init__(self, feature_extractors: List[Dict], axis: int=0, to_dataset: bool = True):
+        self.feature_extractors = feature_extractors
+        self.axis = axis
+        self.to_dataset = to_dataset
+
+    def fit(self, X, y=None):
+        self.fitted_ = True
+        return self
+
+    def transform(self, data: T) -> Union[T, Dict]:
+        features = {}
+
+        for extractor in self.feature_extractors:
+            func = extractor["func"]
+            params = extractor.get("params", {})
+            params["axis"] = self.axis
+            feature = data.apply(func, **params)
+            if isinstance(data.X, list) and feature[0].ndim != data.X[0].ndim - 1:
+                raise ValueError
+            elif isinstance(data.X, CaitsArray) and feature[0].ndim == data.X.ndim - 1:
+                raise ValueError
+
+            features[f"{func.__name__}"] = feature
+
+        if self.to_dataset:
+            axis_names = {f"axis_{self.axis}": {name: i for i, name in enumerate(features.keys())}}
+            return data.features_dict_to_dataset(features, axis_names, self.axis)
+
+        else:
+            return features
