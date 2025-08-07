@@ -811,7 +811,6 @@ class DatasetList(Dataset3):
                     else:
                         raise ValueError
             else:
-                # _axis_names = {"axis_1": self.X[0].axis_names["axis_1"]}
                 _axis_names = None
 
             _X = [CaitsArray(x, axis_names=_axis_names,) for x in X]
@@ -827,6 +826,8 @@ class DatasetList(Dataset3):
                 axis=axis,
             ) for i in range(len(list(features.values())[0]))
         ]
+
+        print(values[0].shape)
 
         return self.numpy_to_dataset(values, axis_names)
 
