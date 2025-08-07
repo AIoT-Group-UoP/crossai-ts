@@ -7,7 +7,7 @@ from caits.dataset._dataset3 import Dataset3
 T = TypeVar('T', bound="Dataset3")
 
 
-class FeatureExtractor2D(BaseEstimator, TransformerMixin):
+class FeatureExtractorSpectrum(BaseEstimator, TransformerMixin):
     def __init__(self, func: Callable, **kw_args: Dict[str, Any]):
         self.func = func
         self.kw_args = kw_args

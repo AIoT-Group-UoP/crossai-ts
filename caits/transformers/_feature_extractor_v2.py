@@ -29,11 +29,6 @@ class FeatureExtractorSignal(BaseEstimator, TransformerMixin):
             params["axis"] = self.axis
             feature = data.apply(func, **params)
 
-            if isinstance(data.X, list) and feature[0].ndim != data.X[0].ndim:
-                raise ValueError
-            elif isinstance(data.X, CaitsArray) and feature[0].ndim == data.X.ndim:
-                raise ValueError
-
             features[f"{func.__name__}"] = feature
 
         if self.to_dataset:
