@@ -5,12 +5,12 @@ import numpy as np
 from pandas import DataFrame
 from sklearn.base import BaseEstimator, TransformerMixin
 
-from caits.dataset._dataset3 import Dataset3
+from caits.dataset._dataset3 import Dataset3, CaitsArray
 
 T = TypeVar('T', bound="Dataset3")
 
 
-class FeatureExtractor(BaseEstimator, TransformerMixin):
+class FeatureExtractorSignal(BaseEstimator, TransformerMixin):
     def __init__(self, feature_extractors: List[Dict], axis: int=0, to_dataset: bool = True):
         self.feature_extractors = feature_extractors
         self.axis = axis
@@ -28,6 +28,12 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
             params = extractor.get("params", {})
             params["axis"] = self.axis
             feature = data.apply(func, **params)
+
+            if isinstance(data.X, list) and feature[0].ndim != data.X[0].ndim:
+                raise ValueError
+            elif isinstance(data.X, CaitsArray) and feature[0].ndim == data.X.ndim:
+                raise ValueError
+
             features[f"{func.__name__}"] = feature
 
         if self.to_dataset:
