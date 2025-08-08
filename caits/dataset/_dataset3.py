@@ -436,13 +436,13 @@ class DatasetArray(Dataset3):
         for i in range(0, self.X.shape[0], batch_size):
             yield self.X.iloc[i : i + batch_size, ...], self.y.iloc[i : i + batch_size, ...]
 
-    # TODO: y
     def unify(self, others, axis_names: Optional = None, axis: int=0):
         _axis = 1 if axis == 0 else 0
+
         if all(
                 [
                     self.X.shape[_axis] == o.X.shape[_axis] and
-                    self.X.axis_names[f"axis_{axis}"] != o.X.axis_names[f"axis_{axis}"]
+                    self.X.axis_names[f"axis_{_axis}"] == o.X.axis_names[f"axis_{_axis}"]
                     for o in others
                 ]
         ):
@@ -459,13 +459,29 @@ class DatasetArray(Dataset3):
             else:
                 axis_names_X = axis_names
 
-            X = CaitsArray(np.concatenate([self.X.values] + [o.X.values for o in others], axis=axis), axis_names=axis_names_X)
-            return self.__class__(X=X, y=self.y)
+            X = CaitsArray(
+                np.concatenate(
+                    [self.X.values] + [o.X.values for o in others],
+                    axis=axis
+                ),
+                axis_names=axis_names_X
+            )
 
-        elif all([self.X.shape[_axis] != o.X.shape[_axis] for o in others]):
-            raise ValueError("self.X and other.X must have the same number of columns.")
+            if axis == 0:
+                y = CaitsArray(
+                    np.concatenate(
+                        [self.y.values] + [o.y.values for o in others],
+                        axis=0
+                    ),
+                    axis_names={"axis_1": self.y.axis_names["axis_1"]}
+                )
+            else:
+                y = self.y
+
+            return self.__class__(X=X, y=y)
+
         else:
-            raise ValueError("self.X and other.y must have the same number of columns.")
+            raise ValueError("self.X and other.X must have the same number of columns.")
 
     def replace(self, other):
         if len(set(self.X.axis_names["axis_1"].keys()).intersection(other.X.axis_names["axis_1"].keys())) == 0:
@@ -475,7 +491,6 @@ class DatasetArray(Dataset3):
         idxs = [self.X.axis_names["axis_1"][col] for col in column_names]
 
         self.X.values[:, idxs] = other.X.values
-
 
     def to_numpy(self):
         return self.X.values, self.y.values
@@ -506,48 +521,25 @@ class DatasetArray(Dataset3):
     def get_axis_names_X(self):
         return self.X.axis_names
 
-    # TODO: y
     def numpy_to_dataset(
             self,
             X,
             axis_names: Optional[Dict[str, Dict[Union[str, int], int]]] = None,
             split: bool = True
     ):
-        if axis_names is None:
-            _axis_names_X = self.X.axis_names
-            _axis_names_y = self.y.axis_names
-        elif all([isinstance(v, str) for v in axis_names.values()]):
-            _axis_names_X = {
-                to_axis: self.X.axis_names[from_axis] for to_axis, from_axis in axis_names.items()
-            }
-            _axis_names_y = {
-                to_axis: self.y.axis_names[from_axis] for to_axis, from_axis in axis_names.items()
-            }
-        elif all([isinstance(v, dict) for v in axis_names.values()]):
-            _axis_names_X = axis_names["X"]
-            _axis_names_y = axis_names["y"]
+        dfX = CaitsArray(X, axis_names=axis_names)
+        return DatasetArray(X=dfX, y=self.y)
 
-        if split:
-            dfX = CaitsArray(X[0], axis_names=(_axis_names_X))
-            dfY = CaitsArray(X[1], axis_names=(_axis_names_y))
-        else:
-            dfX = CaitsArray(X, axis_names=(_axis_names_X))
-            dfY = self.y
-        return DatasetArray(X=dfX, y=dfY)
-
-    # TODO: y
     def features_dict_to_dataset(self, features, axis_names, axis):
-        features_X = np.stack([feat[0] for feat in features.values()], axis=axis)
-        features_y = np.stack([feat[1] for feat in features.values()], axis=axis)
+        features_X = np.stack([feat for feat in features.values()], axis=axis)
 
         _axis = 1 if axis == 0 else 0
 
         axis_names_X = axis_names | {f"axis_{_axis}": self.X.axis_names[f"axis_{_axis}"]}
-        axis_names_y = axis_names | {f"axis_{_axis}": self.y.axis_names[f"axis_{_axis}"]}
 
         return DatasetArray(
             X=CaitsArray(features_X, axis_names=axis_names_X),
-            y=CaitsArray(features_y, axis_names=axis_names_y)
+            y=self.y
         )
 
     # TODO: something is wrong
@@ -579,20 +571,16 @@ class DatasetArray(Dataset3):
 
         return self.__class__(train_X, train_y), self.__class__(test_X, test_y)
 
-    # TODO: y
     def apply(self, func, *args, **kwargs):
         X = func(self.X.values, *args, **kwargs)
-        y = func(self.y.values, *args, **kwargs)
-        return X, y
+        return X
 
-    # TODO: y
     def stack(self, X: List[np.ndarray]):
         return DatasetList(
-            X=[CaitsArray(values=x, axis_names={"axis_1": self.X.axis_names["axis_1"]}) for x in X[0]],
-            y=[CaitsArray(values=y, axis_names={"axis_1": self.y.axis_names["axis_1"]}) for y in X[1]]
+            X=[CaitsArray(values=x, axis_names={"axis_1": self.X.axis_names["axis_1"]}) for x in X],
+            y=self.y
         )
 
-    # TODO: y
     def flatten(self):
         return DatasetArray(CaitsArray(self.X.values.flatten()), self.y)
 
@@ -603,7 +591,6 @@ class DatasetArray(Dataset3):
             self.X.iloc[idxs, ...],
             self.y.iloc[idxs, ...],
         )
-
 
 
 class DatasetList(Dataset3):
@@ -801,19 +788,7 @@ class DatasetList(Dataset3):
             split: bool = True
     ):
         if split:
-            if axis_names is not None:
-                _axis_names = {}
-                for k, v in axis_names.items():
-                    if isinstance(v, str):
-                        _axis_names[k] = self.X[0].axis_names[v]
-                    elif isinstance(v, dict):
-                        _axis_names[k] = v
-                    else:
-                        raise ValueError
-            else:
-                _axis_names = None
-
-            _X = [CaitsArray(x, axis_names=_axis_names,) for x in X]
+            _X = [CaitsArray(x, axis_names=axis_names) for x in X]
         else:
             _X = CaitsArray(X)
 
@@ -826,8 +801,6 @@ class DatasetList(Dataset3):
                 axis=axis,
             ) for i in range(len(list(features.values())[0]))
         ]
-
-        print(values[0].shape)
 
         return self.numpy_to_dataset(values, axis_names)
 
