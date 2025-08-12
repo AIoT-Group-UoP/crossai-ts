@@ -26,17 +26,13 @@ class FeatureExtractorScalar(BaseEstimator, TransformerMixin):
         for extractor in self.feature_extractors:
             func = extractor["func"]
             params = extractor.get("params", {})
-            params["axis"] = self.axis
             feature = data.apply(func, **params)
-            if isinstance(data.X, list) and feature[0].ndim != data.X[0].ndim - 1:
-                raise ValueError
-            elif isinstance(data.X, CaitsArray) and feature[0].ndim == data.X.ndim - 1:
-                raise ValueError
 
             features[f"{func.__name__}"] = feature
 
         if self.to_dataset:
-            axis_names = {f"axis_{self.axis}": {name: i for i, name in enumerate(features.keys())}}
+            axis_names = data.get_axis_names_X()
+            del axis_names[f"axis_{self.axis}"]
             return data.features_dict_to_dataset(features, axis_names, self.axis)
 
         else:
