@@ -49,7 +49,6 @@ class CaitsArray:
     class _LocIndexer:
         def __init__(self, parent, indexer):
             self.parent = parent
-            self.indexer = indexer
 
         def __getitem__(self, index):
             if len(index) != self.parent.ndim:
@@ -279,7 +278,7 @@ class Dataset3(ABC):
         pass
 
     @abstractmethod
-    def to_numpy(self):
+    def to_numpy(self, flatten=False):
         pass
 
     @abstractmethod
@@ -328,7 +327,7 @@ class Dataset3(ABC):
         pass
 
     @abstractmethod
-    def flatten(self):
+    def flatten(self, axis_names_sep=","):
         pass
 
     @abstractmethod
@@ -492,8 +491,12 @@ class DatasetArray(Dataset3):
 
         self.X.values[:, idxs] = other.X.values
 
-    def to_numpy(self):
-        return self.X.values, self.y.values
+    # TODO: Adjust
+    def to_numpy(self, flatten=False):
+        if flatten:
+            return self.X.values.flatten(), self.y.values
+        else:
+            return self.X.values, self.y.values
 
     def to_df(self):
         if self.X.ndim == 2:
@@ -519,7 +522,7 @@ class DatasetArray(Dataset3):
         pass
 
     def get_axis_names_X(self):
-        return self.X.axis_names
+        return deepcopy(self.X.axis_names)
 
     def numpy_to_dataset(
             self,
@@ -531,7 +534,17 @@ class DatasetArray(Dataset3):
         return DatasetArray(X=dfX, y=self.y)
 
     def features_dict_to_dataset(self, features, axis_names, axis):
-        features_X = np.stack([feat for feat in features.values()], axis=axis)
+        features_tmp = {}
+        for feat, vals in features.items():
+            if vals.ndim == 1:
+                features_tmp[feat] = vals
+            else:
+                for i in range(vals.shape[0]):
+                    features_tmp[f"{feat}_{i}"] = vals[i, ...]
+
+        features_X = np.stack([feat for feat in features_tmp.values()], axis=axis)
+
+        axis_names[f"axis_{axis}"] = {name: i for i, name in enumerate(features_tmp.keys())}
 
         _axis = 1 if axis == 0 else 0
 
@@ -581,8 +594,19 @@ class DatasetArray(Dataset3):
             y=self.y
         )
 
-    def flatten(self):
-        return DatasetArray(CaitsArray(self.X.values.flatten()), self.y)
+    # TODO: Adjust
+    def flatten(self, axis_names_sep=","):
+        axis_names_0 = list(self.X.axis_names["axis_0"].keys())
+        axis_names_1 = list(self.X.axis_names["axis_1"].keys())
+        axis_names = {
+            "axis_0": {
+                name: i for i, name in enumerate(
+                    [f"{s0}{axis_names_sep}{s1}" for s0 in axis_names_0 for s1 in axis_names_1]
+                )
+            }
+        }
+
+        return DatasetArray(CaitsArray(self.X.values.flatten(), axis_names=axis_names), self.y)
 
     def shuffle(self, seed: int=42):
         idxs = np.arange(len(self.X))
@@ -753,8 +777,11 @@ class DatasetList(Dataset3):
             self.X[i].values[:, idxs] = other.X[i].values
 
 
-    def to_numpy(self):
-        return [np.array(x.values) for x in self.X], np.array(self.y), np.array(self._id)
+    def to_numpy(self, flatten=False):
+        if flatten:
+            return np.stack([x.values.flatten() for x in self.X]), np.array(self.y), np.array(self._id)
+        else:
+            return np.stack([x.values for x in self.X]), np.array(self.y), np.array(self._id)
 
     def to_df(self):
         return {
@@ -776,10 +803,7 @@ class DatasetList(Dataset3):
         pass
 
     def get_axis_names_X(self):
-        return self.X[0].axis_names
-
-    def get_axis_names_y(self):
-        return {}
+        return deepcopy(self.X[0].axis_names)
 
     def numpy_to_dataset(
             self,
@@ -795,12 +819,22 @@ class DatasetList(Dataset3):
         return DatasetList(X=_X, y=self.y, id=self._id)
 
     def features_dict_to_dataset(self, features, axis_names, axis):
+        features_tmp = {}
+        for feat, values in features.items():
+            if values[0].ndim == 1:
+                features_tmp[feat] = values
+            else:
+                for i in range(values[0].shape[0]):
+                    features_tmp[f"{feat}_{i}"] = [values[j][i, ...] for j in range(len(values))]
+
         values = [
             np.stack(
-                [feat[i] for feat in features.values()],
+                [feat[i] for feat in features_tmp.values()],
                 axis=axis,
-            ) for i in range(len(list(features.values())[0]))
+            ) for i in range(len(list(features_tmp.values())[0]))
         ]
+
+        axis_names[f"axis_{axis}"] = {name: i for i, name in enumerate(features_tmp.keys())}
 
         return self.numpy_to_dataset(values, axis_names)
 
@@ -841,9 +875,13 @@ class DatasetList(Dataset3):
         caitsX = [CaitsArray(values=x, axis_names={"axis_1": self.X[0].axis_names["axis_1"]}) for x in X]
         return DatasetList(X=caitsX, y=y, id=id)
 
-    def flatten(self):
+    def flatten(self, axis_names_sep=","):
+        axis_names_0 = list(self.X[0].axis_names["axis_0"].keys())
+        axis_names_1 = list(self.X[0].axis_names["axis_1"].keys())
+        axis_names = {"axis_1": {name: i for i, name in enumerate([f"{s0}{axis_names_sep}{s1}" for s0 in axis_names_0 for s1 in axis_names_1])}}
+
         return DatasetList(
-            X=CaitsArray(np.stack([x.values.flatten() for x in self.X], axis=0)),
+            X=CaitsArray(np.stack([x.values.flatten() for x in self.X], axis=0), axis_names=axis_names),
             y=self.y,
             id=self._id
         )
