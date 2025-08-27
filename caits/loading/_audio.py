@@ -83,10 +83,12 @@ def audio_loader(
         mode: Loading mode, supports "soundfile" or "scipy".
         format: Audio file format, defaults to "wav".
         dtype: The desired data type for the audio data. Supported options:
-            - "float64" (default): Double-precision floating-point, normalized to [-1, 1]
-            - "float32": Single-precision floating-point, normalized to [-1, 1]
-            - "int16": 16-bit signed integer, no normalization
-            - "int32": 32-bit signed integer, no normalization
+            - "float64" (default): Double-precision floating-point, normalized
+                to [-1, 1].
+            - "float32": Single-precision floating-point, normalized to
+                [-1, 1].
+            - "int16": 16-bit signed integer, no normalization.
+            - "int32": 32-bit signed integer, no normalization.
         target_sr: Optional target sampling rate for resampling.
         classes: Optional list of directory names to include;
                  if None, all directories are included.

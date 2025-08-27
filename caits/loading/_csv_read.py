@@ -76,11 +76,14 @@ def csv_loader_regression(
 
     Args:
         dataset_path: Path to the dataset directory containing CSV files.
-        X_cols: List of column names to use as input. If None, all columns except those defined by y_cols are used.
-        y_cols: List of column names to use as output. If None, the last column is used.
+        X_cols: List of column names to use as input. If None, all columns
+            except those defined by y_cols are used.
+        y_cols: List of column names to use as output. If None, the last
+            column is used.
         header: Specifies the row(s) to use as the column names.
                 Defaults to "infer".
-        export: Format to export the loaded data, "dict" or "df" for DataFrame. Defaults to "dict".
+        export: Format to export the loaded data, "dict" or "df" for
+            DataFrame. Defaults to "dict".
 
     Returns:
         pd.DataFrame or dict: Loaded CSV data.
@@ -113,4 +116,5 @@ def csv_loader_regression(
     elif export == "dict":
         return {"X": X, "y": y}
     else:
-        raise NotImplementedError(f"Export method '{export}' not implemented.")
+        raise ValueError(f"Provide a valid method for exporting the data. "
+                         f"Valid methods: 'df', 'dict'")
