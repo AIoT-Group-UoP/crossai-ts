@@ -39,7 +39,10 @@ def load_yaml_config(config_path: str) -> Dict[str, Any]:
         ) from e
 
 
-def json_loader(dataset_path: str, classes: Optional[List[str]] = None) -> Dict[str, Any]:
+def json_loader(
+    dataset_path: str,
+    classes: Optional[List[str]] = None
+) -> Dict[str, Any]:
     """Loads JSON files from a directory, ensuring keys do
     not include file extensions. Each JSON file's contents are stored
     as a dictionary under the corresponding key.
