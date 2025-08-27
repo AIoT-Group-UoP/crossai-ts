@@ -2,6 +2,7 @@ import glob
 import os
 from typing import Dict, List, Literal, Optional, Union
 
+import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
@@ -118,3 +119,56 @@ def csv_loader_regression(
     else:
         raise ValueError(f"Provide a valid method for exporting the data. "
                          f"Valid methods: 'df', 'dict'")
+
+
+def csv_loader_single_file(
+        file_path: str,
+        channels: Optional[List[str]] = None
+) -> pd.DataFrame:
+    """Reads a CSV file into a pandas DataFrame with custom header logic.
+
+    This function checks if the CSV has a header. If not, it assigns default
+    names 'ch-1', 'ch-2', etc. It also allows the user to override any
+    existing or default header with a custom list of column names.
+
+    Args:
+        file_path (str): The full path to the CSV file.
+        channels (list of str, optional): A list of strings to be used as
+            column names. If provided, this will override any existing header
+            or default naming. Defaults to None.
+
+    Returns:
+        pandas.DataFrame: The CSV data as a DataFrame with the correct headers.
+
+    Raises:
+        FileNotFoundError: If the file_path does not point to an existing file.
+        ValueError: If the number of columns in the custom 'channels' list
+                    does not match the number of columns in the CSV file.
+
+    """
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(
+            f"Error: The file '{file_path}' was not found.")
+
+    if channels:
+        df = pd.read_csv(file_path, header=None)
+        if len(channels) != len(df.columns):
+            raise ValueError(
+                f"Mismatch: The provided list 'channels' has "
+                f"{len(channels)} names, "
+                f"but the CSV file has {len(df.columns)} columns."
+            )
+        df.columns = channels
+
+        return df
+    else:
+        df = pd.read_csv(file_path)
+
+        is_default_header = all(isinstance(col, int) for col in df.columns)
+
+        if is_default_header:
+            num_columns = len(df.columns)
+            new_column_names = [f'ch_{i + 1}' for i in range(num_columns)]
+            df.columns = new_column_names
+
+        return df
