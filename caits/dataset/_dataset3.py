@@ -880,7 +880,7 @@ class DatasetList(Dataset3):
         train_idxs = []
         test_idxs = []
         for idxs in all_idxs:
-            Nx = floor(len(idxs) * (1 - test_size))
+            Nx = ceil(len(idxs) * (1 - test_size))
 
             if random_state is not None:
                 train_idxs_part = np.random.RandomState(random_state).choice(idxs, Nx, replace=False)
