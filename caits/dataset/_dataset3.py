@@ -7,6 +7,7 @@ from typing import Optional, Union, List, Dict
 import copy
 
 import pandas as pd
+from math import ceil, floor
 
 DISPLAY_NUM_ROWS = 5
 DISPLAY_NUM_COLS = 6
@@ -566,16 +567,36 @@ class DatasetArray(Dataset3):
         )
         return dfX
 
-    def train_test_split(self, random_state: Optional[int]=None, test_size: float=0.2):
-        all_idxs = np.arange(self.X.shape[0])
-        Nx = int(self.X.shape[0] * (1 - test_size))
-
-        if random_state is not None:
-            train_idxs = np.random.RandomState(random_state).choice(all_idxs, Nx, replace=False)
-            test_idxs = np.setdiff1d(all_idxs, train_idxs)
+    def train_test_split(
+            self,
+            random_state: Optional[int]=None,
+            test_size: float=0.2,
+            stratified=False
+    ):
+        if not stratified:
+            all_idxs = [np.arange(self.X.shape[0])]
         else:
-            train_idxs = all_idxs[:Nx]
-            test_idxs = all_idxs[Nx:]
+            y_unique_vals = list({tuple(row) for row in self.y.values})
+            all_idxs = []
+            for t in y_unique_vals:
+                all_idxs.append(np.where((self.y.values == t).all(axis=1))[0])
+
+        train_idxs = []
+        test_idxs = []
+        for idxs in all_idxs:
+            Nx = int(len(idxs) * (1 - test_size))
+
+            if random_state is not None:
+                train_idxs_part = np.random.RandomState(random_state).choice(idxs, Nx, replace=False)
+                test_idxs_part = np.setdiff1d(idxs, train_idxs_part)
+            else:
+                train_idxs_part = idxs[:Nx]
+                test_idxs_part = idxs[Nx:]
+            train_idxs.append(train_idxs_part)
+            test_idxs.append(test_idxs_part)
+
+        train_idxs = np.concatenate(train_idxs, axis=0)
+        test_idxs = np.concatenate(test_idxs, axis=0)
 
         train_X = self.X.iloc[train_idxs, ...]
         test_X = self.X.iloc[test_idxs, ...]
@@ -841,17 +862,44 @@ class DatasetList(Dataset3):
     def dict_to_dataset(self, X):
         return DatasetList(**X)
 
-    def train_test_split(self, random_state: Optional[int]=None, test_size: float=0.2):
-        all_idxs = np.arange(len(self.X))
-        Nx = int(len(self.X) * (1 - test_size))
-        if random_state is not None:
-            train_idxs = np.random.RandomState(random_state).choice(all_idxs, Nx, replace=False)
-            test_idxs = np.setdiff1d(all_idxs, train_idxs)
-        else:
-            train_idxs = all_idxs[:Nx]
-            test_idxs = all_idxs[Nx:]
+    def train_test_split(self, random_state: Optional[int]=None, test_size: float=0.2, stratified: bool = False):
 
-        train_X, test_X, train_y, test_y, train_id, test_id = [], [], [], [], [], []
+        if not stratified:
+            all_idxs = [np.arange(len(self.X))]
+        else:
+            tmp = {}
+
+            for i, y in enumerate(self.y):
+                if y not in tmp.keys():
+                    tmp[y] = []
+                else:
+                    tmp[y].append(i)
+
+            all_idxs = tmp.values()
+
+        train_idxs = []
+        test_idxs = []
+        for idxs in all_idxs:
+            Nx = int(len(idxs) * (1 - test_size))
+
+            if random_state is not None:
+                train_idxs_part = np.random.RandomState(random_state).choice(idxs, Nx, replace=False)
+                test_idxs_part = np.setdiff1d(idxs, train_idxs_part)
+            else:
+                train_idxs_part = idxs[:Nx]
+                test_idxs_part = idxs[Nx:]
+            train_idxs.append(train_idxs_part)
+            test_idxs.append(test_idxs_part)
+
+        train_idxs = np.concatenate(train_idxs, axis=0)
+        test_idxs = np.concatenate(test_idxs, axis=0)
+
+        train_X = []
+        train_y = []
+        train_id = []
+        test_X = []
+        test_y = []
+        test_id = []
 
         for idx in train_idxs:
             train_X.append(self.X[idx])
@@ -864,6 +912,7 @@ class DatasetList(Dataset3):
             test_id.append(self._id[idx])
 
         return self.__class__(train_X, train_y, train_id), self.__class__(test_X, test_y, test_id)
+
 
     def apply(self, func, *args, **kwargs):
         return [func(df.values, *args, **kwargs) for df in self.X]
