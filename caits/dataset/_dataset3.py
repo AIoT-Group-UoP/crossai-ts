@@ -930,10 +930,15 @@ class DatasetList(Dataset3):
         axis_names_1 = list(self.X[0].axis_names["axis_1"].keys())
         axis_names = {"axis_1": {name: i for i, name in enumerate([f"{s0}{axis_names_sep}{s1}" for s0 in axis_names_0 for s1 in axis_names_1])}}
 
-        return DatasetList(
+        # return DatasetList(
+        #     X=CaitsArray(np.stack([x.values.flatten() for x in self.X], axis=0), axis_names=axis_names),
+        #     y=self.y,
+        #     id=self._id
+        # )
+
+        return DatasetArray(
             X=CaitsArray(np.stack([x.values.flatten() for x in self.X], axis=0), axis_names=axis_names),
             y=self.y,
-            id=self._id
         )
 
     def shuffle(self, seed: int=42):
