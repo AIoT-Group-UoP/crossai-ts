@@ -834,10 +834,11 @@ class DatasetList(Dataset3):
     ):
         if split:
             _X = [CaitsArray(x, axis_names=axis_names) for x in X]
+            return DatasetList(X=_X, y=self.y, id=self._id)
         else:
             _X = CaitsArray(X)
+            return DatasetArray(X=_X, y=self.y)
 
-        return DatasetList(X=_X, y=self.y, id=self._id)
 
     def features_dict_to_dataset(self, features, axis_names, axis):
         features_tmp = {}
