@@ -123,6 +123,7 @@ def csv_loader_regression(
 
 def csv_loader_single_file(
         file_path: str,
+        delimiter: Optional[str] = ",",
         channels: Optional[List[str]] = None
 ) -> pd.DataFrame:
     """Reads a CSV file into a pandas DataFrame with custom header logic.
@@ -133,6 +134,7 @@ def csv_loader_single_file(
 
     Args:
         file_path (str): The full path to the CSV file.
+        delimiter (str, optional): The CSV delimiter. Defaults to ",".
         channels (list of str, optional): A list of strings to be used as
             column names. If provided, this will override any existing header
             or default naming. Defaults to None.
@@ -151,7 +153,7 @@ def csv_loader_single_file(
             f"Error: The file '{file_path}' was not found.")
 
     if channels:
-        df = pd.read_csv(file_path, header=None)
+        df = pd.read_csv(file_path, header=None, delimiter=delimiter)
         if len(channels) != len(df.columns):
             raise ValueError(
                 f"Mismatch: The provided list 'channels' has "
