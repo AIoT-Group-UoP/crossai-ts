@@ -123,7 +123,7 @@ def csv_loader_regression(
 
 def csv_loader_single_file(
         file_path: str,
-        delimiter: Optional[str] = ",",
+        delimiter: str = ",",
         channels: Optional[List[str]] = None
 ) -> pd.DataFrame:
     """Reads a CSV file into a pandas DataFrame with custom header logic.
