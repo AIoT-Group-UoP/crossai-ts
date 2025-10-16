@@ -164,7 +164,7 @@ def csv_loader_single_file(
 
         return df
     else:
-        df = pd.read_csv(file_path)
+        df = pd.read_csv(file_path, delimiter=delimiter)
 
         is_default_header = all(isinstance(col, int) for col in df.columns)
 
