@@ -234,7 +234,10 @@ def central_moments(
 
 # --- ENERGY ---
 
-def rms_value(array: np.ndarray, axis: int = 0) -> float:
+def rms_value(
+    array: np.ndarray,
+    axis: int = 0
+) -> float:
     """Computes the RMS Power value of a signal.
 
     Args:
@@ -318,11 +321,15 @@ def rms_min(
         return np.min(rms_values, axis=axis)
 
 
-def zcr_value(array: np.ndarray, axis: int = 0) -> float:
+def zcr_value(
+    array: np.ndarray,
+    axis: int = 0
+) -> float:
     """Computes the zero crossing rate of a signal.
 
     Args:
         array: The input signal as a numpy.ndarray.
+        axis: The axis to compute the zcr for. Default is 0.
 
     Returns:
         float: The zero crossing rate of the signal.
@@ -349,6 +356,7 @@ def zcr_max(
         signal: The input signal as a numpy.ndarray.
         frame_length: The length of the frame in samples.
         hop_length: The number of samples to advance between frames (overlap).
+        axis: The axis to compute the zcr for. Default is 0.
         **kwargs: Additional keyword arguments passed to `rolling_zcr`.
 
     Returns:
@@ -374,6 +382,7 @@ def zcr_mean(
         signal: The input signal as a numpy.ndarray.
         frame_length: The length of the frame in samples.
         hop_length: The number of samples to advance between frames (overlap).
+        axis: The axis to compute the zcr for. Default is 0.
         **kwargs: Additional keyword arguments passed to `rolling_zcr`.
 
     Returns:
@@ -399,6 +408,7 @@ def zcr_min(
         signal: The input signal as a numpy.ndarray.
         frame_length: The length of the frame in samples.
         hop_length: The number of samples to advance between frames (overlap).
+        axis: The axis to compute the zcr for. Default is 0.
         **kwargs: Additional keyword arguments passed to `rolling_zcr`.
 
     Returns:
@@ -411,7 +421,10 @@ def zcr_min(
         return np.min(zcr_values, axis=axis)
 
 
-def energy(array: np.ndarray, axis: int = 0) -> np.ndarray:
+def energy(
+    array: np.ndarray,
+    axis: int = 0
+) -> np.ndarray:
     """Computes the energy of a signal:
     https://dsp.stackexchange.com/questions/3377/calculating-the-total-energy-of-a-signal
 
@@ -425,7 +438,10 @@ def energy(array: np.ndarray, axis: int = 0) -> np.ndarray:
     return np.sum(np.square(array), axis=axis)
 
 
-def average_power(array: np.ndarray, axis: int = 0) -> np.ndarray:
+def average_power(
+    array: np.ndarray,
+    axis: int = 0
+) -> np.ndarray:
     """Computes the average power of a signal:
     https://dsp.stackexchange.com/questions/3377/calculating-the-total-energy-of-a-signal
 
@@ -439,7 +455,10 @@ def average_power(array: np.ndarray, axis: int = 0) -> np.ndarray:
     return np.sum(np.square(array), axis=axis) / array.shape[axis]
 
 
-def crest_factor(array: np.ndarray, axis: int = 0) -> np.ndarray:
+def crest_factor(
+    array: np.ndarray,
+    axis: int = 0
+) -> np.ndarray:
     """Computes the crest factor of the signal
 
     Args:
@@ -515,12 +534,18 @@ def envelope_energy_peak_detection(
 
 # --- SPECTRAL ---
 
-def dominant_frequency(array: np.ndarray, fs: int, axis: int = 0) -> float:
+def dominant_frequency(
+    array: np.ndarray,
+    fs: int,
+    axis: int = 0
+) -> float:
     """Computes the dominant frequency of a signal.
 
     Args:
         array: The input signal as a numpy.ndarray.
         fs: The sampling frequency of the signal.
+        axis: The axis along which to compute the dominant frequency. Defaults
+            to 0.
 
     Returns:
         float: The dominant frequency of the signal.
@@ -554,6 +579,7 @@ def mfcc_mean(
         y: Audio time series.
         sr: Sampling rate of y. Default: 22050 Hz.
         n_mfcc: Number of MFCCs to return. Default: 20.
+        axis: The axis along which to compute the mean. Defaults to 0.
         **kwargs: Additional keyword arguments passed to `mfcc`.
 
     Returns:
