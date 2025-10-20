@@ -3,7 +3,6 @@ from typing import List, Union
 
 import numpy as np
 import pandas as pd
-from caits.dataset._dataset3 import CaitsArray
 
 
 def rolling_window_df(

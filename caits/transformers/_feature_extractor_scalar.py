@@ -5,7 +5,7 @@ import numpy as np
 from pandas import DataFrame
 from sklearn.base import BaseEstimator, TransformerMixin
 
-from caits.dataset._dataset3 import Dataset3, CaitsArray
+from caits.dataset._dataset3 import Dataset3, CoreArray
 
 T = TypeVar('T', bound="Dataset3")
 

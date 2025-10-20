@@ -13,7 +13,7 @@ DISPLAY_NUM_ROWS = 5
 DISPLAY_NUM_COLS = 6
 DISPLAY_VECTOR_NUM_ROWS = 60
 
-class CaitsArray:
+class CoreArray:
     class _iLocIndexer:
         def __init__(self, parent) -> None:
             self.parent = parent
@@ -44,7 +44,7 @@ class CaitsArray:
                         }
                         axis_names = {f"axis_{i}": names for i, names in enumerate(axis_names.values())}
 
-                    return CaitsArray(vals, axis_names=axis_names)
+                    return CoreArray(vals, axis_names=axis_names)
 
 
     class _LocIndexer:
@@ -92,7 +92,7 @@ class CaitsArray:
                         }
                         axis_names = {f"axis_{i}": names for i, names in enumerate(axis_names.values())}
 
-                    return CaitsArray(self.parent.values[*idxs], axis_names=axis_names)
+                    return CoreArray(self.parent.values[*idxs], axis_names=axis_names)
 
 
     def __init__(self, values: np.ndarray, axis_names: Optional[Dict]=None):
@@ -235,8 +235,8 @@ class CaitsArray:
 class Dataset3(ABC):
     def __init__(
             self,
-            X: Union[CaitsArray, List[CaitsArray]],
-            y: Union[CaitsArray, List]
+            X: Union[CoreArray, List[CoreArray]],
+            y: Union[CoreArray, List]
     ):
         self.X = X
         self.y = y
@@ -337,9 +337,9 @@ class Dataset3(ABC):
 
 
 class DatasetArray(Dataset3):
-    def __init__(self, X: CaitsArray, y: Optional[CaitsArray] = None):
+    def __init__(self, X: CoreArray, y: Optional[CoreArray] = None):
         if y is None:
-            _y = CaitsArray(np.array([[None] for _ in range(len(X))]))
+            _y = CoreArray(np.array([[None] for _ in range(len(X))]))
         else:
             _y = y
         super().__init__(X, _y)
@@ -459,7 +459,7 @@ class DatasetArray(Dataset3):
             else:
                 axis_names_X = axis_names
 
-            X = CaitsArray(
+            X = CoreArray(
                 np.concatenate(
                     [self.X.values] + [o.X.values for o in others],
                     axis=axis
@@ -468,7 +468,7 @@ class DatasetArray(Dataset3):
             )
 
             if axis == 0:
-                y = CaitsArray(
+                y = CoreArray(
                     np.concatenate(
                         [self.y.values] + [o.y.values for o in others],
                         axis=0
@@ -531,7 +531,7 @@ class DatasetArray(Dataset3):
             axis_names: Optional[Dict[str, Dict[Union[str, int], int]]] = None,
             split: bool = True
     ):
-        dfX = CaitsArray(X, axis_names=axis_names)
+        dfX = CoreArray(X, axis_names=axis_names)
         return DatasetArray(X=dfX, y=self.y)
 
     def features_dict_to_dataset(self, features, axis_names, axis):
@@ -552,14 +552,14 @@ class DatasetArray(Dataset3):
         axis_names_X = axis_names | {f"axis_{_axis}": self.X.axis_names[f"axis_{_axis}"]}
 
         return DatasetArray(
-            X=CaitsArray(features_X, axis_names=axis_names_X),
+            X=CoreArray(features_X, axis_names=axis_names_X),
             y=self.y
         )
 
     # TODO: something is wrong
     def dict_to_dataset(self, X):
         vals = np.stack([row for row in X.values()])
-        dfX = CaitsArray(
+        dfX = CoreArray(
             vals,
             axis_names={
                 axis: names for axis, names in X.axis_names.items() if axis != "axis_0"
@@ -611,7 +611,7 @@ class DatasetArray(Dataset3):
 
     def stack(self, X: List[np.ndarray]):
         return DatasetList(
-            X=[CaitsArray(values=x, axis_names={"axis_1": self.X.axis_names["axis_1"]}) for x in X],
+            X=[CoreArray(values=x, axis_names={"axis_1": self.X.axis_names["axis_1"]}) for x in X],
             y=self.y
         )
 
@@ -627,7 +627,7 @@ class DatasetArray(Dataset3):
             }
         }
 
-        return DatasetArray(CaitsArray(self.X.values.flatten(), axis_names=axis_names), self.y)
+        return DatasetArray(CoreArray(self.X.values.flatten(), axis_names=axis_names), self.y)
 
     def shuffle(self, seed: int=42):
         idxs = np.arange(len(self.X))
@@ -641,7 +641,7 @@ class DatasetArray(Dataset3):
 class DatasetList(Dataset3):
     def __init__(
             self,
-            X: List[CaitsArray],
+            X: List[CoreArray],
             y: Optional[List[Union[str, int]]]=None,
             id: Optional[List[str]]=None
     ) -> None:
@@ -770,7 +770,7 @@ class DatasetList(Dataset3):
                 values = np.concatenate([self.X[i].values] + [d.X[i].values for d in others], axis=1)
 
                 caitsX.append(
-                    CaitsArray(
+                    CoreArray(
                         values=values,
                         axis_names=_axis_names
                     )
@@ -833,10 +833,10 @@ class DatasetList(Dataset3):
             split: bool = True
     ):
         if split:
-            _X = [CaitsArray(x, axis_names=axis_names) for x in X]
+            _X = [CoreArray(x, axis_names=axis_names) for x in X]
             return DatasetList(X=_X, y=self.y, id=self._id)
         else:
-            _X = CaitsArray(X)
+            _X = CoreArray(X)
             return DatasetArray(X=_X, y=self.y)
 
 
@@ -922,7 +922,7 @@ class DatasetList(Dataset3):
         X = sum(data, [])
         y = [self.y[i] for i, x in enumerate(data) for _ in x]
         id = [self._id[i] for i, x in enumerate(data) for _ in x]
-        caitsX = [CaitsArray(values=x, axis_names={"axis_1": self.X[0].axis_names["axis_1"]}) for x in X]
+        caitsX = [CoreArray(values=x, axis_names={"axis_1": self.X[0].axis_names["axis_1"]}) for x in X]
         return DatasetList(X=caitsX, y=y, id=id)
 
     def flatten(self, axis_names_sep=","):
@@ -937,7 +937,7 @@ class DatasetList(Dataset3):
         # )
 
         return DatasetArray(
-            X=CaitsArray(np.stack([x.values.flatten() for x in self.X], axis=0), axis_names=axis_names),
+            X=CoreArray(np.stack([x.values.flatten() for x in self.X], axis=0), axis_names=axis_names),
             y=self.y,
         )
 

@@ -1,5 +1,5 @@
 from sklearn.base import BaseEstimator, TransformerMixin
-from caits.dataset._dataset3 import CaitsArray
+from caits.dataset._dataset3 import CoreArray
 
 class DatasetToArray(BaseEstimator, TransformerMixin):
     def __init__(self, flatten=False, dtype=None):
