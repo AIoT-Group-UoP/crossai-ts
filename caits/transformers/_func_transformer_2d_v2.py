@@ -1,6 +1,6 @@
 from typing import Dict, Callable, Any, Union, TypeVar
 from sklearn.base import BaseEstimator, TransformerMixin
-from caits.dataset._datasetList import Dataset
+from caits.dataset import Dataset
 
 T = TypeVar("T", bound="Dataset")
 
