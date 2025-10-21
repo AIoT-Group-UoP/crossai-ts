@@ -1,6 +1,6 @@
 import numpy as np
 from typing import Optional, Union, Tuple, Dict, List
-from . import CoreArray, Dataset
+from . import CoreArray, Dataset, DatasetList
 import copy
 import pandas as pd
 from math import floor
