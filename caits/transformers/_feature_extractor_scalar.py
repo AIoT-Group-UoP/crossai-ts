@@ -1,13 +1,7 @@
-from collections import defaultdict
 from typing import Dict, List, Union, TypeVar
-
-import numpy as np
-from pandas import DataFrame
 from sklearn.base import BaseEstimator, TransformerMixin
 
-from caits.dataset._datasetList import Dataset, CoreArray
-
-T = TypeVar('T', bound="Dataset3")
+T = TypeVar('T', bound="Dataset")
 
 
 class FeatureExtractorScalar(BaseEstimator, TransformerMixin):

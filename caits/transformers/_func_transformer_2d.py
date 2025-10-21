@@ -1,7 +1,6 @@
 from typing import Dict, Callable, Any, Union
 from sklearn.base import BaseEstimator, TransformerMixin
 from pandas import DataFrame
-
 from ..dataset import Dataset, RegressionDataset
 
 

@@ -1,10 +1,7 @@
-from typing import Dict, List, Union, TypeVar, Tuple
+from typing import Dict, Union, TypeVar
 from sklearn.base import BaseEstimator, TransformerMixin
 
-from caits.dataset._datasetList import Dataset
-
-T = TypeVar('T', bound="Dataset3")
-
+T = TypeVar('T', bound="Dataset")
 
 class ColumnTransformer(BaseEstimator, TransformerMixin):
     def __init__(self, transformations, unify: bool = False):

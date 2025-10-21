@@ -5,7 +5,6 @@ from typing_extensions import TypedDict
 
 from ..dataset import Dataset
 
-
 class Augmentation(TypedDict):
     func: Callable
     params: Dict

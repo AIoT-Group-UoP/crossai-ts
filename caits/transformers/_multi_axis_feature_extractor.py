@@ -1,10 +1,8 @@
 from collections import defaultdict
 from typing import Dict, List
-
 import numpy as np
 from pandas import DataFrame
 from sklearn.base import BaseEstimator, TransformerMixin
-
 from ..dataset import RegressionDataset
 
 
