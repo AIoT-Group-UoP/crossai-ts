@@ -1,10 +1,8 @@
 from typing import Union, TypeVar, List, Dict, Optional
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import FunctionTransformer
-
-from caits.dataset._datasetList import Dataset
-
-T = TypeVar('T', bound="Dataset3")
+from ..dataset import Dataset
+T = TypeVar('T', bound="Dataset")
 
 class SklearnWrapper(BaseEstimator, TransformerMixin):
     def __init__(self, transformer, transformer_kwargs: Optional[Dict]=None):

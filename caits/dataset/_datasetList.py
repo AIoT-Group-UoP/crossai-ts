@@ -7,9 +7,7 @@ from typing import Optional, Union, List, Dict
 import pandas as pd
 from math import ceil
 
-from _dataset import Dataset
-from _coreArray import CoreArray
-from _datasetArray import DatasetArray
+from . import Dataset, CoreArray, DatasetArray
 
 class DatasetList(Dataset):
     def __init__(

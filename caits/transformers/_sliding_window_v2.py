@@ -1,6 +1,5 @@
 from sklearn.base import BaseEstimator, TransformerMixin
-
-from caits.dataset._datasetList import Dataset
+from ..dataset import Dataset
 from ..windowing import sliding_window_arr
 
 

@@ -1,10 +1,8 @@
 from typing import Dict, Callable, Any, Union, TypeVar
 from sklearn.base import BaseEstimator, TransformerMixin
-from pandas import DataFrame
-
 from caits.dataset._datasetList import Dataset
 
-T = TypeVar("T", bound="Dataset3")
+T = TypeVar("T", bound="Dataset")
 
 
 class FunctionTransformer2D(BaseEstimator, TransformerMixin):

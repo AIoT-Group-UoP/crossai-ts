@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Union, List, Optional, Dict
-from _coreArray import CoreArray
+from . import CoreArray
 
 class Dataset(ABC):
     def __init__(
