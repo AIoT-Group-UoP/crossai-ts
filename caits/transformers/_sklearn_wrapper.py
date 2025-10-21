@@ -2,7 +2,7 @@ from typing import Union, TypeVar, List, Dict, Optional
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import FunctionTransformer
 
-from caits.dataset._dataset3 import Dataset3
+from caits.dataset._datasetList import Dataset
 
 T = TypeVar('T', bound="Dataset3")
 

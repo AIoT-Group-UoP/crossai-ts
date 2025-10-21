@@ -1,6 +1,6 @@
 from sklearn.base import BaseEstimator, TransformerMixin
 
-from caits.dataset._dataset3 import Dataset3
+from caits.dataset._datasetList import Dataset
 from ..windowing import sliding_window_arr
 
 
@@ -27,7 +27,7 @@ class SlidingWindow(BaseEstimator, TransformerMixin):
         self.fitted_ = True
         return self
 
-    def transform(self, data: Dataset3) -> Dataset3:
+    def transform(self, data: Dataset) -> Dataset:
         """Apply the sliding window transformation to the input data.
 
         Args:
