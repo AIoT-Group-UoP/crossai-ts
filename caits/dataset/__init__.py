@@ -1,15 +1,13 @@
-from ._dataset import ArrayToDataset, Dataset, ListToDataset
-from ._dataset_regression import RegressionDataset, ListToRegressionDataset
 from ._loader import DataLoader
-from ._dataset2 import Dataset2, DatasetCLF, DatasetRGR, DatasetCLS
+from ._coreArray import CoreArray
+from ._dataset import Dataset
+from ._datasetArray import DatasetArray
+from ._datasetList import DatasetList
 
 __all__ = [
-    "Dataset",
-    "ArrayToDataset",
-    "ListToDataset",
-    "RegressionDataset",
-    "ListToRegressionDataset",
     "DataLoader",
-    "DatasetCLF",
-    "DatasetRGR",
-    "DatasetCLS", ]
+    "CoreArray",
+    "Dataset",
+    "DatasetArray",
+    "DatasetList"
+]
