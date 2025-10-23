@@ -505,6 +505,11 @@ def envelope_energy_peak_detection(
         ValueError: If an unsupported export format is provided.
     """
 
+    if axis == 1:
+        _array = array.T
+    else:
+        _array = array
+
     f_nyq = fs / 2  # Nyquist frequency
     names = []
     n_peaks = []
@@ -515,7 +520,7 @@ def envelope_energy_peak_detection(
         # Bandpass filtering
         fc = [fcl / f_nyq, (fcl + fcl_add) / f_nyq]
         b, a = butter(1, fc, btype="bandpass")
-        bp_filter = filtfilt(b, a, array)
+        bp_filter = filtfilt(b, a, _array)
 
         # Lowpass filtering for envelope energy
         b, a = butter(2, 10 / f_nyq, btype="lowpass")
