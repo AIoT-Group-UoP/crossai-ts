@@ -273,3 +273,4 @@ examples/data/GestureSet_small
 
 .qodo/
 qodana.yaml
+.run/
