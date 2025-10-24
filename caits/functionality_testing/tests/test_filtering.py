@@ -85,23 +85,18 @@ filter_butterworth_params = [
     for kwargs in filter_butterworth_kwargs
 ]
 
-
-@pytest.mark.parametrize(
-    "kwargs", simple_median_params
-)
-def test_median_simple(arr, kwargs):
-    assert filtering.filter_median_simple(arr[0], axis=arr[1], **kwargs).shape == arr[0].shape
+funs = [filtering.filter_median_simple, filtering.filter_median_gen, filtering.filter_butterworth]
+params = [simple_median_params, median_gen_params, filter_butterworth_params]
 
 
-@pytest.mark.parametrize(
-    "kwargs", median_gen_params
-)
-def test_median_gen(arr, kwargs):
-    assert filtering.filter_median_gen(arr[0], axis=arr[1], **kwargs).shape == arr[0].shape
+def _make_test(fun, params):
+    @pytest.mark.parametrize(
+        "kwargs", params
+    )
+    def test_func(arr, kwargs):
+        assert fun(arr[0], axis=arr[1], **kwargs).shape == arr[0].shape
 
+    return test_func
 
-@pytest.mark.parametrize(
-    "kwargs", filter_butterworth_params
-)
-def test_median_gen(arr, kwargs):
-    assert filtering.filter_butterworth(arr[0], axis=arr[1], **kwargs).shape == arr[0].shape
+for fun, params in zip(funs, params):
+    globals()[f"test_{fun.__name__}"] = _make_test(fun, params)
