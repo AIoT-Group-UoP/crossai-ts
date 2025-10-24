@@ -3,8 +3,13 @@ import caits.filtering as filtering
 import pytest
 import itertools
 
+# Median simple
 kernel_size = [x for x in range(1, 7, 2)]
+
+# Median gen
 window_size = [x for x in range(1, 10)]
+
+# Butterworth
 fs = [x for x in range(100, 1000, 100)]
 fs_cutoff_combs = [
     (f, c)
@@ -14,13 +19,18 @@ filter_type = ["lowpass", "highpass"]
 
 order = [x for x in range(1, 10)]
 zi_enable = [True, False]
-method = ['filtfilt', 'sosfilt', 'sosfiltfilt']
+butterworth_method = ['filtfilt', 'sosfilt', 'sosfiltfilt']
 
-sigma = [x for x in range(1, 10)]
+# Gaussian
+sigma = [x for x in range(1, 4)]
+gaussian_mode = ['reflect', 'constant', 'nearest', 'mirror', 'wrap']
+truncate = [x * 0.5 for x in range(9)]
+cval = [x * 0.5 for x in range(9)]
 
 filter_median_simple_combs = kernel_size
 filter_median_gen_combs = window_size
 filter_butterworth_lp_hp_combs = list(itertools.product(fs_cutoff_combs, filter_type))
+filter_gaussian_combs = list(itertools.product(sigma, gaussian_mode, truncate, cval))
 
 bp_cutoff_combs = [
     ((f, (l, h)), "bandpass")
@@ -30,7 +40,7 @@ bp_cutoff_combs = [
 ]
 
 filter_butterworth_bound_combs = filter_butterworth_lp_hp_combs + bp_cutoff_combs
-filter_butterworth_combs = itertools.product(filter_butterworth_bound_combs, order, zi_enable, method)
+filter_butterworth_combs = itertools.product(filter_butterworth_bound_combs, order, zi_enable, butterworth_method)
 
 
 filter_median_simple_kwargs = [
@@ -59,6 +69,16 @@ filter_butterworth_kwargs = [
     for c in filter_butterworth_combs
 ]
 
+filter_gaussian_kwargs = [
+    {
+        "sigma": c[0],
+        "mode": c[1],
+        "truncate": c[2],
+        "cval": c[3]
+    }
+    for c in filter_gaussian_combs
+]
+
 
 simple_median_params = [
     pytest.param(
@@ -76,7 +96,6 @@ median_gen_params = [
     for kwargs in filter_median_gen_kwargs
 ]
 
-
 filter_butterworth_params = [
     pytest.param(
         kwargs,
@@ -85,8 +104,22 @@ filter_butterworth_params = [
     for kwargs in filter_butterworth_kwargs
 ]
 
-funs = [filtering.filter_median_simple, filtering.filter_median_gen, filtering.filter_butterworth]
-params = [simple_median_params, median_gen_params, filter_butterworth_params]
+filter_gaussian_params = [
+    pytest.param(
+        kwargs,
+        id="-".join([f"{k}-{v}" for k, v in kwargs.items()])
+    )
+    for kwargs in filter_gaussian_kwargs
+]
+
+funs = [
+    filtering.filter_median_simple,
+    filtering.filter_median_gen,
+    filtering.filter_butterworth,
+    filtering.filter_gaussian
+]
+
+params = [simple_median_params, median_gen_params, filter_butterworth_params, filter_gaussian_params]
 
 
 def _make_test(fun, params):
