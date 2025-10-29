@@ -505,7 +505,7 @@ def envelope_energy_peak_detection(
         ValueError: If an unsupported export format is provided.
     """
 
-    if axis == 1:
+    if axis == 0:
         _array = array.T
     else:
         _array = array
@@ -525,10 +525,10 @@ def envelope_energy_peak_detection(
         # Lowpass filtering for envelope energy
         b, a = butter(2, 10 / f_nyq, btype="lowpass")
         eed = filtfilt(b, a, bp_filter**2)
-        eed /= np.max(eed + 1e-17)  # Normalize envelope energy
+        eed /= np.max(eed + 1e-17, axis=axis)  # Normalize envelope energy
 
-        peaks, _ = find_peaks(eed)  # Peak detection
-        n_peaks.append(peaks.shape[0])
+        peaks = [find_peaks(eed[i, :])[0] for i in range(eed.shape[0])] # Peak detection
+        n_peaks.append([x.shape[0] for x in peaks])
 
     if export == "array":
         return np.array(n_peaks)
@@ -596,10 +596,11 @@ def mfcc_mean(
 
 def signal_stats(
     arr: np.ndarray,
-    name: str,
     axis: int = 0,
     fs: int = 44100,
-    time_mode: str = "time"
+    time_mode: str = "time",
+    frame_length: int = 10,
+    hop_length: int = 1
 ) -> dict:
     """Computes the basic statistical information of signal.
 
@@ -617,17 +618,28 @@ def signal_stats(
     """
 
     return {
-        f"{name}_max": max_value(arr, axis=axis),
-        f"{name}_min": min_value(arr, axis=axis),
-        f"{name}_mean": mean_value(arr, axis=axis),
-        f"{name}_median": median_value(arr, axis=axis),
-        f"{name}_std": std_value(arr, axis=axis),
-        f"{name}_var": variance_value(arr, axis=axis),
-        f"{name}_kurtosis": kurtosis_value(arr, axis=axis),
-        f"{name}_skewness": sample_skewness(arr, axis=axis),
-        f"{name}_rms": rms_value(arr, axis=axis),
-        # f"{name}_zcr": zcr_value(arr),
-        f"{name}_dominant_frequency": dominant_frequency(arr, fs, axis=axis),
-        f"{name}_crest_factor": crest_factor(arr, axis=axis),
-        f"{name}_signal_length": signal_length(arr, fs=fs, time_mode=time_mode, axis=axis),
+        "mean_value": mean_value(arr, axis=axis),
+        "median_value": median_value(arr, axis=axis),
+        "std_value": std_value(arr, axis=axis),
+        "variance_value": variance_value(arr, axis=axis),
+        "min_value": min_value(arr, axis=axis),
+        "max_value": max_value(arr, axis=axis),
+        "kurtosis_value": kurtosis_value(arr, axis=axis),
+        "sample_skewness": sample_skewness(arr, axis=axis),
+        "signal_length": signal_length(arr, fs=fs, time_mode=time_mode, axis=axis),
+        "central_moments": central_moments(arr, axis=axis),
+        "rms_value": rms_value(arr, axis=axis),
+        "rms_min": rms_min(arr, axis=axis, frame_length=frame_length, hop_length=hop_length),
+        "rms_max": rms_max(arr, axis=axis, frame_length=frame_length, hop_length=hop_length),
+        "rms_mean": rms_mean(arr, axis=axis, frame_length=frame_length, hop_length=hop_length),
+        "zcr_value": zcr_value(arr),
+        "zcr_min": zcr_min(arr, axis=axis, frame_length=frame_length, hop_length=hop_length),
+        "zcr_max": zcr_max(arr, axis=axis, frame_length=frame_length, hop_length=hop_length),
+        "zcr_mean": zcr_mean(arr, axis=axis, frame_length=frame_length, hop_length=hop_length),
+        "energy": energy(arr, axis=axis),
+        "average_power": average_power(arr, axis=axis),
+        "crest_factor": crest_factor(arr, axis=axis),
+        "envelope_energy_peak_detection": envelope_energy_peak_detection(arr, axis=axis, fs=fs),
+        "dominant_frequency": dominant_frequency(arr, fs, axis=axis),
+        "mfcc_mean": mfcc_mean(arr, axis=axis),
     }
