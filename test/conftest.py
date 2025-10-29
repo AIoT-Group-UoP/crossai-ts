@@ -1,6 +1,6 @@
 from _pytest.terminal import TerminalReporter
 from colorama import init
-from caits.functionality_testing import config
+from test import config
 import numpy as np
 import pytest
 
