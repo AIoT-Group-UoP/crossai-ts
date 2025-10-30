@@ -63,7 +63,8 @@ def resample_signal(
 def resample_2d(
     audio_data: np.ndarray, 
     native_sr: int, 
-    target_sr: int, 
+    target_sr: int,
+    axis: int = 0,
     dtype: str = "float32"
 ) -> np.ndarray:
     """Resamples 2D audio data (multi-channel) to a target sampling rate.
@@ -91,18 +92,18 @@ def resample_2d(
 
     return np.apply_along_axis(
         func1d=resample_signal,
-        axis=0,
+        axis=axis,
         arr=audio_data,
         native_sr=native_sr,
-        target_sr=target_sr
+        target_sr=target_sr,
+        dtype=dtype
     )
 
 
 def trim_signal(
     array: np.ndarray, 
     axis=0, 
-    epsilon: 
-    float = 1e-5
+    epsilon: float = 1e-5
 ) -> np.ndarray:
     """Trims the noise from beginning and end of a signal.
 
