@@ -124,8 +124,13 @@ def pcen(
     else:
         # Use of a forward only pass of the filter - but initialize it more
         # carefully.
+        zi_1d = scipy.signal.lfilter_zi([b], [1, b-1])
+        zi = np.tile(zi_1d[:, np.newaxis], (1, S.shape[0] * S.shape[1]))
+        zi = zi.reshape((S.shape[0], S.shape[1], -1))
+
         S_smooth, _ = scipy.signal.lfilter(
-            [b], [1, b - 1], ref, axis=axis, zi=[scipy.signal.lfilter_zi([b], [1, b - 1])] * S[:, 0].shape[0]
+            # [b], [1, b - 1], ref, axis=axis, zi=[scipy.signal.lfilter_zi([b], [1, b - 1])] * S[:, 0].shape[0]
+            [b], [1, b - 1], ref, axis=axis, zi=zi
         )
 
     # Working in log-space gives us some stability, and a slight speedup

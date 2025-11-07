@@ -11,7 +11,7 @@ from ..fe.core_spectrum import phase_vocoder
 
 def add_white_noise(
     array: np.ndarray,
-    noise_factor: float
+    noise_factor: float,
 ) -> np.ndarray:
     """Adds white noise to a signal.
 
@@ -22,7 +22,7 @@ def add_white_noise(
     Returns:
         ndarray: Noisy signal.
     """
-    noise = np.random.normal(0, array.std(), array.size)
+    noise = np.random.normal(0, array.std(), array.shape)
     return array + noise_factor * noise
 
 
@@ -180,13 +180,21 @@ def convolve_ts(
     """
     from tsaug import Convolve
 
+    if array.ndim > 1:
+        _array = array[np.newaxis, ...]
+    else:
+        _array = array
+
     arr = Convolve(window=window, size=kernel, per_channel=per_channel, repeats=repeats, prob=prob, seed=seed).augment(
-        array
+        _array
     )
 
     if repeats > 1 and array.ndim > 1:
         length = array.shape[0]
         arr = arr_splitter(arr, length, repeats)
+
+    if array.ndim > 1:
+        arr = arr[0, ...]
 
     if export_as_list:
         return return_listed_augmentations(arr, repeats)
@@ -228,13 +236,19 @@ def crop_ts(
     """
     from tsaug import Crop
 
+    if array.ndim == 2:
+        _array = array[np.newaxis, ...]
+
     arr = Crop(size=size, resize=resize, repeats=repeats, prob=prob,
                seed=seed
-               ).augment(array)
+               ).augment(_array)
 
     if repeats > 1 and array.ndim > 1:
-        length = array.shape[0]
+        length = _array.shape[0]
         arr = arr_splitter(arr, length, repeats)
+
+    if array.ndim == 2:
+        arr = arr[0, ...]
 
     if export_as_list:
         return return_listed_augmentations(arr, repeats)
@@ -464,13 +478,21 @@ def quantize_ts(
     """
     from tsaug import Quantize
 
+    if array.ndim > 1:
+        _array = array[np.newaxis, ...]
+    else:
+        _array = array
+
     arr = Quantize(n_levels=n_levels, how=how, per_channel=per_channel,
                    repeats=repeats, prob=prob, seed=seed
-                   ).augment(array)
+                   ).augment(_array)
 
     if repeats > 1 and array.ndim > 1:
         length = array.shape[0]
         arr = arr_splitter(arr, length, repeats)
+
+    if array.ndim > 1:
+        arr = arr[0, ...]
 
     if export_as_list:
         return return_listed_augmentations(arr, repeats)
@@ -507,12 +529,20 @@ def resize_ts(
     """
     from tsaug import Resize
 
+    if array.ndim > 1:
+        _array = array[np.newaxis, ...]
+    else:
+        _array = array
+
     arr = Resize(size=size, repeats=repeats, prob=prob, seed=seed
-                 ).augment(array)
+                 ).augment(_array)
 
     if repeats > 1 and array.ndim > 1:
         length = array.shape[0]
         arr = arr_splitter(arr, length, repeats)
+
+    if array.ndim > 1:
+        arr = arr[0, ...]
 
     if export_as_list:
         return return_listed_augmentations(arr, repeats)
@@ -545,11 +575,19 @@ def reverse_ts(
     """
     from tsaug import Reverse
 
-    arr = Reverse(repeats=repeats, prob=prob, seed=seed).augment(array)
+    if array.ndim == 2:
+        _array = array[np.newaxis, ...]
+    else:
+        _array = array
+
+    arr = Reverse(repeats=repeats, prob=prob, seed=seed).augment(_array)
 
     if repeats > 1 and array.ndim > 1:
         length = array.shape[0]
         arr = arr_splitter(arr, length, repeats)
+
+    if array.ndim == 2:
+        arr = arr[0, ...]
 
     if export_as_list:
         return return_listed_augmentations(arr, repeats)
@@ -593,14 +631,22 @@ def time_warp_ts(
     """
     from tsaug import TimeWarp
 
+    if array.ndim == 2:
+        _array = array[np.newaxis, ...]
+    else:
+        _array = array
+
     arr = TimeWarp(
         n_speed_change=n_speed_change, max_speed_ratio=max_speed_ratio,
         repeats=repeats, prob=prob, seed=seed
-    ).augment(array)
+    ).augment(_array)
 
     if repeats > 1 and array.ndim > 1:
         length = array.shape[0]
         arr = arr_splitter(arr, length, repeats)
+
+    if array.ndim == 2:
+        arr = arr[0, ...]
 
     if export_as_list:
         return return_listed_augmentations(arr, repeats)
@@ -663,6 +709,7 @@ def time_stretch_ts(
     y: np.ndarray,
     *,
     rate: float,
+    axis: int = 0,
     **kwargs: Any
 ) -> np.ndarray:
     # The functionality in this implementation are basically derived from
@@ -684,7 +731,7 @@ def time_stretch_ts(
     )
 
     # Predict the length of y_stretch
-    len_stretch = int(round(y.shape[-1] / rate))
+    len_stretch = int(round(y.shape[axis] / rate))
 
     # Invert the STFT
     y_stretch = istft(stft_stretch, dtype=y.dtype, length=len_stretch,
@@ -701,6 +748,7 @@ def pitch_shift_ts(
     bins_per_octave: int = 12,
     res_type: str = "soxr_hq",
     scale: bool = False,
+    axis: int = 0,
     **kwargs: Any,
 ) -> np.ndarray:
     # The functionality in this implementation are basically derived from
@@ -720,7 +768,8 @@ def pitch_shift_ts(
         target_sr=sr,
         res_type=res_type,
         scale=scale,
+        axis=axis
     )
 
     # Crop to the same dimension as the input
-    return fix_length(y_shift, size=y.shape[-1])
+    return fix_length(y_shift, size=y.shape[axis], axis=axis)

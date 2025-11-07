@@ -1,5 +1,4 @@
 from typing import Union
-
 from joblib import dump, load
 from sklearn.base import BaseEstimator
 from sklearn.pipeline import Pipeline

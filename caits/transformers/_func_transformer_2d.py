@@ -1,12 +1,11 @@
-from typing import Dict, Callable, Any
+from typing import Dict, Callable, Any, Union
 from sklearn.base import BaseEstimator, TransformerMixin
 from pandas import DataFrame
-
-from ..dataset import Dataset
+from ..dataset import Dataset, RegressionDataset
 
 
 class FunctionTransformer2D(BaseEstimator, TransformerMixin):
-    def __init__(self, func: Callable, **kw_args: Dict[str, Any]):
+    def __init__(self, func: Callable, **kwargs: Dict[str, Any]):
         """Initializes the Transformer class.
 
         Args:
@@ -14,7 +13,7 @@ class FunctionTransformer2D(BaseEstimator, TransformerMixin):
             **kw_args: Keyword arguments to be passed to the function.
         """
         self.func = func
-        self.kw_args = kw_args
+        self.kw_args = kwargs
 
     def fit(self, X, y=None):
         """Fits the transformer
@@ -28,7 +27,7 @@ class FunctionTransformer2D(BaseEstimator, TransformerMixin):
         """
         return self
 
-    def transform(self, X: Dataset) -> Dataset:
+    def transform(self, X: Union[Dataset, RegressionDataset]) -> Union[Dataset, RegressionDataset]:
         """Applies the transformation function to each DataFrame.
 
         Each DataFrame is treated as a 2D matrix, and the transformation is
@@ -50,7 +49,12 @@ class FunctionTransformer2D(BaseEstimator, TransformerMixin):
             transformed_X.append(transformed_df)
 
         # Return a new Dataset object with the transformed data
-        return Dataset(transformed_X, X.y, X._id)
+        if isinstance(X, Dataset):
+            return Dataset(transformed_X, X.y, X._id)
+        elif isinstance(X, RegressionDataset):
+            return RegressionDataset(transformed_X, X.y)
+        else:
+            raise NotImplementedError("Transformer not implemented.")
 
     def get_params(self, deep=True):
         """Overrides get_params to include func_kwargs.
