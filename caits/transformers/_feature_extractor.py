@@ -1,11 +1,9 @@
 from collections import defaultdict
-from typing import Dict, List
-
+from typing import Dict, List, Union
 import numpy as np
 from pandas import DataFrame
 from sklearn.base import BaseEstimator, TransformerMixin
-
-from ..dataset import Dataset
+from ..dataset import Dataset, RegressionDataset
 
 
 class FeatureExtractor(BaseEstimator, TransformerMixin):
@@ -15,7 +13,7 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         return self
 
-    def transform(self, X: Dataset) -> Dataset:
+    def transform(self, X: Union[Dataset, RegressionDataset]) -> Union[Dataset, RegressionDataset]:
         transformed_X = []
 
         for df in X.X:
@@ -51,5 +49,11 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
             # with channels as columns and features as rows
             features_df = DataFrame(features_dict, index=[col_name for col_name in df.keys()]).T
             transformed_X.append(features_df)
+            print(transformed_X)
 
-        return Dataset(transformed_X, X.y, X._id)
+        if isinstance(X, Dataset):
+            return Dataset(transformed_X, X.y, X._id)
+        elif isinstance(X, RegressionDataset):
+            return RegressionDataset(transformed_X, X.y)
+        else:
+            raise NotImplementedError("Transformer not implemented.")

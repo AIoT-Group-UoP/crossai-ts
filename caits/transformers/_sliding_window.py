@@ -1,5 +1,4 @@
 from sklearn.base import BaseEstimator, TransformerMixin
-
 from ..dataset import Dataset
 from ..windowing import sliding_window_df
 

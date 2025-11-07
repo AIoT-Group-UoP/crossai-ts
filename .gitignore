@@ -259,3 +259,18 @@ cython_debug/
 
 #folder for testings
 testings/
+#functionality_testing/
+
+# folders with data
+examples/data/AirQuality/
+examples/data/Fitabase_Data_3.12.16-4.11.16/
+examples/data/Gestures/
+examples/data/ChestWall_Organized_16000_PCM_16/
+examples/data/GestureSet_small
+
+# dev folders - use for developing new functions or refactoring existing functions
+#dev/
+
+.qodo/
+qodana.yaml
+.run/

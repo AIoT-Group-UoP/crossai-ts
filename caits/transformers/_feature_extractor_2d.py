@@ -1,8 +1,7 @@
-from typing import Dict, Callable, Any
+from typing import Dict, Callable, Any, Union
 from pandas import DataFrame
 from sklearn.base import BaseEstimator, TransformerMixin
-
-from ..dataset import Dataset
+from ..dataset import Dataset, RegressionDataset
 
 
 class FeatureExtractor2D(BaseEstimator, TransformerMixin):
@@ -13,7 +12,7 @@ class FeatureExtractor2D(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         return self
 
-    def transform(self, X: Dataset) -> Dataset:
+    def transform(self, X: Union[Dataset, RegressionDataset]) -> Union[Dataset, RegressionDataset]:
         transformed_X = []
 
         for df in X.X:
@@ -34,7 +33,12 @@ class FeatureExtractor2D(BaseEstimator, TransformerMixin):
             # Store the 2D numpy array as a DataFrame
             transformed_X.append(DataFrame(feature))
 
-        return Dataset(transformed_X, X.y, X._id)
+        if isinstance(X, Dataset):
+            return Dataset(transformed_X, X.y, X._id)
+        elif isinstance(X, RegressionDataset):
+            return RegressionDataset(transformed_X, X.y)
+        else:
+            raise NotImplementedError("Transformer not implemented.")
 
     def get_params(self, deep=True):
         """Overrides get_params to include func and kw_args."""

@@ -8,7 +8,8 @@ from scipy.signal import (butter, filtfilt, medfilt, sosfilt, sosfilt_zi,
 
 def filter_median_simple(
     array: np.ndarray, 
-    kernel_size: int = None
+    kernel_size: int = None,
+    axis = 0
 ) -> np.ndarray:
     """Performs a median filter on an N-dimensional array.
 
@@ -24,8 +25,10 @@ def filter_median_simple(
         >>> signal = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9])
         >>> filtered_signal = filter_median_simple(array, kernel_size=3)
     """
-    filtered_signal = medfilt(array, kernel_size)
-    return filtered_signal
+    _array = array if axis == 0 else array.T
+
+    filtered_signal = medfilt(_array, kernel_size)
+    return filtered_signal if axis == 0 else filtered_signal.T
 
 
 def filter_median_gen(
@@ -34,7 +37,8 @@ def filter_median_gen(
     output=None, 
     mode="reflect", 
     cval=0.0, 
-    origin=0
+    origin=0,
+    axis=0
 ) -> np.ndarray:
     """Calculates a multidimensional median filter. This is more general
         function than median_simple, and thus, has a more efficient
@@ -61,8 +65,10 @@ def filter_median_gen(
         >>> signal = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9])
         >>> filtered_signal = filter_median_gen(array, window_size=3)
     """
-    filtered_signal = median_filter(array, size=window_size, output=output, mode=mode, cval=cval, origin=origin)
-    return filtered_signal
+    _array = array if axis == 0 else array.T
+
+    filtered_signal = median_filter(_array, size=window_size, output=output, mode=mode, cval=cval, origin=origin)
+    return filtered_signal if axis == 0 else filtered_signal.T
 
 
 def filter_butterworth(
@@ -141,13 +147,10 @@ def filter_butterworth(
         if method == "sosfilt":
             if zi_enable:
                 tmp = sosfilt_zi(sos)
-                print("initial shape", tmp.shape)
                 if len(tmp.shape) < 3:
-                    zi = tmp[:, :, np.newaxis]
-                    print("if shape < 3, transform to: ", zi.shape)
+                    zi = tmp[..., np.newaxis]
                 else:
                     zi = tmp
-                    print("else zi shape", tmp.shape)
                 # return the filtered signal and the final filter delay
                 return sosfilt(sos, array, axis=axis, zi=zi)[0]
             else:
@@ -170,6 +173,7 @@ def filter_gaussian(
     mode="reflect",
     cval=0.0,
     truncate=4.0,
+    axis = 0
 ) -> np.ndarray:
     """Applies a Gaussian filter to a signal using SciPy.
 
@@ -197,8 +201,12 @@ def filter_gaussian(
         >>> signal = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9])
         >>> filtered_signal = filter_gaussian(signal, sigma=1)
     """
-    return gaussian_filter(
-        array, sigma=sigma, order=order, 
+    _array = array if axis == 0 else array.T
+
+    filtered_signal = gaussian_filter(
+        _array, sigma=sigma, order=order,
         output=output, mode=mode, cval=cval, 
         truncate=truncate
     )
+
+    return filtered_signal if axis == 0 else filtered_signal.T

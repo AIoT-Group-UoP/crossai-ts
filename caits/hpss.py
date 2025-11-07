@@ -9,6 +9,7 @@ from .fe import stft, istft
 def hpss(
     y: np.ndarray,
     percussion_factor: Optional[float] = None,
+    axis: int = 0,
     **kwargs: Any
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Decomposes an audio time series into harmonic and percussive components.
@@ -22,6 +23,8 @@ def hpss(
         percussion_factor (Optional[float]): Factor to apply to the percussive
             component for enhanced audio. If None, harmonic and percussive
             components are returned. Default is None.
+        axis (int): Axis to apply to the harmonic and percussive components.
+            Default is 0.
         **kwargs (Any): Additional keyword arguments for
             `librosa.decompose.hpss`.
 
@@ -41,9 +44,11 @@ def hpss(
     stft_harm, stft_perc = _hpss(stft_matrix, **kwargs)
 
     # Invert the STFTs. Adjust length to match the input.
-    y_harm = istft(stft_harm, dtype=y.dtype, length=y.shape[-1])
-    y_perc = istft(stft_perc, dtype=y.dtype, length=y.shape[-1])
+    # y_harm = istft(stft_harm, dtype=y.dtype, length=y.shape[-1])
+    # y_perc = istft(stft_perc, dtype=y.dtype, length=y.shape[-1])
 
+    y_harm = istft(stft_harm, dtype=y.dtype, length=y.shape[axis])
+    y_perc = istft(stft_perc, dtype=y.dtype, length=y.shape[axis])
     if percussion_factor is not None:
         enhanced_audio = y_harm + percussion_factor * y_perc
         return enhanced_audio

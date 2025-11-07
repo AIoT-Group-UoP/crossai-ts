@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def normalize_signal(sig: np.ndarray) -> np.ndarray:
+def normalize_signal(sig: np.ndarray, axis: int = 0) -> np.ndarray:
     """Normalizes a signal to the proper range.
 
     Args:
@@ -18,7 +18,7 @@ def normalize_signal(sig: np.ndarray) -> np.ndarray:
             return sig / max(intinfo.max, -intinfo.min)
 
         except ValueError:  # array is not integer dtype
-            return sig / max(sig.max(), -sig.min())
+            return sig / np.max((sig.max(axis=axis), -sig.min(axis=axis)), axis=axis)
 
 
 def resample_signal(
@@ -60,11 +60,11 @@ def resample_signal(
     return resampled_buffer
 
 
-# TODO: Make it also work for (n_samples, ) arrays for robustness
 def resample_2d(
     audio_data: np.ndarray, 
     native_sr: int, 
-    target_sr: int, 
+    target_sr: int,
+    axis: int = 0,
     dtype: str = "float32"
 ) -> np.ndarray:
     """Resamples 2D audio data (multi-channel) to a target sampling rate.
@@ -81,31 +81,29 @@ def resample_2d(
         ValueError: If the input `audio_data` is not a 2-dimensional NumPy array.
     """
 
+    # If audio data is 1D (n_samples, ), make it 2D (n_samples, 1)
+    if audio_data.ndim == 1:
+        audio_data = np.expand_dims(audio_data, axis=-1)
+
     # Check if audio data is 2D
-    if audio_data.ndim != 2:
-        raise ValueError("Input audio data must be a 2-dimensional NumPy array " "(n_samples, n_channels).")
+    elif audio_data.ndim != 2:
+        raise ValueError(
+            "Input audio data must be a 1-dimensional or 2-dimensional NumPy array " "(n_samples, n_channels).")
 
-    # Initialize a list to hold resampled channels
-    resampled_channels = []
-
-    # Iterate through each channel in the audio data
-    for i in range(audio_data.shape[1]):
-        channel_data = audio_data[:, i]
-        resampled_channel_data = resample_signal(channel_data, native_sr, target_sr, dtype)
-
-        resampled_channels.append(resampled_channel_data)
-
-    # Stack the resampled channels back into a 2D array
-    resampled_audio_data = np.stack(resampled_channels, axis=1)
-
-    return resampled_audio_data
+    return np.apply_along_axis(
+        func1d=resample_signal,
+        axis=axis,
+        arr=audio_data,
+        native_sr=native_sr,
+        target_sr=target_sr,
+        dtype=dtype
+    )
 
 
 def trim_signal(
     array: np.ndarray, 
     axis=0, 
-    epsilon: 
-    float = 1e-5
+    epsilon: float = 1e-5
 ) -> np.ndarray:
     """Trims the noise from beginning and end of a signal.
 

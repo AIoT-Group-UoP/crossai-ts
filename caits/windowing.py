@@ -77,6 +77,34 @@ def sliding_window_df(df: pd.DataFrame, window_size: int, overlap: int) -> List[
     return windowed_dfs
 
 
+def sliding_window_arr(arr: np.ndarray, window_size: int, overlap: int) -> List[np.ndarray]:
+    """Generates windowed np.ndarray based on the specified
+    window size and overlap.
+
+    Args:
+        arr: The np.ndarray with all the values that will be inserted to the
+            sliding window algorithm.
+        window_size: The window size in number of samples.
+        overlap: The hop length in number of samples.
+
+    Returns:
+        List of segmented CaitsArrays.
+    """
+    if overlap >= window_size:
+        raise ValueError("Overlap must be smaller than window size.")
+
+    step_size = window_size - overlap
+    windowed_arrs = []
+
+    num_rows = arr.shape[0]
+    for start in range(0, num_rows - window_size + 1, step_size):
+        end = start + window_size
+        windowed_arr = arr[start:end, ...]
+        windowed_arrs.append(windowed_arr)
+
+    return windowed_arrs
+
+
 def windowing_df(
     df: pd.DataFrame,
     ws: int = 500,
@@ -130,7 +158,8 @@ def windowing_df(
 def frame_signal(
     array: np.ndarray,
     frame_length: int,
-    hop_length: int
+    hop_length: int,
+    axis: int = 0
 ) -> np.ndarray:
     """Distinguishes a signal into overlapping frames.
 
@@ -144,7 +173,7 @@ def frame_signal(
             (frame_length x num_frames).
     """
     # Number of frames
-    num_frames = 1 + int(np.floor((len(array) - frame_length) / hop_length))
+    num_frames = 1 + int(np.floor((array.shape[axis] - frame_length) / hop_length))
     # Row indices
     rows = np.arange(frame_length)[:, None]
     # Column indices
