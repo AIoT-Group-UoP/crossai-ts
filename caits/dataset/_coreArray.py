@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Optional, Dict, List
+from typing import Optional, Dict, Iterable
 
 DISPLAY_NUM_ROWS = 5
 DISPLAY_NUM_COLS = 6
@@ -90,7 +90,7 @@ class CoreArray:
     def __init__(
             self,
             values: np.ndarray,
-            axis_names: Optional[Dict[str, List]]=None
+            axis_names: Optional[Dict[str, Iterable]]=None
     ):
         self.values = values
         self.axis_names = {f"axis_{i}": {} for i in range(values.ndim)}
