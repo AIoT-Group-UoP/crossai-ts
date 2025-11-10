@@ -1,13 +1,12 @@
 from ._loader import DataLoader
 from ._coreArray import CoreArray
-from ._dataset import Dataset
-from ._datasetArray import DatasetArray
-from ._datasetList import DatasetList
+from ._datasetBase import DatasetBase
+from ._dataset import DatasetArray, DatasetList
 
 __all__ = [
     "DataLoader",
     "CoreArray",
-    "Dataset",
+    "DatasetBase",
     "DatasetArray",
     "DatasetList"
 ]
