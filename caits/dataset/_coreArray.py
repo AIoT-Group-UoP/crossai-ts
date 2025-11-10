@@ -1,6 +1,5 @@
 import numpy as np
-from typing import Optional, Dict
-import copy
+from typing import Optional, Dict, List
 
 DISPLAY_NUM_ROWS = 5
 DISPLAY_NUM_COLS = 6
@@ -88,7 +87,11 @@ class CoreArray:
                     return CoreArray(self.parent.values[*idxs], axis_names=axis_names)
 
 
-    def __init__(self, values: np.ndarray, axis_names: Optional[Dict]=None):
+    def __init__(
+            self,
+            values: np.ndarray,
+            axis_names: Optional[Dict[str, List]]=None
+    ):
         self.values = values
         self.axis_names = {f"axis_{i}": {} for i in range(values.ndim)}
         self.shape = values.shape
@@ -98,19 +101,17 @@ class CoreArray:
             axis_names = {}
 
         if len(axis_names) > values.ndim:
-            print(axis_names)
-            print(values)
-            raise ValueError("Axis names must not exceed number of dimensions")
+            raise ValueError(
+                f"Number of axis names ({len(axis_names)},) must not exceed number of dimensions ({values.ndim},)."
+            )
         for i, axis in enumerate([f"axis_{j}" for j in range(values.ndim)]):
             if axis in axis_names.keys():
                 if len(axis_names[axis]) != values.shape[i]:
-                    print(values)
-                    print(axis_names[axis])
                     raise ValueError(
-                        f"Shapes {[len(axis) for axis in axis_names.values()]} "
-                        f"and {list(values.shape)} don't match.")
+                        f"Number of axis names ({len(axis_names[axis])},) "
+                        f"and number of values ({list(values[axis])},) in axis={axis} don't match.")
                 else:
-                    self.axis_names[axis] = copy.deepcopy(axis_names[axis])
+                    self.axis_names[axis] = {name: j for j, name in enumerate(axis_names[axis])}
             else:
                 self.axis_names[axis] = {j: j for j in range(values.shape[i])}
 
