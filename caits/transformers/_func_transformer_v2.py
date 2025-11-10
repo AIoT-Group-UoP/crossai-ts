@@ -1,8 +1,8 @@
 from typing import Union, TypeVar
 from sklearn.base import BaseEstimator, TransformerMixin
-from caits.dataset import Dataset
+from caits.dataset import DatasetBase
 
-T = TypeVar('T', bound="Dataset")
+T = TypeVar('T', bound="DatasetBase")
 
 class FunctionTransformer(BaseEstimator, TransformerMixin):
     def __init__(self, func, **func_kwargs):
@@ -36,7 +36,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
             X: The Dataset object containing the data to be transformed.
 
         Returns:
-            Dataset: A new Dataset object with the transformed data.
+            DatasetBase: A new Dataset object with the transformed data.
         """
         transformed_data = data.apply(self.func, **self.func_kwargs)
         return data.numpy_to_dataset(transformed_data)

@@ -1,8 +1,8 @@
 from typing import Union, TypeVar, List, Dict, Optional
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import FunctionTransformer
-from ..dataset import Dataset
-T = TypeVar('T', bound="Dataset")
+from ..dataset import DatasetBase
+T = TypeVar('T', bound="DatasetBase")
 
 class SklearnWrapper(BaseEstimator, TransformerMixin):
     def __init__(self, transformer, transformer_kwargs: Optional[Dict]=None):
@@ -39,7 +39,7 @@ class SklearnWrapper(BaseEstimator, TransformerMixin):
             X: The Dataset object containing the data to be transformed.
 
         Returns:
-            Dataset: A new Dataset object with the transformed data.
+            DatasetBase: A new Dataset object with the transformed data.
         """
         transformed_X = self.fitted_transformer_.transform(data.X.values)
         return data.numpy_to_dataset(transformed_X, split=False)

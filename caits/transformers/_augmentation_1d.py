@@ -3,7 +3,7 @@ from typing import Callable, Dict, List
 from sklearn.base import BaseEstimator, TransformerMixin
 from typing_extensions import TypedDict
 
-from ..dataset import Dataset
+from ..dataset import DatasetBase
 
 class Augmentation(TypedDict):
     func: Callable
@@ -30,7 +30,7 @@ class Augmenter1D(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         return self
 
-    def transform(self, X: Dataset) -> Dataset:
+    def transform(self, X: DatasetBase) -> DatasetBase:
         transformed_X = []
         transformed_y = []
         transformed_id = []
@@ -53,4 +53,4 @@ class Augmenter1D(BaseEstimator, TransformerMixin):
                 transformed_y.append(label)  # Duplicate label
                 transformed_id.append(id_)  # Duplicate ID
 
-        return Dataset(transformed_X, transformed_y, transformed_id)
+        return DatasetBase(transformed_X, transformed_y, transformed_id)

@@ -3,7 +3,7 @@ from typing import Any, List, Optional
 from numpy import ndarray
 from pandas import DataFrame
 from sklearn.base import BaseEstimator, TransformerMixin
-from ..dataset import Dataset
+from ..dataset import DatasetBase
 
 
 class ArrayToDataset(BaseEstimator, TransformerMixin):
@@ -58,7 +58,7 @@ class ArrayToDataset(BaseEstimator, TransformerMixin):
         X_dfs = [DataFrame(x) for x in X]
 
         # Create and return the Dataset object
-        return Dataset(X=X_dfs, y=list(y), id=self.ids)
+        return DatasetBase(X=X_dfs, y=list(y), id=self.ids)
 
 
 class DatasetToArray(BaseEstimator, TransformerMixin):

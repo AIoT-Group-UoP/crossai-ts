@@ -1,8 +1,8 @@
 from typing import Dict, Callable, Any, Union, TypeVar
 from sklearn.base import BaseEstimator, TransformerMixin
-from caits.dataset import Dataset
+from caits.dataset import DatasetBase
 
-T = TypeVar("T", bound="Dataset")
+T = TypeVar("T", bound="DatasetBase")
 
 
 class FunctionTransformer2D(BaseEstimator, TransformerMixin):
@@ -40,7 +40,7 @@ class FunctionTransformer2D(BaseEstimator, TransformerMixin):
             X: The Dataset object containing the data to be transformed.
 
         Returns:
-            Dataset: A new Dataset object with the transformed data.
+            DatasetBase: A new Dataset object with the transformed data.
         """
         res = data.apply(self.func, **self.kw_args)
         axis_names = data.get_axis_names_X()["axis_0"]
