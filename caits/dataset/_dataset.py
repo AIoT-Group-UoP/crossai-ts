@@ -171,13 +171,13 @@ class DatasetArray(DatasetBase):
             return {
                 "X": pd.DataFrame(
                     self.X.values,
-                    columns=list(self.X.axis_names["axis_1"].keys()),
-                    index=list(self.X.axis_names["axis_0"].keys())
+                    columns=self.X.keys()["axis_1"],
+                    index=self.X.keys()["axis_0"]
                 ),
                 "y": pd.DataFrame(
                     self.y.values,
-                    columns=list(self.y.axis_names["axis_1"].keys()),
-                    index=list(self.y.axis_names["axis_0"].keys())
+                    columns=self.y.keys()["axis_1"],
+                    index=self.y.keys()["axis_0"]
                 )
             }
         else:
