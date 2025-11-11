@@ -478,7 +478,7 @@ class DatasetList(DatasetBase):
     def to_df(self):
         return {
             "X": {
-                [pd.DataFrame(x, columns=list(self.X[0].axis_names["axis_1"].keys())) for x in self.X]
+                [pd.DataFrame(x, columns=list(self.X[0].keys()["axis_1"])) for x in self.X]
             },
             "y": pd.DataFrame(self.y),
             "id": pd.DataFrame(self._id)
