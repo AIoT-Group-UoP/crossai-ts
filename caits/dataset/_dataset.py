@@ -212,11 +212,11 @@ class DatasetArray(DatasetBase):
 
         features_X = np.stack([feat for feat in features_tmp.values()], axis=axis)
 
-        axis_names[f"axis_{axis}"] = {name: i for i, name in enumerate(features_tmp.keys())}
+        axis_names[f"axis_{axis}"] = list(features_tmp.keys())
 
         _axis = 1 if axis == 0 else 0
 
-        axis_names_X = axis_names | {f"axis_{_axis}": self.X.axis_names[f"axis_{_axis}"]}
+        axis_names_X = axis_names | {f"axis_{_axis}": self.X.keys()[f"axis_{_axis}"]}
 
         return DatasetArray(
             X=CoreArray(features_X, axis_names=axis_names_X),
