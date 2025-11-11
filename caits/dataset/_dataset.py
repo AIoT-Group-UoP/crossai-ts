@@ -426,15 +426,15 @@ class DatasetList(DatasetBase):
                 X=self.X + sum([o.X for o in others], []),
                 y=self.y + sum([o.y for o in others], []),
                 id=self._id + sum([o._id for o in others], []),
-                )
+            )
         elif axis == 1:
             caitsX = []
             for i in range(len(self.X)):
                 if axis_names is None:
-                    _axis_names = deepcopy(self.X[i].axis_names)
-                    axis_1 = list(_axis_names["axis_1"].keys())
-                    axis_1 += sum([list(d.X[i].axis_names["axis_1"].keys()) for d in others], [])
-                    _axis_names["axis_1"] = {name: i for i, name in enumerate(axis_1)}
+                    _axis_names = self.X[i].keys()
+                    axis_1 = _axis_names["axis_1"]
+                    axis_1 += sum([list(d.X[i].keys()["axis_1"]) for d in others], [])
+                    _axis_names["axis_1"] = axis_1
                 else:
                     _axis_names = axis_names
 
