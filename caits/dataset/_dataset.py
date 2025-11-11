@@ -287,14 +287,14 @@ class DatasetArray(DatasetBase):
 
     # TODO: Adjust
     def flatten(self, axis_names_sep=","):
-        axis_names_0 = list(self.X.axis_names["axis_0"].keys())
-        axis_names_1 = list(self.X.axis_names["axis_1"].keys())
+        axis_names_0 = self.X.keys()["axis_0"]
+        axis_names_1 = self.X.keys()["axis_1"]
         axis_names = {
-            "axis_0": {
-                name: i for i, name in enumerate(
-                    [f"{s0}{axis_names_sep}{s1}" for s0 in axis_names_0 for s1 in axis_names_1]
-                )
-            }
+            "axis_0": [
+                f"{s0}{axis_names_sep}{s1}"
+                for s0 in axis_names_0
+                for s1 in axis_names_1
+            ]
         }
 
         return DatasetArray(CoreArray(self.X.values.flatten(), axis_names=axis_names), self.y)
