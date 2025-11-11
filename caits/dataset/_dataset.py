@@ -151,10 +151,10 @@ class DatasetArray(DatasetBase):
             raise ValueError("self.X and other.X must have the same number of columns.")
 
     def replace(self, other):
-        if len(set(self.X.axis_names["axis_1"].keys()).intersection(other.X.axis_names["axis_1"].keys())) == 0:
+        if len(set(self.X.keys()["axis_1"]).intersection(other.X.keys()["axis_1"])) == 0:
             raise IndexError(f"Column names {other.X.axis_names['axis_names'].keys()} not found in X or y.")
 
-        column_names = list(other.X.axis_names["axis_1"].keys())
+        column_names = other.X.keys()["axis_1"]
         idxs = [self.X.axis_names["axis_1"][col] for col in column_names]
 
         self.X.values[:, idxs] = other.X.values
