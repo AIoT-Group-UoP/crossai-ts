@@ -118,15 +118,10 @@ class DatasetArray(DatasetBase):
                     for o in others
                 ]
         ):
-            tmp_axis_names_X = {
-                (name if axis == 1 else i): i for i, name in enumerate(
-                    list(self.X.axis_names[f"axis_{axis}"].keys()) +
-                    sum([list(o.X.axis_names[f"axis_{axis}"].keys()) for o in others], [])
-                )
-            }
+            tmp_axis_names_X = self.X.keys()[f"axis_{axis}"] + sum([o.X.keys()[f"axis_{axis}"] for o in others])
 
             if axis_names is None:
-                axis_names_X = deepcopy(self.X.axis_names)
+                axis_names_X = self.X.keys()
                 axis_names_X[f"axis_{axis}"] = tmp_axis_names_X
             else:
                 axis_names_X = axis_names
@@ -145,7 +140,7 @@ class DatasetArray(DatasetBase):
                         [self.y.values] + [o.y.values for o in others],
                         axis=0
                     ),
-                    axis_names={"axis_1": self.y.axis_names["axis_1"]}
+                    axis_names={"axis_1": self.y.keys()["axis_1"]}
                 )
             else:
                 y = self.y
