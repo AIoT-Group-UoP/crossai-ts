@@ -527,7 +527,7 @@ class DatasetList(DatasetBase):
             ) for i in range(len(list(features_tmp.values())[0]))
         ]
 
-        axis_names[f"axis_{axis}"] = {name: i for i, name in enumerate(features_tmp.keys())}
+        axis_names[f"axis_{axis}"] = list(features_tmp.keys())
 
         return self.numpy_to_dataset(values, axis_names)
 
