@@ -278,7 +278,10 @@ class DatasetArray(DatasetBase):
 
     def stack(self, X: List[np.ndarray]):
         return DatasetList(
-            X=[CoreArray(values=x, axis_names={"axis_1": self.X.axis_names["axis_1"]}) for x in X],
+            X=[
+                CoreArray(values=x, axis_names={"axis_1": self.X.keys()["axis_1"]})
+                for x in X
+            ],
             y=self.y
         )
 
