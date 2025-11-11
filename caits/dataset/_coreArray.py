@@ -147,7 +147,7 @@ class CoreArray:
             values = [f"{val:>{widths[1]}}" for val in value_strs]
             res += "\n".join([n+v for n, v in zip(names, values)]) + "\n\n"
 
-        res += f"CaitsArray with shape {self.shape}\n"
+        res += f"CoreArray with shape {self.shape}\n"
         return res
 
     def __repr_single_frame(self, comb=None):
