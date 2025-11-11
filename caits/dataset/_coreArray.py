@@ -224,3 +224,10 @@ class CoreArray:
             result += "".join(tmp) + "\n"
 
         return result
+
+
+    def keys(self):
+        return {
+            k: list(v.keys())
+            for k, v in self.axis_names.items()
+        }
