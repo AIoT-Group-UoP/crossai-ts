@@ -229,7 +229,7 @@ class DatasetArray(DatasetBase):
         dfX = CoreArray(
             vals,
             axis_names={
-                axis: names for axis, names in X.axis_names.items() if axis != "axis_0"
+                axis: names for axis, names in X.keys().items() if axis != "axis_0"
             }
         )
         return dfX
