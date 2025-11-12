@@ -39,7 +39,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
             DatasetBase: A new Dataset object with the transformed data.
         """
         transformed_data = data.apply(self.func, **self.func_kwargs)
-        return data.numpy_to_dataset(transformed_data)
+        return data.numpy_to_dataset(transformed_data, {"axis_1": data.get_axis_names_X()["axis_1"]})
 
     def get_params(self, deep=True):
         """Overrides get_params to include func_kwargs.
