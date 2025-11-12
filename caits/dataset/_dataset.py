@@ -196,10 +196,14 @@ class DatasetArray(DatasetBase):
             self,
             X,
             axis_names: Optional[Dict[str, Dict[Union[str, int], int]]] = None,
-            split: bool = True
+            split: bool = False
     ):
-        dfX = CoreArray(X, axis_names=axis_names)
-        return DatasetArray(X=dfX, y=self.y)
+        if not split:
+            dfX = CoreArray(X, axis_names=axis_names)
+            return DatasetArray(X=dfX, y=self.y)
+        else:
+            dfX = [CoreArray(x, axis_names=axis_names) for x in X]
+            return DatasetList(X=dfX, y=self.y)
 
     def features_dict_to_dataset(self, features, axis_names, axis):
         features_tmp = {}
