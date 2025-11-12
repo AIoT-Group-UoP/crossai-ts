@@ -544,8 +544,7 @@ class DatasetList(DatasetBase):
             for i, y in enumerate(self.y):
                 if y not in tmp.keys():
                     tmp[y] = []
-                else:
-                    tmp[y].append(i)
+                tmp[y].append(i)
 
             all_idxs = tmp.values()
 
