@@ -118,7 +118,7 @@ class DatasetArray(DatasetBase):
                     for o in others
                 ]
         ):
-            tmp_axis_names_X = self.X.keys()[f"axis_{axis}"] + sum([o.X.keys()[f"axis_{axis}"] for o in others])
+            tmp_axis_names_X = self.X.keys()[f"axis_{axis}"] + sum([o.X.keys()[f"axis_{axis}"] for o in others], [])
 
             if axis_names is None:
                 axis_names_X = self.X.keys()
