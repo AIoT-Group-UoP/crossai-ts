@@ -109,7 +109,7 @@ class CoreArray:
                 if len(axis_names[axis]) != values.shape[i]:
                     raise ValueError(
                         f"Number of axis names ({len(axis_names[axis])},) "
-                        f"and number of values ({list(values[axis])},) in axis={axis} don't match.")
+                        f"and number of values ({values.shape[i]},) in axis={axis} don't match.")
                 else:
                     self.axis_names[axis] = {name: j for j, name in enumerate(axis_names[axis])}
             else:
