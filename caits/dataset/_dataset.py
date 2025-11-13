@@ -6,6 +6,7 @@ import pandas as pd
 from math import ceil, floor
 from ._coreArray import CoreArray
 from ._datasetBase import DatasetBase
+import itertools
 
 
 class DatasetArray(DatasetBase):
@@ -600,19 +601,24 @@ class DatasetList(DatasetBase):
         return DatasetList(X=caitsX, y=y, id=id)
 
     def flatten(self, axis_names_sep=","):
-        axis_names_0 = self.X[0].keys()["axis_0"]
-        axis_names_1 = self.X[0].keys()["axis_1"]
+        axis_names = self.X[0].keys()
+        axis_names_list = []
+        for i in range(len(axis_names)):
+            axis_names_list.append(axis_names[f"axis_{i}"])
+
+        axis_names_combs = []
+        for comb in itertools.product(*axis_names_list):
+            axis_names_combs.append(axis_names_sep.join([str(x) for x in comb]))
+
         axis_names = {
-            "axis_1": [
-                f"{s0}{axis_names_sep}{s1}"
-                for s0 in axis_names_0
-                for s1 in axis_names_1
-            ]
+            "axis_1": axis_names_combs,
         }
+
+        flattened_values = np.stack([x.values.flatten() for x in self.X], axis=0)
 
         return DatasetArray(
             X=CoreArray(
-                np.stack([x.values.flatten() for x in self.X], axis=0),
+                flattened_values,
                 axis_names=axis_names
             ),
             y=self.y,
