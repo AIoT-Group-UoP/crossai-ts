@@ -267,6 +267,7 @@ examples/data/Fitabase_Data_3.12.16-4.11.16/
 examples/data/Gestures/
 examples/data/ChestWall_Organized_16000_PCM_16/
 examples/data/GestureSet_small
+examples/data/GestureSet_small.zip
 
 # dev folders - use for developing new functions or refactoring existing functions
 #dev/
