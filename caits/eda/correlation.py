@@ -65,14 +65,19 @@ def corr(arr: np.ndarray, axis=0, method="pearson", export="array"):
     return res
 
 
-def get_high_corr_features(arr: np.ndarray, axis=0, method="pearson", threshold: float = 0.75):
+def get_high_corr_features(
+    arr: np.ndarray,
+    axis=0,
+    method="pearson",
+    threshold: float = 0.75
+):
     """Selects features from an array that have a high correlation with each"""
 
     corrs = corr(arr, axis=axis, method=method, export="dict")
     feats = set()
 
     for k, v in corrs.items():
-        if abs(v) > threshold:
+        if abs(v) >= threshold:
             feats = feats.union(set(k))
 
     feats = list(feats)
