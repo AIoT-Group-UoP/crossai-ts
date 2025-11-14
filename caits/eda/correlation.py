@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 
-def get_high_corr_features(df: pd.DataFrame, threshold: float = 0.75) -> List[str]:
+def get_high_corr_features_df(df: pd.DataFrame, threshold: float = 0.75) -> List[str]:
     """Selects features from a DataFrame that have a high correlation with each
     other, based on a specified correlation threshold. It excludes perfect
     self-correlations (correlation of a feature with itself).

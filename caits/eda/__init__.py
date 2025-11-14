@@ -1,4 +1,4 @@
-from .correlation import get_high_corr_features
+from .correlation import get_high_corr_features_df
 from .outliers_removal import filter_outliers
 from .plotting import (
     plot_dim_reduced_scatter,
@@ -9,7 +9,7 @@ from .plotting import (
 )
 
 __all__ = [
-    "get_high_corr_features",
+    "get_high_corr_features_df",
     "filter_outliers",
     "plot_dim_reduced_scatter",
     "plot_distribution",
