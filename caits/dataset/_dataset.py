@@ -280,31 +280,39 @@ class DatasetArray(DatasetBase):
     def apply(
             self,
             func,
-            to_list=False,
+            to_X=True,
+            to_y=False,
+            datasetList=False,
             axis_names_X=None,
             axis_names_y=None,
             *args,
             **kwargs
     ):
-        X_values = func(self.X.values, *args, **kwargs)
+        if to_X:
+            if axis_names_X is not None:
+                _axis_names_X = axis_names_X
+            else:
+                _axis_names_X = self.X.keys()
 
-        if axis_names_X is not None:
-            _axis_names_X = axis_names_X
+            X_vals = func(self.X.values, *args, **kwargs)
+
+            X_tr = CoreArray(X_vals, axis_names=_axis_names_X)
         else:
-            _axis_names_X = self.X.keys()
+            X_tr = self.X
 
-        X = CoreArray(X_values, axis_names=_axis_names_X)
+        if to_y:
+            if axis_names_y is not None:
+                _axis_names_y = axis_names_y
+            else:
+                _axis_names_y = axis_names_y
 
-        if axis_names_y is not None:
-            _axis_names_y = axis_names_y
+            y_vals = func(self.y.values, *args, **kwargs)
+            y_tr = CoreArray(y_vals, axis_names=_axis_names_y)
+
+        if datasetList:
+            return DatasetList(X=X_tr, y=y_tr)
         else:
-            _axis_names_y = self.y.keys()
-
-        if to_list:
-            return DatasetList(X=X, y=self.y)
-        else:
-            return DatasetArray(X=X, y=self.y)
-
+            return DatasetArray(X=X_tr, y=y_tr)
 
 
 
