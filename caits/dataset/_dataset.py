@@ -304,7 +304,7 @@ class DatasetArray(DatasetBase):
             if axis_names_y is not None:
                 _axis_names_y = axis_names_y
             else:
-                _axis_names_y = axis_names_y
+                _axis_names_y = self.y.keys()
 
             y_vals = func(self.y.values, *args, **kwargs)
             y_tr = CoreArray(y_vals, axis_names=_axis_names_y)
