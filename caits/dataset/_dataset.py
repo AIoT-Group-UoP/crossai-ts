@@ -277,9 +277,36 @@ class DatasetArray(DatasetBase):
 
         return self.__class__(train_X, train_y), self.__class__(test_X, test_y)
 
-    def apply(self, func, *args, **kwargs):
-        X = func(self.X.values, *args, **kwargs)
-        return X
+    def apply(
+            self,
+            func,
+            to_list=False,
+            axis_names_X=None,
+            axis_names_y=None,
+            *args,
+            **kwargs
+    ):
+        X_values = func(self.X.values, *args, **kwargs)
+
+        if axis_names_X is not None:
+            _axis_names_X = axis_names_X
+        else:
+            _axis_names_X = self.X.keys()
+
+        X = CoreArray(X_values, axis_names=_axis_names_X)
+
+        if axis_names_y is not None:
+            _axis_names_y = axis_names_y
+        else:
+            _axis_names_y = self.y.keys()
+
+        if to_list:
+            return DatasetList(X=X, y=self.y)
+        else:
+            return DatasetArray(X=X, y=self.y)
+
+
+
 
     def stack(self, X: List[np.ndarray]):
         return DatasetList(
