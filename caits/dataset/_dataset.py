@@ -308,6 +308,8 @@ class DatasetArray(DatasetBase):
 
             y_vals = func(self.y.values, *args, **kwargs)
             y_tr = CoreArray(y_vals, axis_names=_axis_names_y)
+        else:
+            y_tr = self.y
 
         if datasetList:
             return DatasetList(X=X_tr, y=y_tr)
