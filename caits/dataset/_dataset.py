@@ -632,9 +632,9 @@ class DatasetList(DatasetBase):
         func,
         to_X = True,
         to_y = False,
-        datasetList = False,
         axis_names_X = None,
         axis_names_y = None,
+        export_to=None,
         *args,
         ** kwargs
     ):
@@ -668,10 +668,14 @@ class DatasetList(DatasetBase):
         else:
             y_tr = self.y
 
-        if datasetList:
+        if export_to is None:
+            return self.__class__(X_tr, y_tr)
+        elif export_to == "datasetlist":
             return DatasetList(X=X_tr, y=y_tr)
-        else:
+        elif export_to == "datasetarray":
             return DatasetArray(X=X_tr, y=y_tr)
+        else:
+            raise Exception(f"export_to {export_to} is not supported.")
 
 
     def stack(self, data):
