@@ -627,8 +627,52 @@ class DatasetList(DatasetBase):
         return self.__class__(train_X, train_y, train_id), self.__class__(test_X, test_y, test_id)
 
 
-    def apply(self, func, *args, **kwargs):
-        return [func(df.values, *args, **kwargs) for df in self.X]
+    def apply(
+        self,
+        func,
+        to_X = True,
+        to_y = False,
+        datasetList = False,
+        axis_names_X = None,
+        axis_names_y = None,
+        *args,
+        ** kwargs
+    ):
+        if to_X:
+            if axis_names_X is not None:
+                _axis_names_X = axis_names_X
+            else:
+                _axis_names_X = self.X[0].keys()
+
+            X_tr = [
+                CoreArray(
+                    values=func(df.values, *args, **kwargs),
+                    axis_names=_axis_names_X
+                )
+                for df in self.X
+            ]
+        else:
+            X_tr = self.X
+
+        if to_y:
+            if axis_names_y is not None:
+                _axis_names_y = axis_names_y
+            else:
+                _axis_names_y = self.y.keys()
+
+
+            y_tr = CoreArray(
+                func(self.y.values, *args, **kwargs),
+                axis_names=_axis_names_y
+            )
+        else:
+            y_tr = self.y
+
+        if datasetList:
+            return DatasetList(X=X_tr, y=y_tr)
+        else:
+            return DatasetArray(X=X_tr, y=y_tr)
+
 
     def stack(self, data):
         X = sum(data, [])
