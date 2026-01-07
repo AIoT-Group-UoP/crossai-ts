@@ -661,11 +661,17 @@ class DatasetList(DatasetBase):
             else:
                 _axis_names_y = self.y.keys()
 
+            if augmentation:
+                y_tr = CoreArray(
+                    values=np.array(y_values),
+                    axis_names=_axis_names_y
+                )
+            else:
+                y_tr = CoreArray(
+                    func(self.y.values, *args, **kwargs),
+                    axis_names=_axis_names_y
+                )
 
-            y_tr = CoreArray(
-                func(self.y.values, *args, **kwargs),
-                axis_names=_axis_names_y
-            )
         else:
             y_tr = self.y
 
