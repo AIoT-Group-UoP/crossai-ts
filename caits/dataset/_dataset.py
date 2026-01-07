@@ -687,6 +687,12 @@ class DatasetList(DatasetBase):
             return DatasetList(X=X_tr, y=y_tr)
         elif export_to == "datasetarray":
             return DatasetArray(X=X_tr, y=y_tr)
+        elif export_to == "dict":
+            return {
+                "X": X_tr,
+                "y": y_tr,
+                "id": self._id
+            }
         else:
             raise Exception(f"export_to {export_to} is not supported.")
 
