@@ -645,6 +645,12 @@ class DatasetList(DatasetBase):
             else:
                 _axis_names_X = self.X[0].keys()
 
+            X_values = [func(df.values, *args, **kwargs) for df in self.X]
+
+            if augmentation:
+                y_values = [self.y.values[i] for i in range(len(X_values)) for _ in X_values[i]]
+                X_values = sum(X_values, [])
+
             X_tr = [
                 CoreArray(
                     values=func(df.values, *args, **kwargs),
