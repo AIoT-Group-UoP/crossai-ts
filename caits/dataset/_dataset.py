@@ -653,10 +653,10 @@ class DatasetList(DatasetBase):
 
             X_tr = [
                 CoreArray(
-                    values=func(df.values, *args, **kwargs),
+                    values=df,
                     axis_names=_axis_names_X
                 )
-                for df in self.X
+                for df in X_values
             ]
         else:
             X_tr = self.X
