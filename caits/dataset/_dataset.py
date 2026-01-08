@@ -286,9 +286,7 @@ class DatasetArray(DatasetBase):
             func,
             to_X=True,
             to_y=False,
-            datasetList=False,
-            axis_names_X=None,
-            axis_names_y=None,
+            export_to=None,
             *args,
             **kwargs
     ):
