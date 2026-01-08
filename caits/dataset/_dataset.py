@@ -202,11 +202,11 @@ class DatasetArray(DatasetBase):
             split: bool = False
     ):
         if not split:
-            dfX = CoreArray(X, axis_names=axis_names)
-            return DatasetArray(X=dfX, y=self.y)
+            dfX = CoreArray(X, axis_names=axis_names_X)
+            return DatasetArray(X=dfX, y=y)
         else:
-            dfX = [CoreArray(x, axis_names=axis_names) for x in X]
-            return DatasetList(X=dfX, y=self.y)
+            dfX = [CoreArray(x, axis_names=axis_names_X) for x in X]
+            return DatasetList(X=dfX, y=y)
 
     def features_dict_to_dataset(self, features, axis_names, axis):
         features_tmp = {}
