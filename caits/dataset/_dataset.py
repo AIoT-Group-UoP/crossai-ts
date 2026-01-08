@@ -541,8 +541,8 @@ class DatasetList(DatasetBase):
     def get_axis_names_X(self):
         return deepcopy(self.X[0].axis_names)
 
+    @staticmethod
     def numpy_to_dataset(
-            self,
             X,
             axis_names: Optional[Dict[str, Dict[Union[str, int], int]]] = None,
             split: bool = True
