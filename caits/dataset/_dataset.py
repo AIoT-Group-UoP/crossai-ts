@@ -544,7 +544,9 @@ class DatasetList(DatasetBase):
     @staticmethod
     def numpy_to_dataset(
             X,
-            axis_names: Optional[Dict[str, Dict[Union[str, int], int]]] = None,
+            y,
+            axis_names_X: Optional[Dict[str, Dict[Union[str, int], int]]] = None,
+            axis_names_y = None,
             split: bool = True
     ):
         if split:
