@@ -300,10 +300,13 @@ class DatasetArray(DatasetBase):
         else:
             y_tr = self.y.values
 
-        if datasetList:
-            return DatasetList(X=X_tr, y=y_tr)
-        else:
-            return DatasetArray(X=X_tr, y=y_tr)
+        if export_to is None or export_to == "tuple":
+            return X_tr, y_tr
+        elif export_to == "dict":
+            return {
+                "X": X_tr,
+                "y": y_tr
+            }
 
 
 
