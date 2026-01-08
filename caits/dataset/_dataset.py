@@ -550,11 +550,11 @@ class DatasetList(DatasetBase):
             split: bool = True
     ):
         if split:
-            _X = [CoreArray(x, axis_names=axis_names) for x in X]
-            return DatasetList(X=_X, y=self.y, id=self._id)
+            _X = [CoreArray(x, axis_names=axis_names_X) for x in X]
+            return DatasetList(X=_X, y=y)
         else:
             _X = CoreArray(X)
-            return DatasetArray(X=_X, y=self.y)
+            return DatasetArray(X=_X, y=y)
 
 
     def features_dict_to_dataset(self, features, axis_names, axis):
