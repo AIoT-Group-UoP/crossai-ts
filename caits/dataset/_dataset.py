@@ -291,27 +291,14 @@ class DatasetArray(DatasetBase):
             **kwargs
     ):
         if to_X:
-            if axis_names_X is not None:
-                _axis_names_X = axis_names_X
-            else:
-                _axis_names_X = self.X.keys()
-
-            X_vals = func(self.X.values, *args, **kwargs)
-
-            X_tr = CoreArray(X_vals, axis_names=_axis_names_X)
+            X_tr = func(self.X.values, *args, **kwargs)
         else:
-            X_tr = self.X
+            X_tr = self.X.values
 
         if to_y:
-            if axis_names_y is not None:
-                _axis_names_y = axis_names_y
-            else:
-                _axis_names_y = self.y.keys()
-
-            y_vals = func(self.y.values, *args, **kwargs)
-            y_tr = CoreArray(y_vals, axis_names=_axis_names_y)
+            y_tr = func(self.y.values, *args, **kwargs)
         else:
-            y_tr = self.y
+            y_tr = self.y.values
 
         if datasetList:
             return DatasetList(X=X_tr, y=y_tr)
