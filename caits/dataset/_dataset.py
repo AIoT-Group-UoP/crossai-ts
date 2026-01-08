@@ -681,9 +681,7 @@ class DatasetList(DatasetBase):
         else:
             y_tr = self.y
 
-        if export_to is None:
-            return self.__class__(X_tr, y_tr)
-        elif export_to == "datasetlist":
+        if export_to is None or export_to == "datasetlist":
             return DatasetList(X=X_tr, y=y_tr)
         elif export_to == "datasetarray":
             return DatasetArray(X=X_tr, y=y_tr)
