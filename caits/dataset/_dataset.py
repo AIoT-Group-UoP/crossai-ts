@@ -637,52 +637,16 @@ class DatasetList(DatasetBase):
         **kwargs
     ):
         if to_X:
-            if axis_names_X is not None:
-                _axis_names_X = axis_names_X
-            else:
-                _axis_names_X = self.X[0].keys()
-
-            X_values = [func(df.values, *args, **kwargs) for df in self.X]
-
-            if augmentation:
-                y_values = [self.y.values[i] for i in range(len(X_values)) for _ in X_values[i]]
-                X_values = sum(X_values, [])
-
-            X_tr = [
-                CoreArray(
-                    values=df,
-                    axis_names=_axis_names_X
-                )
-                for df in X_values
-            ]
+            X_tr = [func(df.values, *args, **kwargs) for df in self.X]
         else:
-            X_tr = self.X
+            X_tr = self.X.values
 
         if to_y:
-            if axis_names_y is not None:
-                _axis_names_y = axis_names_y
-            else:
-                _axis_names_y = self.y.keys()
-
-            if augmentation:
-                y_tr = CoreArray(
-                    values=np.array(y_values),
-                    axis_names=_axis_names_y
-                )
-            else:
-                y_tr = CoreArray(
-                    func(self.y.values, *args, **kwargs),
-                    axis_names=_axis_names_y
-                )
-
+            y_tr = func(self.y.values, *args, **kwargs),
         else:
             y_tr = self.y
 
-        if export_to is None or export_to == "datasetlist":
-            return DatasetList(X=X_tr, y=y_tr)
-        elif export_to == "datasetarray":
-            return DatasetArray(X=X_tr, y=y_tr)
-        elif export_to == "tuple":
+        if export_to is None or export_to == "tuple":
             return X_tr, y_tr, self._id
         elif export_to == "dict":
             return {
