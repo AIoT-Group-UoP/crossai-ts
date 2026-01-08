@@ -632,9 +632,6 @@ class DatasetList(DatasetBase):
         func,
         to_X = True,
         to_y = False,
-        axis_names_X = None,
-        axis_names_y = None,
-        augmentation = False,
         export_to=None,
         *args,
         **kwargs
