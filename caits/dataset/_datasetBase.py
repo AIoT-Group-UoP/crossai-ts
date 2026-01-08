@@ -68,6 +68,7 @@ class DatasetBase(ABC):
     def get_axis_names_X(self):
         pass
 
+    @staticmethod
     @abstractmethod
     def numpy_to_dataset(
             self,
