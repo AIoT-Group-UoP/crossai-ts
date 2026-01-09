@@ -193,6 +193,9 @@ class DatasetArray(DatasetBase):
     def get_axis_names_X(self):
         return deepcopy(self.X.axis_names)
 
+    def get_axis_names_y(self):
+        return deepcopy(self.y.axis_names)
+
     @staticmethod
     def numpy_to_dataset(
             X,
