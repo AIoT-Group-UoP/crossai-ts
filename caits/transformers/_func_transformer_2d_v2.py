@@ -6,7 +6,12 @@ T = TypeVar("T", bound="DatasetBase")
 
 
 class FunctionTransformer2D(BaseEstimator, TransformerMixin):
-    def __init__(self, func: Callable, **kwargs: Dict[str, Any]):
+    def __init__(
+            self, func: Callable,
+            to_X=True,
+            to_y=False,
+            **kwargs: Dict[str, Any]
+    ):
         """Initializes the Transformer class.
 
         Args:
@@ -15,6 +20,8 @@ class FunctionTransformer2D(BaseEstimator, TransformerMixin):
         """
         self.func = func
         self.kw_args = kwargs
+        self.to_X = to_X
+        self.to_y = to_y
 
     def fit(self, X, y=None):
         """Fits the transformer
