@@ -5,9 +5,17 @@ T = TypeVar('T', bound="Dataset")
 
 
 class FeatureExtractorSpectrum(BaseEstimator, TransformerMixin):
-    def __init__(self, func: Callable, **kw_args: Dict[str, Any]):
+    def __init__(
+            self,
+            func: Callable,
+            to_X=True,
+            to_y=False,
+            **kw_args: Dict[str, Any]
+    ):
         self.func = func
         self.kw_args = kw_args
+        self.to_X = to_X
+        self.to_y = to_y
 
     def fit(self, X, y=None):
         self.fitted_ = True
