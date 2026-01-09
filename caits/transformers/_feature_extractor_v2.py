@@ -45,8 +45,18 @@ class FeatureExtractorSignal(BaseEstimator, TransformerMixin):
             features["y"][f"{func.__name__}"] = feature["y"]
 
         if self.to_dataset:
-            axis_names = {f"axis_{self.axis}": {name: i for i, name in enumerate(features.keys())}}
-            return data.features_dict_to_dataset(features, axis_names, self.axis)
+            axis_names_X = {
+                f"axis_{self.axis}": {name: i for i, name in enumerate(features["X"].keys())}
+            }
+            axis_names_y = {
+                f"axis_{self.axis}": {name: i for i, name in enumerate(features["y"].keys())}
+            }
+            return data.features_dict_to_dataset(
+                features,
+                axis_names_X,
+                axis_names_y,
+                self.axis
+            )
 
         else:
             return features
