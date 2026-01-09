@@ -339,13 +339,12 @@ class DatasetArray(DatasetBase):
             "axis_2": axis_names["y"]["axis_1"]
         }
 
-    def stack(self, X: List[np.ndarray]):
-        return DatasetList(
-            X=[
-                CoreArray(values=x, axis_names={"axis_1": self.X.keys()["axis_1"]})
-                for x in X
-            ],
-            y=self.y
+        X_core = CoreArray(X, axis_names_X)
+        y_core = CoreArray(y, axis_names_y)
+
+        return DatasetArray(
+            X=X_core,
+            y=y_core
         )
 
     # TODO: Adjust
