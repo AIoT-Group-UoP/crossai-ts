@@ -329,7 +329,15 @@ class DatasetArray(DatasetBase):
         del axis_names["X"]["axis_0"]
         del axis_names["y"]["axis_0"]
 
+        axis_names_X = {
+            "axis_0": [f"# Window_{i}" for i in range(len(y_vals))],
+            "axis_2": axis_names["X"]["axis_1"]
+        }
 
+        axis_names_y = {
+            "axis_0": [f"Window_{i}" for i in range(len(y_vals))],
+            "axis_2": axis_names["y"]["axis_1"]
+        }
 
     def stack(self, X: List[np.ndarray]):
         return DatasetList(
