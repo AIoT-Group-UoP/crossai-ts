@@ -22,9 +22,25 @@ class FeatureExtractorSpectrum(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, data: T) -> T:
-        features = data.apply(self.func, **self.kw_args)
-        axis_names = data.get_axis_names_X()["axis_1"]
-        res = data.numpy_to_dataset(features, axis_names={"axis_0": axis_names})
+        features = data.apply(
+            func=self.func,
+            to_X=self.to_X,
+            to_y=self.to_y,
+            **self.kw_args
+        )
+
+        axis_names_X = data.get_axis_names_X()["axis_1"]
+        axis_names_y = data.get_axis_names_y()["axis_1"]
+
+        res = data.__class__.numpy_to_dataset(
+            *features,
+            axis_names_X={
+                ("axis_0" if self.to_X else "axis_1"): axis_names_X
+            },
+            axis_names_y={
+                ("axis_0" if self.to_y else "axis_1"): axis_names_y
+            }
+        )
         return res
 
 
