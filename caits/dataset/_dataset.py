@@ -313,6 +313,21 @@ class DatasetArray(DatasetBase):
                 "X": X_tr,
                 "y": y_tr
             }
+        else:
+            raise Exception(f"export_to {export_to} is not supported.")
+
+
+    @staticmethod
+    def stack(
+            X_vals: List[np.ndarray],
+            y_vals,
+            axis_names
+    ):
+        X = np.stack(X_vals)
+        y = np.stack(y_vals)
+
+        del axis_names["X"]["axis_0"]
+        del axis_names["y"]["axis_0"]
 
 
 
