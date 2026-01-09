@@ -31,8 +31,6 @@ from caits.fe._spectrum import melspectrogram, power_to_db, delta
 MAX_MEM_BLOCK = 2 ** 8 * 2 ** 10
 
 import numpy as np
-from numpy.lib.stride_tricks import as_strided
-
 
 def stft(
     y: np.ndarray,
