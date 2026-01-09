@@ -81,7 +81,11 @@ class DatasetBase(ABC):
 
     @staticmethod
     @abstractmethod
-    def features_dict_to_dataset(self, features, axis_names, axis):
+    def features_dict_to_dataset(
+            features,
+            axis_names,
+            axis
+    ):
         pass
 
     @abstractmethod
