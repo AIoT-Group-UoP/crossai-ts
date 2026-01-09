@@ -5,7 +5,13 @@ from caits.dataset import DatasetBase
 T = TypeVar('T', bound="DatasetBase")
 
 class FunctionTransformer(BaseEstimator, TransformerMixin):
-    def __init__(self, func, **func_kwargs):
+    def __init__(
+            self,
+            func,
+            to_X=True,
+            to_y=False,
+            **func_kwargs
+    ):
         """Initializes the Transformer class.
 
         Args:
@@ -15,6 +21,8 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         """
         self.func = func
         self.func_kwargs = func_kwargs
+        self.to_X = to_X
+        self.to_y = to_y
 
     def fit(self, X, y=None):
         """Fits the transformer
