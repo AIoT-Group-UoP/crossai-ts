@@ -213,27 +213,30 @@ class DatasetArray(DatasetBase):
             dfX = [CoreArray(x, axis_names=axis_names_X) for x in X]
             return DatasetList(X=dfX, y=dfy)
 
-    def features_dict_to_dataset(self, features, axis_names, axis):
-        features_tmp = {}
-        for feat, vals in features.items():
-            if vals.ndim == 1:
-                features_tmp[feat] = vals
-            else:
-                for i in range(vals.shape[0]):
-                    features_tmp[f"{feat}_{i}"] = vals[i, ...]
+    @staticmethod
+    def features_dict_to_dataset(
+            features,
+            axis_names,
+            axis
+    ):
+        features_arrs = {}
 
-        features_X = np.stack([feat for feat in features_tmp.values()], axis=axis)
+        for part, feats in features.items():
+            features_tmp = {}
 
-        axis_names[f"axis_{axis}"] = list(features_tmp.keys())
+            for feat, vals in feats.items():
+                if vals.ndim == 1:
+                    features_tmp[feat] = vals
+                else:
+                    for i in range(vals.shape[0]):
+                        features_tmp[f"{feat}_{i}"] = vals[i, ...]
 
-        _axis = 1 if axis == 0 else 0
+            features_stacked = np.stack([feat for feat in features_tmp.values()], axis=axis)
+            axis_names[part][f"axis_{axis}"] = list(features_tmp.keys())
 
-        axis_names_X = axis_names | {f"axis_{_axis}": self.X.keys()[f"axis_{_axis}"]}
+            features_arrs[part] = CoreArray(features_stacked, axis_names=axis_names[part])
 
-        return DatasetArray(
-            X=CoreArray(features_X, axis_names=axis_names_X),
-            y=self.y
-        )
+        return DatasetArray(**features_arrs)
 
     # TODO: something is wrong
     def dict_to_dataset(self, X):
