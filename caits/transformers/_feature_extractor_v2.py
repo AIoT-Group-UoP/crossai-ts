@@ -24,15 +24,25 @@ class FeatureExtractorSignal(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, data: T) -> Union[T, Dict]:
-        features = {}
+        features = {
+            "X": {},
+            "y": {}
+        }
 
         for extractor in self.feature_extractors:
             func = extractor["func"]
             params = extractor.get("params", {})
             params["axis"] = self.axis
-            feature = data.apply(func, **params)
+            feature = data.apply(
+                func=func,
+                to_X=self.to_X,
+                to_y=self.to_y,
+                export_to="dict",
+                **params
+            )
 
-            features[f"{func.__name__}"] = feature
+            features["X"][f"{func.__name__}"] = feature["X"]
+            features["y"][f"{func.__name__}"] = feature["y"]
 
         if self.to_dataset:
             axis_names = {f"axis_{self.axis}": {name: i for i, name in enumerate(features.keys())}}
