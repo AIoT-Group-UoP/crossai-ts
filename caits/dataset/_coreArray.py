@@ -179,7 +179,10 @@ class CoreArray:
             if comb is not None:
                 row_str = [f"{self.values[*comb, row_idx, i]:>{col_widths[i]}}  " for i in range(self.shape[-1])]
             else:
-                row_str = [f"{self.values[row_idx, i]:>{col_widths[i]}}  " for i in range(self.shape[-1])]
+                row_str = [
+                    f"{(self.values[row_idx, i] if self.values[row_idx, i] is not None else ''):>{col_widths[i]}}  "
+                    for i in range(self.shape[-1])
+                ]
             ret.append(row_str)
 
         final_ret = []
