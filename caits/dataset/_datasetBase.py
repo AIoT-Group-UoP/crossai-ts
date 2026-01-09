@@ -100,8 +100,13 @@ class DatasetBase(ABC):
     def apply(self, func, *args, **kwargs):
         pass
 
+    @staticmethod
     @abstractmethod
-    def stack(self, data: List):
+    def stack(
+            X_vals,
+            y_vals,
+            axis_names,
+    ):
         pass
 
     @abstractmethod
