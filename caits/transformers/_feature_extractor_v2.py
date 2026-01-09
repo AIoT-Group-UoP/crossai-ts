@@ -5,8 +5,17 @@ T = TypeVar('T', bound="Dataset")
 
 
 class FeatureExtractorSignal(BaseEstimator, TransformerMixin):
-    def __init__(self, feature_extractors: List[Dict], axis: int=0, to_dataset: bool = True):
+    def __init__(
+            self,
+            feature_extractors: List[Dict],
+            to_X=True,
+            to_y=False,
+            axis: int=0,
+            to_dataset: bool = True
+    ):
         self.feature_extractors = feature_extractors
+        self.to_X = to_X
+        self.to_y = to_y
         self.axis = axis
         self.to_dataset = to_dataset
 
