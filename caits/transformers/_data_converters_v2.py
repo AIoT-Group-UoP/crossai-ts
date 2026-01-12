@@ -61,7 +61,16 @@ class DatasetToArray(BaseEstimator, TransformerMixin):
 
 
 class ArrayToDataset(BaseEstimator, TransformerMixin):
-    def __init__(self, shape, dtype=None, axis_names=None, flattened=True):
+    def __init__(
+            self,
+            shape_X,
+            shape_y,
+            to_X=True,
+            to_y=False,
+            dtype=None,
+            axis_names=None,
+            flattened=True
+    ):
         """Initializes the ArrayToDataset transformer.
         """
         self.shape = shape
