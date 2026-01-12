@@ -22,7 +22,6 @@ class DatasetToArray(BaseEstimator, TransformerMixin):
         self.to_y = to_y
         self.dtype = dtype
 
-
     def fit(self, X, y=None):
         """Fit method (no-op since nothing is learned)."""
         self.fitted_ = True
