@@ -1,7 +1,13 @@
 from sklearn.base import BaseEstimator, TransformerMixin
 
 class DatasetToArray(BaseEstimator, TransformerMixin):
-    def __init__(self, flatten=False, dtype=None):
+    def __init__(
+            self,
+            flatten=False,
+            to_X=True,
+            to_y=False,
+            dtype=None
+    ):
         """Initializes the DatasetToArray transformer.
 
         Args:
