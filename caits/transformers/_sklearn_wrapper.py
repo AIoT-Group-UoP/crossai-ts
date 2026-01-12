@@ -20,6 +20,8 @@ class SklearnWrapper(BaseEstimator, TransformerMixin):
             **func_kwargs: Keyword arguments to be passed to the function.
         """
         self.transformer = transformer
+        self.to_X = to_X
+        self.to_y = to_y
 
         if transformer_kwargs is None:
             transformer_kwargs = {}
@@ -35,7 +37,8 @@ class SklearnWrapper(BaseEstimator, TransformerMixin):
         Returns:
             self: Returns the instance itself.
         """
-        self.fitted_transformer_ = self.transformer(**self.transformer_kwargs).fit(X.X.values, y)
+        self.fitted_transformer_X_ = self.transformer(**self.transformer_kwargs).fit(X.X.values)
+        self.fitted_transformer_y_ = self.transformer(**self.transformer_kwargs).fit(X.y.values)
         return self
 
     def transform(self, data: T) -> T:
@@ -47,8 +50,23 @@ class SklearnWrapper(BaseEstimator, TransformerMixin):
         Returns:
             DatasetBase: A new Dataset object with the transformed data.
         """
-        transformed_X = self.fitted_transformer_.transform(data.X.values)
-        return data.numpy_to_dataset(transformed_X, split=False)
+        if self.to_X:
+            transformed_X = self.fitted_transformer_X_.transform(data.X.values)
+        else:
+            transformed_X = data.X.values
+
+        if self.to_y:
+            transformed_y = self.fitted_transformer_y_.transform(data.y.values)
+        else:
+            transformed_y = data.y.values
+
+        return data.__class__.numpy_to_dataset(
+            transformed_X,
+            transformed_y,
+            axis_names_X=data.X.keys(),
+            axis_names_y=data.y.keys(),
+            split=False
+        )
 
     def get_params(self, deep=True):
         """Overrides get_params to include func_kwargs.
