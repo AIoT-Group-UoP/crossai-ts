@@ -73,7 +73,10 @@ class ArrayToDataset(BaseEstimator, TransformerMixin):
     ):
         """Initializes the ArrayToDataset transformer.
         """
-        self.shape = shape
+        self.shape_X = shape_X
+        self.shape_y = shape_y
+        self.to_X = to_X
+        self.to_y = to_y
         self.dtype = dtype
         self.axis_names = axis_names
         self.flattened = flattened
@@ -85,11 +88,23 @@ class ArrayToDataset(BaseEstimator, TransformerMixin):
     def transform(self, X):
         """Transforms the Dataset into a numpy array."""
         if self.flattened:
-            _X = [X.X.values[i, :].reshape(self.shape) for i in range(X.X.shape[0])]
-        else:
-            _X = X.X.values
+            if self.to_X:
+                _X = [X.X.values[i, :].reshape(self.shape_X) for i in range(X.X.shape[0])]
+            else:
+                _X = X.X.values
 
-        return X.numpy_to_dataset(_X, axis_names=self.axis_names, split=self.flattened)
+            if self.to_y:
+                _y = [X.y.values[i, :].reshape(self.shape_y) for i in range(X.y.shape[0])]
+            else:
+                _y = X.y.values
+
+            return X.numpy_to_dataset(
+                _X,
+                _y,
+                axis_names_X=self.axis_names["X"],
+                axis_names_y=self.axis_names["y"],
+                split=self.flattened
+            )
 
     def get_params(self, deep=True):
         """Returns the parameters of the transformer."""
