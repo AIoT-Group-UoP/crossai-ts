@@ -18,6 +18,8 @@ class DatasetToArray(BaseEstimator, TransformerMixin):
                          default NumPy data type will be used.
         """
         self.flatten = flatten
+        self.to_X = to_X
+        self.to_y = to_y
         self.dtype = dtype
 
 
@@ -37,8 +39,7 @@ class DatasetToArray(BaseEstimator, TransformerMixin):
         """
         if self.flatten:
             # Reshape to a 2D array by merging window and channel dimensions
-            # return X.flatten().reshape(-1, 1)
-            return X.flatten()
+            return X.flatten(self.to_X, self.to_y)
         else:
             return X
 
