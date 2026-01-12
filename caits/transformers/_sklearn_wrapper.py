@@ -5,7 +5,13 @@ from ..dataset import DatasetBase
 T = TypeVar('T', bound="DatasetBase")
 
 class SklearnWrapper(BaseEstimator, TransformerMixin):
-    def __init__(self, transformer, transformer_kwargs: Optional[Dict]=None):
+    def __init__(
+            self,
+            transformer,
+            to_X=True,
+            to_y=False,
+            transformer_kwargs: Optional[Dict]=None
+    ):
         """Initializes the Transformer class.
 
         Args:
