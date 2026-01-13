@@ -348,18 +348,49 @@ class DatasetArray(DatasetBase):
         )
 
     # TODO: Adjust
-    def flatten(self, axis_names_sep=","):
-        axis_names_0 = self.X.keys()["axis_0"]
-        axis_names_1 = self.X.keys()["axis_1"]
-        axis_names = {
-            "axis_0": [
-                f"{s0}{axis_names_sep}{s1}"
-                for s0 in axis_names_0
-                for s1 in axis_names_1
-            ]
+    def flatten(
+            self,
+            to_X=True,
+            to_y=False,
+            axis_names_sep=","
+    ):
+        init_axis_names = {}
+        axis_names = {}
+        parts = {
+            "X": self.X,
+            "y": self.y
         }
 
-        return DatasetArray(CoreArray(self.X.values.flatten(), axis_names=axis_names), self.y)
+        if to_X:
+            init_axis_names["X"] = self.X.keys()
+            axis_names["X"] = {}
+        if to_y:
+            init_axis_names["y"] = self.y.keys()
+            axis_names["y"] = {}
+
+        for part in axis_names.keys():
+            axis_names_0 = init_axis_names[part]["axis_0"]
+            axis_names_1 = init_axis_names[part]["axis_1"]
+            axis_names_2 = init_axis_names[part]["axis_2"]
+
+            tmp_axis_names = {
+                "axis_0": axis_names_0,
+                "axis_1": [
+                    f"{s1}{axis_names_sep}{s2}"
+                    for s1 in axis_names_1
+                    for s2 in axis_names_2
+                ]
+            }
+
+            axis_names[part] = tmp_axis_names
+
+            vals = parts[part].values
+            parts[part] = CoreArray(
+                vals.reshape(vals.shape[0], -1),
+                axis_names=axis_names[part]
+            )
+
+        return DatasetArray(**parts)
 
     def shuffle(self, seed: int=42):
         idxs = np.arange(len(self.X))

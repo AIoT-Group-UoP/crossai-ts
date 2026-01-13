@@ -1,7 +1,13 @@
 from sklearn.base import BaseEstimator, TransformerMixin
 
 class DatasetToArray(BaseEstimator, TransformerMixin):
-    def __init__(self, flatten=False, dtype=None):
+    def __init__(
+            self,
+            flatten=False,
+            to_X=True,
+            to_y=False,
+            dtype=None
+    ):
         """Initializes the DatasetToArray transformer.
 
         Args:
@@ -12,8 +18,9 @@ class DatasetToArray(BaseEstimator, TransformerMixin):
                          default NumPy data type will be used.
         """
         self.flatten = flatten
+        self.to_X = to_X
+        self.to_y = to_y
         self.dtype = dtype
-
 
     def fit(self, X, y=None):
         """Fit method (no-op since nothing is learned)."""
@@ -31,8 +38,7 @@ class DatasetToArray(BaseEstimator, TransformerMixin):
         """
         if self.flatten:
             # Reshape to a 2D array by merging window and channel dimensions
-            # return X.flatten().reshape(-1, 1)
-            return X.flatten()
+            return X.flatten(self.to_X, self.to_y)
         else:
             return X
 
@@ -54,10 +60,22 @@ class DatasetToArray(BaseEstimator, TransformerMixin):
 
 
 class ArrayToDataset(BaseEstimator, TransformerMixin):
-    def __init__(self, shape, dtype=None, axis_names=None, flattened=True):
+    def __init__(
+            self,
+            shape_X,
+            shape_y,
+            to_X=True,
+            to_y=False,
+            dtype=None,
+            axis_names=None,
+            flattened=True
+    ):
         """Initializes the ArrayToDataset transformer.
         """
-        self.shape = shape
+        self.shape_X = shape_X
+        self.shape_y = shape_y
+        self.to_X = to_X
+        self.to_y = to_y
         self.dtype = dtype
         self.axis_names = axis_names
         self.flattened = flattened
@@ -69,20 +87,35 @@ class ArrayToDataset(BaseEstimator, TransformerMixin):
     def transform(self, X):
         """Transforms the Dataset into a numpy array."""
         if self.flattened:
-            _X = [X.X.values[i, :].reshape(self.shape) for i in range(X.X.shape[0])]
-        else:
-            _X = X.X.values
+            if self.to_X:
+                _X = X.X.values.reshape(self.shape_X)
+            else:
+                _X = X.X.values
 
-        return X.numpy_to_dataset(_X, axis_names=self.axis_names, split=self.flattened)
+            if self.to_y:
+                _y = X.y.values.reshape(self.shape_y)
+            else:
+                _y = X.y.values
+
+            return X.__class__.numpy_to_dataset(
+                _X,
+                _y,
+                axis_names_X=self.axis_names["X"],
+                axis_names_y=self.axis_names["y"],
+            )
 
     def get_params(self, deep=True):
         """Returns the parameters of the transformer."""
         params = super().get_params(deep=deep)
         params.update(
             {
-                "shape": self.shape,
+                "shape_X": self.shape_X,
+                "shape_y": self.shape_y,
+                "to_X": self.to_X,
+                "to_y": self.to_y,
                 "dtype": self.dtype,
                 "axis_names": self.axis_names,
+                "flattened": self.flattened,
             }
         )
         return params
