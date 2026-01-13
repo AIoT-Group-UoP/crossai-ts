@@ -139,8 +139,8 @@ class SklearnWrapper(Pipeline):
             )
         )
 
-        inverseReshaper = (
-            "inverseReshaper",
+        inverse_reshaper = (
+            "inverse_reshaper",
             ArrayToDataset(
                 shape_X=self.shape_X_,
                 shape_y=self.shape_y_,
@@ -157,7 +157,7 @@ class SklearnWrapper(Pipeline):
         self.steps = [
             reshaper,
             *self.sklearn_transformers,
-            inverseReshaper
+            inverse_reshaper
         ]
 
         super().fit(X, y, **params)
