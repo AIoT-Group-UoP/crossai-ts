@@ -109,9 +109,13 @@ class ArrayToDataset(BaseEstimator, TransformerMixin):
         params = super().get_params(deep=deep)
         params.update(
             {
-                "shape": self.shape,
+                "shape_X": self.shape_X,
+                "shape_y": self.shape_y,
+                "to_X": self.to_X,
+                "to_y": self.to_y,
                 "dtype": self.dtype,
                 "axis_names": self.axis_names,
+                "flattened": self.flattened,
             }
         )
         return params
