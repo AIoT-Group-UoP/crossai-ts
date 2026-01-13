@@ -88,21 +88,20 @@ class ArrayToDataset(BaseEstimator, TransformerMixin):
         """Transforms the Dataset into a numpy array."""
         if self.flattened:
             if self.to_X:
-                _X = [X.X.values[i, :].reshape(self.shape_X) for i in range(X.X.shape[0])]
+                _X = X.X.values.reshape(self.shape_X)
             else:
                 _X = X.X.values
 
             if self.to_y:
-                _y = [X.y.values[i, :].reshape(self.shape_y) for i in range(X.y.shape[0])]
+                _y = X.y.values.reshape(self.shape_y)
             else:
                 _y = X.y.values
 
-            return X.numpy_to_dataset(
+            return X.__class__.numpy_to_dataset(
                 _X,
                 _y,
                 axis_names_X=self.axis_names["X"],
                 axis_names_y=self.axis_names["y"],
-                split=self.flattened
             )
 
     def get_params(self, deep=True):
