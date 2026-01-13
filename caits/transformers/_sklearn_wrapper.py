@@ -6,7 +6,7 @@ from ._data_converters_v2 import DatasetToArray, ArrayToDataset
 from ..dataset import DatasetBase
 T = TypeVar('T', bound="DatasetBase")
 
-class SklearnStep(BaseEstimator, TransformerMixin):
+class SklearnPipeStep(BaseEstimator, TransformerMixin):
     def __init__(
             self,
             transformer,
@@ -111,7 +111,7 @@ class SklearnWrapper(Pipeline):
         self.to_X = to_X
         self.to_y = to_y
         self.sklearn_transformers = [
-            (name, SklearnStep(skt, to_X=to_X, to_y=to_y, **params))
+            (name, SklearnPipeStep(skt, to_X=to_X, to_y=to_y, **params))
             for name, skt, params in sklearn_transformers
         ]
         super().__init__(self.sklearn_transformers)
