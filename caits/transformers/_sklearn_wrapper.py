@@ -4,7 +4,7 @@ from sklearn.preprocessing import FunctionTransformer
 from ..dataset import DatasetBase
 T = TypeVar('T', bound="DatasetBase")
 
-class SklearnWrapper(BaseEstimator, TransformerMixin):
+class SklearnStep(BaseEstimator, TransformerMixin):
     def __init__(
             self,
             transformer,
