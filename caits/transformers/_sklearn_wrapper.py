@@ -39,8 +39,10 @@ class SklearnPipeStep(BaseEstimator, TransformerMixin):
         Returns:
             self: Returns the instance itself.
         """
-        self.fitted_transformer_X_ = self.transformer(**self.transformer_kwargs).fit(X.X.values)
-        self.fitted_transformer_y_ = self.transformer(**self.transformer_kwargs).fit(X.y.values)
+        if self.to_X:
+            self.fitted_transformer_X_ = self.transformer(**self.transformer_kwargs).fit(X.X.values)
+        if self.to_y:
+            self.fitted_transformer_y_ = self.transformer(**self.transformer_kwargs).fit(X.y.values)
         return self
 
     def transform(self, data: T) -> T:
