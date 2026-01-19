@@ -109,47 +109,64 @@ class DatasetArray(DatasetBase):
         for i in range(0, self.X.shape[0], batch_size):
             yield self.X.iloc[i : i + batch_size, ...], self.y.iloc[i : i + batch_size, ...]
 
-    def unify(self, others, axis_names: Optional = None, axis: int=0):
-        _axis = 1 if axis == 0 else 0
+    def unify(
+            self,
+            others,
+            axis_names: Optional = None,
+            axis: int=0,
+            to_X: bool = True,
+            to_y: bool = False
+    ):
+        init_data = {
+            "X": self.X,
+            "y": self.y
+        }
+        other_data = {}
 
-        if all(
-                [
-                    self.X.shape[_axis] == o.X.shape[_axis] and
-                    self.X.axis_names[f"axis_{_axis}"] == o.X.axis_names[f"axis_{_axis}"]
-                    for o in others
-                ]
-        ):
-            tmp_axis_names_X = self.X.keys()[f"axis_{axis}"] + sum([o.X.keys()[f"axis_{axis}"] for o in others], [])
+        if to_X:
+            other_data["X"] = [o.X for o in others]
 
-            if axis_names is None:
-                axis_names_X = self.X.keys()
-                axis_names_X[f"axis_{axis}"] = tmp_axis_names_X
+        if to_y:
+            other_data["y"] = [o.y for o in others]
+
+        new_data = init_data.copy()
+
+        for applies, data in other_data:
+            init_shape = data[applies].shape
+            shape = [init_shape[i] for i in range(len(init_shape)) if i != axis]
+
+            _axis_names = data.keys()
+
+            for o in data:
+                tmp_shape = [o.shape[i] for i in range(len(o.shape)) if i != axis]
+                tmp_axis_names = {k: v for k, v in o.keys().items() if k != f"axis_{axis}"}
+
+                if shape != tmp_shape:
+                    raise ValueError(f"All DatasetArray.{applies} objects must have equal dimensions except the one "
+                                     f"they will be appended on.")
+
+                if _axis_names != tmp_axis_names:
+                    raise ValueError(f"All DatasetArray.{applies} objects must the same axis names on all dimensions "
+                                     f"except the one they will be appended.")
+
+            if axis_names is None or applies not in axis_names.keys():
+                new_axis_names = init_data[applies].keys()
+                to_append = sum([o.keys()[f"axis_{axis}"] for o in data], [])
+                new_axis_names.extend(to_append)
             else:
-                axis_names_X = axis_names
+                new_axis_names = init_data[applies].keys()[f"axis_{axis}"]
 
-            X = CoreArray(
+
+            new_data[applies] = CoreArray(
                 np.concatenate(
-                    [self.X.values] + [o.X.values for o in others],
+                    [init_data[applies].values] + [o.values for o in data],
                     axis=axis
                 ),
-                axis_names=axis_names_X
+                axis_names=new_axis_names
             )
 
-            if axis == 0:
-                y = CoreArray(
-                    np.concatenate(
-                        [self.y.values] + [o.y.values for o in others],
-                        axis=0
-                    ),
-                    axis_names={"axis_1": self.y.keys()["axis_1"]}
-                )
-            else:
-                y = self.y
+        return DatasetArray(**new_data)
 
-            return self.__class__(X=X, y=y)
-
-        else:
-            raise ValueError("self.X and other.X must have the same number of columns.")
 
     def replace(self, other):
         if len(set(self.X.keys()["axis_1"]).intersection(other.X.keys()["axis_1"])) == 0:
