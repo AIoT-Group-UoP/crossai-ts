@@ -53,8 +53,10 @@ class FeatureExtractorSignal(BaseEstimator, TransformerMixin):
             }
             return data.features_dict_to_dataset(
                 features,
-                axis_names_X,
-                axis_names_y,
+                {
+                    "X": axis_names_X,
+                    "y": axis_names_y
+                },
                 self.axis
             )
 
