@@ -12,10 +12,14 @@ class ColumnTransformer(BaseEstimator, TransformerMixin):
         self.transformations_ = []
 
         for transformation in self.transformations:
-            name, transformer, columns, new_columns = transformation
-            _data = X[:, columns]
+            name, transformer, columns_set = transformation
+            columns_X = columns_set["X"][0] if "X" in columns_set else []
+            columns_y = columns_set["y"][0] if "y" in columns_set else []
+
+            _data = X[:, columns_X + columns_y]
+
             self.transformations_.append(
-                (name, transformer.fit(_data), columns, new_columns)
+                (name, transformer.fit(_data), columns_set)
             )
 
         return self
