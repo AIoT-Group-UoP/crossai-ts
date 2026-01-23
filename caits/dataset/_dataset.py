@@ -131,11 +131,11 @@ class DatasetArray(DatasetBase):
 
         new_data = init_data.copy()
 
-        for applies, data in other_data:
-            init_shape = data[applies].shape
+        for applies, data in other_data.items():
+            init_shape = init_data[applies].shape
             shape = [init_shape[i] for i in range(len(init_shape)) if i != axis]
 
-            _axis_names = data.keys()
+            _axis_names = {k: v for k, v in init_data[applies].keys().items() if k != f"axis_{axis}"}
 
             for o in data:
                 tmp_shape = [o.shape[i] for i in range(len(o.shape)) if i != axis]
@@ -152,10 +152,9 @@ class DatasetArray(DatasetBase):
             if axis_names is None or applies not in axis_names.keys():
                 new_axis_names = init_data[applies].keys()
                 to_append = sum([o.keys()[f"axis_{axis}"] for o in data], [])
-                new_axis_names.extend(to_append)
+                new_axis_names[f"axis_{axis}"].extend(to_append)
             else:
-                new_axis_names = init_data[applies].keys()[f"axis_{axis}"]
-
+                new_axis_names = axis_names[applies]
 
             new_data[applies] = CoreArray(
                 np.concatenate(
