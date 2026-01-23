@@ -167,14 +167,28 @@ class DatasetArray(DatasetBase):
         return DatasetArray(**new_data)
 
 
-    def replace(self, other):
-        if len(set(self.X.keys()["axis_1"]).intersection(other.X.keys()["axis_1"])) == 0:
-            raise IndexError(f"Column names {other.X.axis_names['axis_names'].keys()} not found in X or y.")
+    def replace(
+            self,
+            other,
+            axis=1
+    ):
+        column_names_X = other.X.keys()[f"axis_{axis}"]
+        column_names_y = other.y.keys()[f"axis_{axis}"]
 
-        column_names = other.X.keys()["axis_1"]
-        idxs = [self.X.axis_names["axis_1"][col] for col in column_names]
+        if len(column_names_X) != 0 and (set(self.X.keys()[f"axis_{axis}"]).intersection(column_names_X)) == 0:
+            raise IndexError(f"Column names {other.X.keys()[f'axis_{axis}']} not found in X.")
 
-        self.X.values[:, idxs] = other.X.values
+        if len(column_names_y) != 0 and len(set(self.y.keys()[f"axis_{axis}"]).intersection(column_names_y)) == 0:
+            raise IndexError(f"Column names {other.y.keys()[f'axis_{axis}']} not found in y.")
+
+        idxs_X = [self.X.axis_names[f"axis_{axis}"][col] for col in column_names_X]
+        idxs_y = [self.y.axis_names[f"axis_{axis}"][col] for col in column_names_y]
+
+        if len(idxs_X) != 0:
+            self.X.values[:, idxs_X] = other.X.values
+
+        if len(idxs_y) != 0:
+            self.y.values[:, idxs_y] = other.y.values
 
     # TODO: Adjust
     def to_numpy(self, flatten=False):
