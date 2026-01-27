@@ -36,6 +36,9 @@ class DatasetBase(ABC):
     def __add__(self, other):
         pass
 
+    def __copy__(self):
+        pass
+
     @abstractmethod
     def batch(self, batch_size: int):
         pass
