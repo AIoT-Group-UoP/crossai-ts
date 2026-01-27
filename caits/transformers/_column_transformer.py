@@ -63,5 +63,5 @@ class ColumnTransformer(BaseEstimator, TransformerMixin):
         if self.unify:
             return final_tr_data
         else:
-            data.replace(final_tr_data)
-            return data
+            ret_data = data.replace(final_tr_data)
+            return ret_data
