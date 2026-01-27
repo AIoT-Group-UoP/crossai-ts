@@ -13,8 +13,19 @@ class ColumnTransformer(BaseEstimator, TransformerMixin):
 
         for transformation in self.transformations:
             name, transformer, columns_set = transformation
-            columns_X = columns_set["X"][0] if "X" in columns_set else []
-            columns_y = columns_set["y"][0] if "y" in columns_set else []
+            if "X" in columns_set:
+                columns_X = columns_set["X"][0]
+                self.to_X_ = True
+            else:
+                columns_X = []
+                self.to_X_ = False
+
+            if "y" in columns_set:
+                columns_y = columns_set["y"][0]
+                self.to_y_ = True
+            else:
+                columns_y = []
+                self.to_y_ = False
 
             _data = X[:, columns_X + columns_y]
 
@@ -57,7 +68,9 @@ class ColumnTransformer(BaseEstimator, TransformerMixin):
                 "X": {"axis_1": column_names_X},
                 "y": {"axis_1": column_names_y}
             },
-            axis=1
+            axis=1,
+            to_X=self.to_X_,
+            to_y=self.to_y_,
         )
 
         if self.unify:
