@@ -1,5 +1,6 @@
 import numpy as np
 from typing import Optional, Dict, Iterable
+import copy
 
 DISPLAY_NUM_ROWS = 5
 DISPLAY_NUM_COLS = 6
@@ -234,3 +235,7 @@ class CoreArray:
             k: list(v.keys())
             for k, v in self.axis_names.items()
         }
+
+
+    def __copy__(self):
+        return copy.deepcopy(self)
