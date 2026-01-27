@@ -105,6 +105,9 @@ class DatasetArray(DatasetBase):
     def __add__(self, other):
         return self.unify([other])
 
+    def __copy__(self):
+        return copy.deepcopy(self)
+
     def batch(self, batch_size: int):
         for i in range(0, self.X.shape[0], batch_size):
             yield self.X.iloc[i : i + batch_size, ...], self.y.iloc[i : i + batch_size, ...]
