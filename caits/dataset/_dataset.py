@@ -7,6 +7,7 @@ from math import ceil, floor
 from ._coreArray import CoreArray
 from ._datasetBase import DatasetBase
 import itertools
+import copy
 
 
 class DatasetArray(DatasetBase):
@@ -26,9 +27,9 @@ class DatasetArray(DatasetBase):
 
     def __getitem__(self, idx: Union[int, slice, list, Tuple]):
         if isinstance(idx, int):
-            return DatasetArray(self.X.iloc[idx, ...], self.y.iloc[idx, ...])
+            return copy.deepcopy(DatasetArray(self.X.iloc[idx, ...], self.y.iloc[idx, ...]))
         elif isinstance(idx, slice):
-            return DatasetArray(self.X.iloc[idx, ...], self.y.iloc[idx, ...])
+            return copy.deepcopy(DatasetArray(self.X.iloc[idx, ...], self.y.iloc[idx, ...]))
         elif isinstance(idx, list):
             return DatasetArray(self.X.iloc[idx, ...], self.y.iloc[idx, ...])
         elif isinstance(idx, tuple):
