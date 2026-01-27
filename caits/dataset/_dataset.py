@@ -176,6 +176,8 @@ class DatasetArray(DatasetBase):
             other,
             axis=1
     ):
+        ret_data = self[:]
+
         column_names_X = other.X.keys()[f"axis_{axis}"]
         column_names_y = other.y.keys()[f"axis_{axis}"]
 
@@ -189,10 +191,12 @@ class DatasetArray(DatasetBase):
         idxs_y = [self.y.axis_names[f"axis_{axis}"][col] for col in column_names_y]
 
         if len(idxs_X) != 0:
-            self.X.values[:, idxs_X] = other.X.values
+            ret_data.X.values[:, idxs_X] = other.X.values
 
         if len(idxs_y) != 0:
-            self.y.values[:, idxs_y] = other.y.values
+            ret_data.y.values[:, idxs_y] = other.y.values
+
+        return ret_data
 
     # TODO: Adjust
     def to_numpy(self, flatten=False):
