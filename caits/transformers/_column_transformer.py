@@ -38,7 +38,8 @@ class ColumnTransformer(BaseEstimator, TransformerMixin):
     # TODO: Replaces to the original data we do not want that
     def transform(self, data: T) -> Union[T, Dict]:
 
-        tr_data = []
+        tr_data = data.copy()
+
         if self.unify:
             column_names_arr_X = sum([t[-1]["X"][1] if "X" in t[-1] else [] for t in self.transformations_], [])
             column_names_arr_y = sum([t[-1]["y"][1] if "y" in t[-1] else [] for t in self.transformations_], [])
@@ -56,10 +57,22 @@ class ColumnTransformer(BaseEstimator, TransformerMixin):
         for transformation in self.transformations_:
             name, transformer, columns_set = transformation
 
-            columns_X = columns_set["X"][0] if "X" in columns_set else []
-            columns_y = columns_set["y"][0] if "y" in columns_set else []
+            if "X" in columns_set:
+                columns_X = columns_set["X"][0]
+                unify_X = columns_set["X"][1] is not None
+                new_data = transformer.transform(tr_data[:, columns_X])
 
-            _data = data[:, columns_X + columns_y]
+                if unify_X:
+                    new_data = new_data.rename(columns_set["X"])
+                    tr_data = tr_data.unify(new_data, axis=1)
+                else:
+                    tr_data = tr_data.replace(new_data)
+
+            if "y" in columns_set:
+                columns_y = columns_set["y"][0]
+                unify_y = columns_set["y"][1] is not None
+
+            _data = tr_data[:, columns_X + columns_y]
             tr_data.append(transformer.transform(_data))
 
         final_tr_data = tr_data[0].unify(

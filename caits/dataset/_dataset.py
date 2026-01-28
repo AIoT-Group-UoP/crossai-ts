@@ -1,3 +1,4 @@
+from os import rename
 from typing import Tuple
 from copy import deepcopy
 import numpy as np
@@ -438,6 +439,19 @@ class DatasetArray(DatasetBase):
             self.y.iloc[idxs, ...],
         )
 
+    def rename(self, renamings: dict):
+        new_dataset_arr = copy.deepcopy(self)
+
+        for part in renamings.keys():
+            for axis, contents in renamings[part].items():
+                for old_name, new_name in contents.items():
+                    if new_name in new_dataset_arr[part][axis]:
+                        raise ValueError(f"renamings[{part}][{axis}][{new_name}] already exists.")
+
+                    value = new_dataset_arr[part][axis].pop(old_name)
+                    new_dataset_arr[part][axis][new_name] = value
+
+        return new_dataset_arr
 
 
 class DatasetList(DatasetBase):
