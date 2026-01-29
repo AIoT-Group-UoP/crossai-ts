@@ -5,28 +5,18 @@ from sklearn.base import BaseEstimator, TransformerMixin
 T = TypeVar('T', bound="Dataset")
 
 class ColumnTransformer(BaseEstimator, TransformerMixin):
-    def __init__(self, transformations, unify: bool = False):
+    def __init__(self, transformations):
         self.transformations = transformations
-        self.unify = unify
+
 
     def fit(self, X, y=None):
         self.transformations_ = []
 
         for transformation in self.transformations:
             name, transformer, columns_set = transformation
-            if "X" in columns_set:
-                columns_X = columns_set["X"][0]
-                self.to_X_ = True
-            else:
-                columns_X = []
-                self.to_X_ = False
 
-            if "y" in columns_set:
-                columns_y = columns_set["y"][0]
-                self.to_y_ = True
-            else:
-                columns_y = []
-                self.to_y_ = False
+            columns_X = columns_set["X"][0] if "X" in columns_set else []
+            columns_y = columns_set["y"][0] if "y" in columns_set else []
 
             _data = X[:, columns_X + columns_y]
 
