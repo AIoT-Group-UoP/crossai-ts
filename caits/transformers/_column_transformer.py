@@ -40,31 +40,45 @@ class ColumnTransformer(BaseEstimator, TransformerMixin):
                 new_data = transformer.transform(tr_data[:, columns_X])
 
                 if unify_X:
-                    new_data = new_data.rename(columns_set["X"])
-                    tr_data = tr_data.unify(new_data, axis=1)
+                    old_keys = new_data.X.keys()["axis_1"]
+                    new_keys = columns_set["X"][1]
+
+                    renamings = {
+                        "X": {
+                            "axis_1": {
+                                old_key: new_key
+                                for old_key, new_key in zip(old_keys, new_keys)
+                            }
+                        }
+                    }
+
+                    new_data = new_data.rename(renamings)
+                    tr_data = tr_data.unify([new_data], axis=1, to_X=True, to_y=False)
                 else:
                     tr_data = tr_data.replace(new_data)
 
             if "y" in columns_set:
                 columns_y = columns_set["y"][0]
                 unify_y = columns_set["y"][1] is not None
+                new_data = transformer.transform(tr_data[:, columns_y])
 
-            _data = tr_data[:, columns_X + columns_y]
-            tr_data.append(transformer.transform(_data))
+                if unify_y:
+                    old_keys = new_data.y.keys()["axis_1"]
+                    new_keys = columns_set["y"][1]
 
-        final_tr_data = tr_data[0].unify(
-            tr_data[1:],
-            axis_names={
-                "X": {"axis_1": column_names_X},
-                "y": {"axis_1": column_names_y}
-            },
-            axis=1,
-            to_X=self.to_X_,
-            to_y=self.to_y_,
-        )
+                    renamings = {
+                        "y": {
+                            "axis_1": {
+                                old_key: new_key
+                                for old_key, new_key in zip(old_keys, new_keys)
+                            }
+                        }
+                    }
 
-        if self.unify:
-            return final_tr_data
-        else:
-            ret_data = data.replace(final_tr_data)
-            return ret_data
+                    new_data = new_data.rename(renamings)
+                    tr_data = tr_data.unify([new_data], axis=1, to_X=False, to_y=True)
+                else:
+                    tr_data = tr_data.replace(new_data)
+
+        return tr_data
+
