@@ -1,3 +1,4 @@
+import copy
 from typing import Dict, Union, TypeVar
 from sklearn.base import BaseEstimator, TransformerMixin
 
@@ -38,21 +39,7 @@ class ColumnTransformer(BaseEstimator, TransformerMixin):
     # TODO: Replaces to the original data we do not want that
     def transform(self, data: T) -> Union[T, Dict]:
 
-        tr_data = data.copy()
-
-        if self.unify:
-            column_names_arr_X = sum([t[-1]["X"][1] if "X" in t[-1] else [] for t in self.transformations_], [])
-            column_names_arr_y = sum([t[-1]["y"][1] if "y" in t[-1] else [] for t in self.transformations_], [])
-
-            tr_data.append(data)
-            column_names_arr_X = list(data.get_axis_names_X()["axis_1"].keys()) + column_names_arr_X
-            column_names_arr_y = list(data.y.keys()["axis_1"]) + column_names_arr_y
-        else:
-            column_names_arr_X = sum([t[-1]["X"][0] if "X" in t[-1] else [] for t in self.transformations_], [])
-            column_names_arr_y = sum([t[-1]["y"][0] if "y" in t[-1] else [] for t in self.transformations_], [])
-
-        column_names_X = {col: i for i, col in enumerate(column_names_arr_X)}
-        column_names_y = {col: i for i, col in enumerate(column_names_arr_y)}
+        tr_data = copy.deepcopy(data)
 
         for transformation in self.transformations_:
             name, transformer, columns_set = transformation
