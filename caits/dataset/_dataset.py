@@ -445,11 +445,16 @@ class DatasetArray(DatasetBase):
         for part in renamings.keys():
             for axis, contents in renamings[part].items():
                 for old_name, new_name in contents.items():
-                    if new_name in new_dataset_arr[part][axis]:
+                    if part == "X":
+                        data_part = new_dataset_arr.X
+                    else:
+                        data_part = new_dataset_arr.y
+
+                    if new_name in data_part.axis_names[axis]:
                         raise ValueError(f"renamings[{part}][{axis}][{new_name}] already exists.")
 
-                    value = new_dataset_arr[part][axis].pop(old_name)
-                    new_dataset_arr[part][axis][new_name] = value
+                    value = data_part.axis_names[axis].pop(old_name)
+                    data_part.axis_names[axis][new_name] = value
 
         return new_dataset_arr
 
