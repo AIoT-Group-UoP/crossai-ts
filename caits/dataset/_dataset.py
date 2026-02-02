@@ -433,6 +433,32 @@ class DatasetArray(DatasetBase):
 
         return DatasetArray(**parts)
 
+
+    def reshape(
+            self,
+            shape_X,
+            shape_y,
+            axis_names_X,
+            axis_names_y
+    ):
+        if shape_X is not None:
+            _X = self.X.values.reshape(shape_X)
+        else:
+            _X = self.X.values
+
+        if shape_y is not None:
+            _y = self.y.values.reshape(shape_y)
+        else:
+            _y = self.y.values
+
+        return self.__class__.numpy_to_dataset(
+            _X,
+            _y,
+            axis_names_X=axis_names_X,
+            axis_names_y=axis_names_y
+        )
+
+
     def shuffle(self, seed: int=42):
         idxs = np.arange(len(self.X))
         np.random.shuffle(idxs)
