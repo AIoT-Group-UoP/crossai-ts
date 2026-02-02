@@ -108,7 +108,7 @@ class DatasetBase(ABC):
         pass
 
     @abstractmethod
-    def flatten(self, axis_names_sep=","):
+    def flatten(self, to_X, to_y, axis_names_sep=","):
         pass
 
     @abstractmethod
