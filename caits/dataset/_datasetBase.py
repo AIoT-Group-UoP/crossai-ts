@@ -112,5 +112,9 @@ class DatasetBase(ABC):
         pass
 
     @abstractmethod
+    def reshape(self, shape_X, shape_y, axis_names_X, axis_names_y):
+        pass
+
+    @abstractmethod
     def shuffle(self, seed: int=42):
         pass
