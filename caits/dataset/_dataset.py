@@ -601,9 +601,11 @@ class DatasetList(DatasetBase):
 
     def unify(self, others, axis_names: Optional = None, axis: int=0):
         if axis == 0:
+            y_vals = np.concatenate([self.y.values] + [o.y.values for o in others])
+
             return self.__class__(
                 X=self.X + sum([o.X for o in others], []),
-                y=self.y + sum([o.y for o in others], []),
+                y=CoreArray(values=y_vals, axis_names={"axis_1": self.y.keys()["axis_1"]}),
                 id=self._id + sum([o._id for o in others], []),
             )
         elif axis == 1:
