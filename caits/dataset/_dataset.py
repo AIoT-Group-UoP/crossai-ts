@@ -356,12 +356,14 @@ class DatasetArray(DatasetBase):
             raise Exception(f"export_to {export_to} is not supported.")
 
 
-    @staticmethod
-    def stack(
-            X_vals: List[np.ndarray],
-            y_vals,
-            axis_names
-    ):
+    def apply_windowing(self, func, *args, **kwargs):
+        X_vals, y_vals = self.apply(func, to_X=True, to_y=True, *args, **kwargs)
+
+        axis_names = {
+            "X": copy.deepcopy(self.X.axis_names),
+            "y": copy.deepcopy(self.y.axis_names)
+        }
+
         X = np.stack(X_vals)
         y = np.stack(y_vals)
 
