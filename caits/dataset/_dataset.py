@@ -848,6 +848,17 @@ class DatasetList(DatasetBase):
             y=self.y,
         )
 
+
+    def reshape(
+            self,
+            shape_X,
+            shape_y,
+            axis_names_X,
+            axis_names_y
+    ):
+        pass
+
+
     def shuffle(self, seed: int=42):
         idxs = np.arange(len(self.X))
         np.random.RandomState(seed).shuffle(idxs)
