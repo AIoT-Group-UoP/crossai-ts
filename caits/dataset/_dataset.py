@@ -685,18 +685,18 @@ class DatasetList(DatasetBase):
     def numpy_to_dataset(
             X,
             y,
+            id,
             axis_names_X: Optional[Dict[str, Dict[Union[str, int], int]]] = None,
             axis_names_y = None,
-            split: bool = True
+            split: bool = True,
     ):
-        _y = CoreArray(y, axis_names=axis_names_y)
 
         if split:
             _X = [CoreArray(x, axis_names=axis_names_X) for x in X]
-            return DatasetList(X=_X, y=_y)
+            return DatasetList(X=_X, y=y)
         else:
             _X = CoreArray(X)
-            return DatasetArray(X=_X, y=_y)
+            return DatasetArray(X=_X, y=y)
 
 
     def features_dict_to_dataset(self, features, axis_names, axis):
