@@ -818,7 +818,13 @@ class DatasetList(DatasetBase):
 
         return DatasetList(X=caitsX, y=y, id=id)
 
-    def flatten(self, axis_names_sep=","):
+
+    def flatten(
+            self,
+            to_X = True,
+            to_y = False,
+            axis_names_sep=","
+    ):
         axis_names = self.X[0].keys()
         axis_names_list = []
         for i in range(len(axis_names)):
