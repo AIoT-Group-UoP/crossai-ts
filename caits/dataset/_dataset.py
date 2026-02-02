@@ -699,25 +699,41 @@ class DatasetList(DatasetBase):
             return DatasetArray(X=_X, y=y)
 
 
-    def features_dict_to_dataset(self, features, axis_names, axis):
-        features_tmp = {}
-        for feat, values in features.items():
-            if values[0].ndim == 1:
-                features_tmp[feat] = values
-            else:
-                for i in range(values[0].shape[0]):
-                    features_tmp[f"{feat}_{i}"] = [values[j][i, ...] for j in range(len(values))]
+    @staticmethod
+    def features_dict_to_dataset(
+            features,
+            axis_names,
+            axis
+    ):
+        ret_values = {}
 
-        values = [
-            np.stack(
-                [feat[i] for feat in features_tmp.values()],
-                axis=axis,
-            ) for i in range(len(list(features_tmp.values())[0]))
-        ]
+        for part, part_features in features.items():
+            features_tmp = {}
+            for feat, values in part_features.items():
+                if values[0].ndim == 1:
+                    features_tmp[feat] = values
+                else:
+                    for i in range(values[0].shape[0]):
+                        features_tmp[f"{feat}_{i}"] = [values[j][i, ...] for j in range(len(values))]
 
-        axis_names[f"axis_{axis}"] = list(features_tmp.keys())
+            ret_values[part] = [
+                np.stack(
+                    [feat[i] for feat in features_tmp.values()],
+                    axis=axis,
+                ) for i in range(len(list(features_tmp.values())[0]))
+            ]
 
-        return self.numpy_to_dataset(values, axis_names)
+            ret_axis_names = {
+                f"axis_names_{part}": {
+                    f"axis_{axis}": list(features_tmp.keys())
+                }
+            }
+
+        for part in ["X", "y", "id"]:
+            if part not in ret_values.keys():
+                ret_values[part] = None
+
+        return DatasetList.numpy_to_dataset(**ret_values, **ret_axis_names)
 
     def dict_to_dataset(self, X):
         return DatasetList(**X)
