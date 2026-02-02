@@ -49,13 +49,13 @@ class FeatureExtractorScalar(BaseEstimator, TransformerMixin):
             axis_names = {}
 
             if self.to_X:
-                axis_names["X"] = data.X.keys()
+                axis_names["X"] = data.get_axis_names_X()
                 del axis_names["X"][f"axis_0"]
             else:
                 axis_names["X"] = {}
 
             if self.to_y:
-                axis_names["y"] = data.y.keys()
+                axis_names["y"] = data.get_axis_names_y()
                 del axis_names["y"][f"axis_0"]
             else:
                 axis_names["y"] = {}
