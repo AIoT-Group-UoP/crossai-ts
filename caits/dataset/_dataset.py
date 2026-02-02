@@ -774,6 +774,17 @@ class DatasetList(DatasetBase):
         else:
             raise Exception(f"export_to {export_to} is not supported.")
 
+    def apply_windowing(self, func, *args, **kwargs):
+        windowed_data = self.apply(func, to_y=False, *args, **kwargs)
+
+        X = sum(windowed_data[0], [])
+        y = CoreArray(
+            values=np.array(
+                [self.y.values[i, ...] for i, x in enumerate(windowed_data[0]) for _ in x]
+            ),
+            axis_names={"axis_1": self.y.keys()["axis_1"]}
+        )
+        id = [self._id[i] for i, x in enumerate(windowed_data[0]) for _ in x]
 
     def stack(self, data):
         X = sum(data, [])
