@@ -103,13 +103,8 @@ class DatasetBase(ABC):
     def apply(self, func, *args, **kwargs):
         pass
 
-    @staticmethod
     @abstractmethod
-    def stack(
-            X_vals,
-            y_vals,
-            axis_names,
-    ):
+    def apply_windowing(self, func, *args, **kwargs):
         pass
 
     @abstractmethod
