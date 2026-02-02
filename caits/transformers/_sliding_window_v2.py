@@ -35,17 +35,8 @@ class SlidingWindow(BaseEstimator, TransformerMixin):
         Returns:
             DatasetBase: A new Dataset object with transformed data.
         """
-        tmp = data.apply(
+        return data.apply_windowing(
             sliding_window_arr,
-            to_X=True,
-            to_y=True,
             window_size=self.window_size,
             overlap=self.overlap
         )
-
-        axis_names = {
-            "X": data.X.keys(),
-            "y": data.y.keys()
-        }
-
-        return data.stack(*tmp, axis_names=axis_names)
