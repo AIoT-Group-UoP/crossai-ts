@@ -388,6 +388,7 @@ class DatasetArray(DatasetBase):
             y=y_core
         )
 
+
     # TODO: Adjust
     def flatten(
             self,
