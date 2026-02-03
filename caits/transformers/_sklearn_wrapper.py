@@ -160,8 +160,8 @@ class SklearnWrapper(Pipeline):
                 to_X=self.to_X,
                 to_y=self.to_y,
                 axis_names={
-                    "X": X.X.keys(),
-                    "y": X.y.keys()
+                    "X": X.get_axis_names_X(),
+                    "y": X.get_axis_names_y()
                 },
                 flattened=True,
                 export_to=self.export_to_
