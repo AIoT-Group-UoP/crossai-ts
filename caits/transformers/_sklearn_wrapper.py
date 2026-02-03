@@ -108,10 +108,12 @@ class SklearnWrapper(Pipeline):
             sklearn_transformers,
             to_X=True,
             to_y=False,
+            export_to=None
     ):
 
         self.to_X = to_X
         self.to_y = to_y
+        self.export_to = export_to
         self.sklearn_transformers = [
             (name, SklearnPipeStep(skt, to_X=to_X, to_y=to_y, **params))
             for name, skt, params in sklearn_transformers
@@ -129,7 +131,16 @@ class SklearnWrapper(Pipeline):
         Args:
             X: The input data (ignored).
         """
-        self.shape_X_ = X.X.shape
+        if self.export_to is None:
+            self.export_to_ = None
+
+        if X.__class__.__name__ == "DatasetArray":
+            self.export_to_ = "datasetArray"
+            self.shape_X_ = X.X.shape
+        else:
+            self.export_to_ = "datasetList"
+            self.shape_X_ = X.X[0].shape
+
         self.shape_y_ = X.y.shape
 
         reshaper = (
