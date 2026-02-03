@@ -44,7 +44,14 @@ class DatasetBase(ABC):
         pass
 
     @abstractmethod
-    def unify(self, others, axis_names: Optional = None, axis: int=0):
+    def unify(
+            self,
+            others,
+            axis_names: Optional = None,
+            axis: int=0,
+            to_X: bool=True,
+            to_y: bool=False
+    ):
         pass
 
     @abstractmethod
