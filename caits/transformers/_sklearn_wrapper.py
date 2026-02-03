@@ -176,3 +176,11 @@ class SklearnWrapper(Pipeline):
 
         super().fit(X, y, **params)
 
+
+    def fit_transform(self, X, y=None, **params):
+        """Fits the transformer
+        Args:
+            X: The input data (ignored).
+        """
+        self.fit(X, y, **params)
+        return super().transform(X, **params)
