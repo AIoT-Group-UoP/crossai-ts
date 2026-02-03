@@ -39,7 +39,7 @@ class ColumnTransformer(BaseEstimator, TransformerMixin):
                 new_data = transformer.transform(tr_data[:, columns_X])
 
                 if columns_set["X"][1] is not None:
-                    old_keys = new_data.X.keys()["axis_1"]
+                    old_keys = new_data.get_axis_names_X()["axis_1"].keys()
                     new_keys = columns_set["X"][1]
 
                     renamings = {
@@ -61,7 +61,7 @@ class ColumnTransformer(BaseEstimator, TransformerMixin):
                 new_data = transformer.transform(tr_data[:, columns_y])
 
                 if columns_set["y"][1] is not None:
-                    old_keys = new_data.y.keys()["axis_1"]
+                    old_keys = new_data.get_axis_names_X()["axis_1"].keys()
                     new_keys = columns_set["y"][1]
 
                     renamings = {
