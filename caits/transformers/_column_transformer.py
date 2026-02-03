@@ -20,8 +20,10 @@ class ColumnTransformer(BaseEstimator, TransformerMixin):
 
             _data = X[:, columns_X + columns_y]
 
+            transformer.fit(_data)
+
             self.transformations_.append(
-                (name, transformer.fit(_data), columns_set)
+                (name, transformer, columns_set)
             )
 
         return self
