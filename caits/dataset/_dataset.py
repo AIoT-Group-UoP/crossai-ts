@@ -920,3 +920,31 @@ class DatasetList(DatasetBase):
         )
 
 
+    def rename(self, renamings):
+
+        new_dataset_list = copy.deepcopy(self)
+
+        for part in renamings.keys():
+            for axis, contents in renamings[part].items():
+                for old_name, new_name in contents.items():
+                    if part == "X":
+                        data_part = new_dataset_list.X
+
+                        if new_name in new_dataset_list.get_axis_names_X()[axis]:
+                            raise ValueError(f"renamings[{part}][{axis}][{new_name}] already exists.")
+
+                        for i, x in enumerate(self.X):
+                            value = data_part[i].axis_names[axis].pop(old_name)
+                            data_part[i].axis_names[axis][new_name] = value
+
+                    else:
+                        data_part = new_dataset_list.y
+
+                        if new_name in new_dataset_list.get_axis_names_y()[axis]:
+                            raise ValueError(f"renamings[{part}][{axis}][{new_name}] already exists.")
+
+                        value = data_part.axis_names[axis].pop(old_name)
+                        data_part.axis_names[axis][new_name] = value
+
+        return new_dataset_list
+
