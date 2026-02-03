@@ -677,9 +677,9 @@ class DatasetList(DatasetBase):
 
     def to_numpy(self, flatten=False):
         if flatten:
-            return np.stack([x.values.flatten() for x in self.X]), np.array(self.y), np.array(self._id)
+            return np.stack([x.values.flatten() for x in self.X]), self.y.values, np.array(self._id)
         else:
-            return np.stack([x.values for x in self.X]), np.array(self.y), np.array(self._id)
+            return np.stack([x.values for x in self.X]), self.y.values, np.array(self._id)
 
     def to_df(self):
         return {
