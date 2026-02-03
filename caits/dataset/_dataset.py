@@ -657,6 +657,8 @@ class DatasetList(DatasetBase):
             raise ValueError("Invalid axis argument.")
 
     def replace(self, other):
+        new_data = deepcopy(self)
+
         if len(self.X) != len(other.X):
             raise ValueError("self.X and other.X must have same length.")
         if len(self.y) != len(other.y):
@@ -666,11 +668,12 @@ class DatasetList(DatasetBase):
         if len(set(self.X[0].axis_names[f"axis_1"].keys()).intersection(other.X[0].axis_names[f"axis_1"].keys())) == 0:
             raise ValueError("self.X[0] and other.X[0] must have same axis_name.")
 
-        idxs = [self.X[0].axis_names["axis_1"][o] for o in other.X[0].axis_names["axis_1"].keys()]
+        idxs = [new_data.X[0].axis_names["axis_1"][o] for o in other.X[0].axis_names["axis_1"].keys()]
 
         for i in range(len(self.X)):
-            self.X[i].values[:, idxs] = other.X[i].values
+            new_data.X[i].values[:, idxs] = other.X[i].values
 
+        return new_data
 
     def to_numpy(self, flatten=False):
         if flatten:
