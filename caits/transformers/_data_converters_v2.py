@@ -6,7 +6,7 @@ class DatasetToArray(BaseEstimator, TransformerMixin):
             flatten=False,
             to_X=True,
             to_y=False,
-            dtype=None
+            dtype=None,
     ):
         """Initializes the DatasetToArray transformer.
 
@@ -68,7 +68,8 @@ class ArrayToDataset(BaseEstimator, TransformerMixin):
             to_y=False,
             dtype=None,
             axis_names=None,
-            flattened=True
+            flattened=True,
+            export_to="datasetArray"
     ):
         """Initializes the ArrayToDataset transformer.
         """
@@ -79,6 +80,7 @@ class ArrayToDataset(BaseEstimator, TransformerMixin):
         self.dtype = dtype
         self.axis_names = axis_names
         self.flattened = flattened
+        self.export_to = export_to
 
     def fit(self, X, y=None):
         self.fitted_ = True
@@ -92,6 +94,7 @@ class ArrayToDataset(BaseEstimator, TransformerMixin):
                 self.shape_y if self.to_y else None,
                 axis_names_X=self.axis_names["X"] if self.to_X else None,
                 axis_names_y=self.axis_names["y"] if self.to_y else X.y.axis_names,
+                export_to=self.export_to
             )
 
 
