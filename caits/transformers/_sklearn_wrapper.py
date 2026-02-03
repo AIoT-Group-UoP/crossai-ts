@@ -163,7 +163,8 @@ class SklearnWrapper(Pipeline):
                     "X": X.X.keys(),
                     "y": X.y.keys()
                 },
-                flattened=True
+                flattened=True,
+                export_to=self.export_to_
             )
         )
 
