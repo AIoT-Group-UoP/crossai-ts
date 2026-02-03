@@ -125,3 +125,7 @@ class DatasetBase(ABC):
     @abstractmethod
     def shuffle(self, seed: int=42):
         pass
+
+    @abstractmethod
+    def rename(self, renamings):
+        pass
