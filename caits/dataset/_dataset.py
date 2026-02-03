@@ -802,21 +802,21 @@ class DatasetList(DatasetBase):
         test_idxs = np.concatenate(test_idxs, axis=0)
 
         train_X = []
-        train_y = []
         train_id = []
         test_X = []
-        test_y = []
         test_id = []
 
         for idx in train_idxs:
             train_X.append(self.X[idx])
-            train_y.append(self.y[idx])
             train_id.append(self._id[idx])
+
+        train_y = self.y.iloc[train_idxs, ...]
 
         for idx in test_idxs:
             test_X.append(self.X[idx])
-            test_y.append(self.y[idx])
             test_id.append(self._id[idx])
+
+        test_y = self.y.iloc[test_idxs, ...]
 
         return self.__class__(train_X, train_y, train_id), self.__class__(test_X, test_y, test_id)
 
