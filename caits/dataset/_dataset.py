@@ -581,13 +581,13 @@ class DatasetList(DatasetBase):
 
     def __get_single(self, idx: Union[int, slice, List]):
         if isinstance(idx, int):
-            return [self.X[idx]], [self.y[idx]], [self._id[idx]]
+            return [self.X[idx]], [self.y.iloc[idx]], [self._id[idx]]
 
         elif isinstance(idx, slice):
-            return self.X[idx], self.y[idx], self._id[idx]
+            return self.X[idx], self.y.iloc[idx, ...], self._id[idx]
 
         elif isinstance(idx, list) and all([isinstance(k, int) for k in idx]):
-            return [self.X[i] for i in idx], [self.y[i] for i in idx], [self._id[i] for i in idx]
+            return [self.X[i] for i in idx], [self.y.iloc[i] for i in idx], [self._id[i] for i in idx]
 
         else:
             raise ValueError
