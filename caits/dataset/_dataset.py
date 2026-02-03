@@ -440,24 +440,39 @@ class DatasetArray(DatasetBase):
             shape_X,
             shape_y,
             axis_names_X,
-            axis_names_y
+            axis_names_y,
+            export_to="datasetArray"
     ):
-        if shape_X is not None:
-            _X = self.X.values.reshape(shape_X)
-        else:
-            _X = self.X.values
-
         if shape_y is not None:
             _y = self.y.values.reshape(shape_y)
         else:
             _y = self.y.values
 
-        return self.__class__.numpy_to_dataset(
-            _X,
-            _y,
-            axis_names_X=axis_names_X,
-            axis_names_y=axis_names_y
-        )
+        if export_to == "datasetArray":
+            if shape_X is not None:
+                _X = self.X.values.reshape(shape_X)
+            else:
+                _X = self.X.values
+
+            return DatasetArray.numpy_to_dataset(
+                _X,
+                _y,
+                axis_names_X=axis_names_X,
+                axis_names_y=axis_names_y
+            )
+
+        elif export_to == "datasetList":
+            _X = [self.X.values[i, ...].reshape(shape_X) for i in range(self.X.values.shape[0])]
+            return DatasetList.numpy_to_dataset(
+                _X,
+                _y,
+                None,
+                axis_names_X=axis_names_X,
+                axis_names_y=axis_names_y
+            )
+
+        else:
+            raise Exception(f"export_to {export_to} is not supported.")
 
 
     def shuffle(self, seed: int=42):
