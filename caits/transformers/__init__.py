@@ -17,7 +17,7 @@ from ._feature_extractor_v2 import FeatureExtractorSignal
 from ._feature_extractor_2d_v2 import FeatureExtractorSpectrum
 from ._func_transformer_v2 import FunctionTransformer
 from ._func_transformer_2d_v2 import FunctionTransformer2D
-from ._sklearn_wrapper import SklearnPipeStep
+from ._sklearn_wrapper import SklearnPipeStep, SklearnWrapper
 from ._sliding_window_v2 import SlidingWindow
 
 
@@ -38,4 +38,5 @@ __all__ = [
     "FunctionTransformer",
     "FunctionTransformer2D",
     "SklearnPipeStep",
+    "SklearnWrapper",
 ]
