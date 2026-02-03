@@ -614,7 +614,14 @@ class DatasetList(DatasetBase):
         for i in range(0, len(self.X), batch_size):
             yield self.X[i : i + batch_size], self.y[i : i + batch_size], self._id[i : i + batch_size]
 
-    def unify(self, others, axis_names: Optional = None, axis: int=0):
+    def unify(
+            self,
+            others,
+            axis_names: Optional = None,
+            axis: int=0,
+            to_X: bool = True,
+            to_y: bool = True
+    ):
         if axis == 0:
             y_vals = np.concatenate([self.y.values] + [o.y.values for o in others])
 
