@@ -598,7 +598,7 @@ class DatasetList(DatasetBase):
 
     def __next__(self):
         if self._current < len(self):
-            res = self.X[self._current], self.y[self._current], self._id[self._current]
+            res = self.X[self._current], self.y.iloc[self._current, ...], self._id[self._current]
             self._current += 1
             return res
         else:
