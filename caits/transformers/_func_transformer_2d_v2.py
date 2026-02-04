@@ -65,7 +65,7 @@ class FunctionTransformer2D(BaseEstimator, TransformerMixin):
                 ("axis_1" if self.to_X else "axis_0"): axis_names_X
             },
             axis_names_y={
-                ("axis_1" if self.to_y else "axis_1"): axis_names_y
+                ("axis_1" if self.to_y else "axis_0"): axis_names_y
             }
         )
         return dfX
