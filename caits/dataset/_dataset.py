@@ -715,13 +715,14 @@ class DatasetList(DatasetBase):
             axis_names_y = None,
             split: bool = True,
     ):
+        dfy = CoreArray(y, axis_names=axis_names_y)
 
         if split:
             _X = [CoreArray(x, axis_names=axis_names_X) for x in X]
-            return DatasetList(X=_X, y=y)
+            return DatasetList(X=_X, y=dfy)
         else:
             _X = CoreArray(X)
-            return DatasetArray(X=_X, y=y)
+            return DatasetArray(X=_X, y=dfy)
 
 
     @staticmethod
@@ -763,7 +764,7 @@ class DatasetList(DatasetBase):
 
         for part in ["X", "y", "id"]:
             if part not in ret_values.keys():
-                ret_values[part] = None
+                ret_values[part] = np.array([None])
 
         return DatasetList.numpy_to_dataset(**ret_values, **ret_axis_names)
 
@@ -838,7 +839,7 @@ class DatasetList(DatasetBase):
         if to_y:
             y_tr = func(self.y.values, *args, **kwargs),
         else:
-            y_tr = self.y
+            y_tr = self.y.values
 
         if export_to is None or export_to == "tuple":
             return X_tr, y_tr, self._id
