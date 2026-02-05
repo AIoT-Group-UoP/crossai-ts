@@ -254,11 +254,19 @@ class DatasetArray(DatasetBase):
 
     @staticmethod
     def features_dict_to_dataset(
-            features,
+            features: dict,
             axis_names,
-            axis
+            axis,
+            to_X = True,
+            to_y = False
     ):
         features_arrs = {}
+
+        if not to_X:
+            features_arrs["X"] = features.pop("X")
+
+        if not to_y:
+            features_arrs["y"] = features.pop("y")
 
         for part, feats in features.items():
             features_tmp = {}
@@ -729,44 +737,58 @@ class DatasetList(DatasetBase):
     def features_dict_to_dataset(
             features,
             axis_names,
-            axis
+            axis,
+            to_X = True,
+            to_y = False
     ):
+
         ret_values = {}
-        ret_axis_names = {}
+        ret_axis_names = copy.deepcopy(axis_names)
 
-        for part, part_features in features.items():
-            if part == "X":
-                features_tmp = {}
-                for feat, values in part_features.items():
-                    if values[0].ndim == 1:
-                        features_tmp[feat] = values
-                    else:
-                        for i in range(values[0].shape[0]):
-                            features_tmp[f"{feat}_{i}"] = [values[j][i, ...] for j in range(len(values))]
+        # Processing X
+        if to_X:
+            features_tmp = {}
+            for feat, values in features["X"].items():
+                if values[0].ndim == 1:
+                    features_tmp[feat] = values
+                else:
+                    for i in range(values[0].shape[0]):
+                        features_tmp[f"{feat}_{i}"] = [values[j][i, ...] for j in range(len(values))]
 
-                ret_values[part] = [
-                    np.stack(
-                        [feat[i] for feat in features_tmp.values()],
-                        axis=axis,
-                    ) for i in range(len(list(features_tmp.values())[0]))
-                ]
+            tmp = [
+                np.stack(
+                    [feat[i] for feat in features_tmp.values()],
+                    axis=axis,
+                ) for i in range(len(list(features_tmp.values())[0]))
+            ]
 
-                ret_axis_names[f"axis_names_{part}"] = {
-                    f"axis_{axis}": list(features_tmp.keys())
-                }
-            elif part == "y":
-                ret_values[part] = part_features[list(part_features.keys())[0]].values
-                ret_axis_names[f"axis_names_{part}"] = {
-                    f"axis_{axis}": part_features[list(part_features.keys())[0]].keys()
-                }
-            else:
-                pass
+            ret_axis_names["X"][f"axis_{axis}"] = list(features_tmp.keys())
 
-        for part in ["X", "y", "id"]:
-            if part not in ret_values.keys():
-                ret_values[part] = np.array([None])
+            ret_values["X"] = [CoreArray(x, ret_axis_names["X"]) for x in tmp]
+        else:
+            ret_values["X"] = features["X"]
 
-        return DatasetList.numpy_to_dataset(**ret_values, **ret_axis_names)
+        if to_y:
+            features_tmp = {}
+            # Processing y
+            for feat, values in features["y"].items():
+                if values.ndim == 1:
+                    features_tmp[feat] = values
+                else:
+                    for i in range(values.shape[0]):
+                        features_tmp[f"{feat}_{i}"] = values[i, ...]
+
+            tmp = np.stack([feat for feat in features_tmp.values()], axis=axis)
+
+            ret_axis_names["y"][f"axis_{axis}"] = list(features_tmp.keys())
+
+            ret_values["y"] = CoreArray(tmp, ret_axis_names["y"])
+        else:
+            ret_values["y"] = features["y"]
+
+        ret_values["id"] = features["id"]
+
+        return DatasetList(**ret_values)
 
     def dict_to_dataset(self, X):
         return DatasetList(**X)

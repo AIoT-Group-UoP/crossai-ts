@@ -1,3 +1,4 @@
+import copy
 from typing import Dict, List, Union, TypeVar
 from sklearn.base import BaseEstimator, TransformerMixin
 
@@ -22,10 +23,13 @@ class FeatureExtractorSignal(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, data: T) -> Union[T, Dict]:
-        features = {
-            "X": {},
-            "y": {}
-        }
+        features = data.to_dict()
+
+        if self.to_X:
+            features["X"] = {}
+
+        if self.to_y:
+            features["y"] = {}
 
         for extractor in self.feature_extractors:
             func = extractor["func"]
@@ -39,23 +43,36 @@ class FeatureExtractorSignal(BaseEstimator, TransformerMixin):
                 **params
             )
 
-            features["X"][f"{func.__name__}"] = feature["X"]
-            features["y"][f"{func.__name__}"] = feature["y"]
+            if self.to_X:
+                features["X"][f"{func.__name__}"] = feature["X"]
+
+            if self.to_y:
+                features["y"][f"{func.__name__}"] = feature["y"]
 
         if self.to_dataset:
-            axis_names_X = {
-                f"axis_1": {name: i for i, name in enumerate(features["X"].keys())}
-            }
-            axis_names_y = {
-                f"axis_1": {name: i for i, name in enumerate(features["y"].keys())}
-            }
-            return data.features_dict_to_dataset(
+            if self.to_X:
+                axis_names_X = {
+                    f"axis_1": {name: i for i, name in enumerate(features["X"].keys())}
+                }
+            else:
+                axis_names_X = {}
+
+            if self.to_y:
+                axis_names_y = {
+                    f"axis_1": {name: i for i, name in enumerate(features["y"].keys())}
+                }
+            else:
+                axis_names_y = copy.deepcopy(data.y.axis_names)
+
+            return data.__class__.features_dict_to_dataset(
                 features,
                 {
                     "X": axis_names_X,
                     "y": axis_names_y
                 },
-                axis=1
+                axis=1,
+                to_X=self.to_X,
+                to_y=self.to_y
             )
 
         else:

@@ -94,7 +94,9 @@ class DatasetBase(ABC):
     def features_dict_to_dataset(
             features,
             axis_names,
-            axis
+            axis,
+            to_X = True,
+            to_y = False
     ):
         pass
 

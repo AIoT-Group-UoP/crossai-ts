@@ -22,11 +22,13 @@ class FeatureExtractorScalar(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, data: T) -> Union[T, Dict]:
-        features = {}
+        transformed_data = data.to_dict()
+
         if self.to_X:
-            features["X"] = {}
+            transformed_data["X"] = {}
+
         if self.to_y:
-            features["y"] = {}
+            transformed_data["y"] = {}
 
         for extractor in self.feature_extractors:
             func = extractor["func"]
@@ -40,10 +42,10 @@ class FeatureExtractorScalar(BaseEstimator, TransformerMixin):
             )
 
             if self.to_X:
-                features["X"][f"{func.__name__}"] = feature["X"]
+                transformed_data["X"][f"{func.__name__}"] = feature["X"]
 
             if self.to_y:
-                features["y"][f"{func.__name__}"] = feature["y"]
+                transformed_data["y"][f"{func.__name__}"] = feature["y"]
 
         if self.to_dataset:
             axis_names = {}
@@ -61,10 +63,12 @@ class FeatureExtractorScalar(BaseEstimator, TransformerMixin):
                 axis_names["y"] = {}
 
             return data.__class__.features_dict_to_dataset(
-                features=features,
+                features=transformed_data,
                 axis_names=axis_names,
-                axis=0
+                axis=0,
+                to_X=self.to_X,
+                to_y=self.to_y,
             )
 
         else:
-            return features
+            return transformed_data
