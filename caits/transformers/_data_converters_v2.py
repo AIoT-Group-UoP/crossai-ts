@@ -96,6 +96,8 @@ class ArrayToDataset(BaseEstimator, TransformerMixin):
                 axis_names_y=self.axis_names["y"] if self.to_y else X.y.axis_names,
                 export_to=self.export_to
             )
+        else:
+            return X
 
 
 
