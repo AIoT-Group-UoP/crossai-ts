@@ -108,7 +108,8 @@ class SklearnWrapper(Pipeline):
             sklearn_transformers,
             to_X=True,
             to_y=False,
-            export_to=None
+            export_to=None,
+            flatten=True
     ):
 
         self.to_X = to_X
@@ -118,6 +119,7 @@ class SklearnWrapper(Pipeline):
             (name, SklearnPipeStep(skt, to_X=to_X, to_y=to_y, **params))
             for name, skt, params in sklearn_transformers
         ]
+        self.flatten = flatten
         super().__init__(self.sklearn_transformers)
 
 
@@ -146,7 +148,7 @@ class SklearnWrapper(Pipeline):
         reshaper = (
             "reshaper",
             DatasetToArray(
-                flatten=True,
+                flatten=self.flatten,
                 to_X=self.to_X,
                 to_y=self.to_y
             )
@@ -163,7 +165,7 @@ class SklearnWrapper(Pipeline):
                     "X": X.get_axis_names_X(),
                     "y": X.get_axis_names_y()
                 },
-                flattened=True,
+                flattened=self.flatten,
                 export_to=self.export_to_
             )
         )
