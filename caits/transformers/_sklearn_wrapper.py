@@ -12,7 +12,7 @@ class SklearnPipeStep(BaseEstimator, TransformerMixin):
             transformer,
             to_X=True,
             to_y=False,
-            transformer_kwargs: Optional[Dict]=None
+            **transformer_kwargs
     ):
         """Initializes the Transformer class.
 
