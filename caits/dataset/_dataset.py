@@ -102,7 +102,7 @@ class DatasetArray(DatasetBase):
             raise StopIteration
 
     def __repr__(self):
-        return f"DatasetArray object with {len(self.X)} instances."
+        return f"DatasetArray object with {len(self.X)} instances"
 
     def __add__(self, other):
         return self.unify([other])
@@ -613,7 +613,7 @@ class DatasetList(DatasetBase):
             raise StopIteration
 
     def __repr__(self):
-        return f"DatasetList object with {len(self.X)} instances."
+        return f"DatasetList object with {len(self.X)} instances"
 
     def __add__(self, other):
         return self.unify([other])
