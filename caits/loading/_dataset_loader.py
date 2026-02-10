@@ -32,7 +32,7 @@ def load_file(
 
     if y_cols is not None:
         ret["data"]["y"] = data.loc[:, y_cols]
-        data = data.drop({"axis_1":y_cols})
+        data = data.drop({"axis_1": y_cols})
 
     ret["data"]["X"] = data.loc[:, X_cols] if X_cols is not None else data
     ret["sr"] = sr
@@ -72,7 +72,7 @@ def load_dir(
         if classes is None or subdir in classes:
             file = os.path.basename(file_path)
             try:
-                single_file_data, sr = load_file(
+                (single_file_data,), sr = load_file(
                     file_path=file_path,
                     type=type,
                     X_cols=X_cols,
