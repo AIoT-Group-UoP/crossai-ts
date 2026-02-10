@@ -16,5 +16,7 @@ __all__ = [
     "s3_wav_loader",
     "s3_wav_specs_check",
     "json_loader",
-    "load_yaml_config"
+    "load_yaml_config",
+    "load_file",
+    "load_dir"
 ]
