@@ -239,3 +239,17 @@ class CoreArray:
 
     def __copy__(self):
         return copy.deepcopy(self)
+
+
+    def drop(self, axis_names):
+        names_to_keep = [slice(None, None, None) for _ in range(self.ndim)]
+
+        for axis, names in axis_names.items():
+            axis_num = int(axis.split("_")[-1])
+            curr_names_set = set(self.keys()[axis])
+            names_set = set(names)
+            tmp = list(curr_names_set - names_set)
+            names_to_keep[axis_num] = sorted(tmp, key=self.axis_names[axis].get)
+
+        return self.loc[*names_to_keep]
+
