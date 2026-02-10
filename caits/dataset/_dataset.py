@@ -515,7 +515,7 @@ class DatasetList(DatasetBase):
     def __init__(
             self,
             X: List[CoreArray],
-            y: Optional[List[Union[str, int]]]=None,
+            y: Optional[CoreArray]=None,
             id: Optional[List[str]]=None
     ) -> None:
         if y is None:
