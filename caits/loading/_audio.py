@@ -10,6 +10,7 @@ from scipy.io import wavfile
 from tqdm import tqdm
 
 from ..preprocessing import resample_2d
+from ..dataset import CoreArray
 
 
 def wav_loader(
@@ -18,7 +19,7 @@ def wav_loader(
     target_sr: Optional[int] = None,
     dtype: str = "float64",
     channels: Optional[List[str]] = None
-) -> Tuple[pd.DataFrame, int]:
+) -> Tuple[CoreArray, int]:
     """Loads and optionally resamples a mono or multichannel audio
     file into a DataFrame.
 
@@ -48,8 +49,6 @@ def wav_loader(
             # Normalize to [-1, 1] for float types
             audio_data = audio_data / np.iinfo(audio_data.dtype).max
             audio_data = audio_data.astype(dtype)  # Convert to specified type
-        if audio_data.ndim == 1:
-            audio_data = audio_data.reshape(-1, 1)
     else:
         raise ValueError(f"Unsupported mode: {mode}")
 
