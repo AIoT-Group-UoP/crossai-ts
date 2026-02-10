@@ -66,7 +66,10 @@ def wav_loader(
     if channels is None or len(channels) != audio_data.shape[1]:
         channels = [f"ch_{i + 1}" for i in range(audio_data.shape[1])]
 
-    return pd.DataFrame(audio_data, columns=channels), target_sr
+    return CoreArray(
+        values=audio_data,
+        axis_names={"axis_1": channels}
+    ), target_sr
 
 
 def audio_loader(
