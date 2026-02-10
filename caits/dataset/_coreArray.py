@@ -46,7 +46,7 @@ class CoreArray:
 
         def __getitem__(self, index):
             if len(index) != self.parent.ndim:
-                raise ValueError(f'Index must be {self.parent.parent.values.ndim} dimensional')
+                raise ValueError(f'Index must be {self.parent.values.ndim} dimensional')
             else:
                 idxs = []
                 axis_names = {axis: np.array(list(names.keys())) for axis, names in self.parent.axis_names.items()}
