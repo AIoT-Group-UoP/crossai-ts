@@ -2,7 +2,7 @@ from typing import Union, TypeVar, List, Dict, Optional
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.pipeline import Pipeline
-from ._data_converters_v2 import DatasetToArray, ArrayToDataset
+from ._data_converters import DatasetToArray, ArrayToDataset
 from ..dataset import DatasetBase
 T = TypeVar('T', bound="DatasetBase")
 

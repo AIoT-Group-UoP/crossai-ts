@@ -1,10 +1,17 @@
-from typing import Union
+from typing import Union, TypeVar
 from sklearn.base import BaseEstimator, TransformerMixin
-from ..dataset import Dataset, RegressionDataset
+from caits.dataset import DatasetBase
 
+T = TypeVar('T', bound="DatasetBase")
 
 class FunctionTransformer(BaseEstimator, TransformerMixin):
-    def __init__(self, func, **func_kwargs):
+    def __init__(
+            self,
+            func,
+            to_X=True,
+            to_y=False,
+            **func_kwargs
+    ):
         """Initializes the Transformer class.
 
         Args:
@@ -14,6 +21,8 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         """
         self.func = func
         self.func_kwargs = func_kwargs
+        self.to_X = to_X
+        self.to_y = to_y
 
     def fit(self, X, y=None):
         """Fits the transformer
@@ -25,30 +34,30 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         Returns:
             self: Returns the instance itself.
         """
+        self.fitted_ = True
         return self
 
-    def transform(self, X: Union[Dataset, RegressionDataset]) -> Union[Dataset, RegressionDataset]:
+    def transform(self, data: T) -> T:
         """Applies the transformation function column-wise to the data.
 
         Args:
             X: The Dataset object containing the data to be transformed.
 
         Returns:
-            Dataset: A new Dataset object with the transformed data.
+            DatasetBase: A new Dataset object with the transformed data.
         """
-        transformed_X = []
-        for df in X.X:
-            # Apply the function column-wise
-            transformed_df = df.apply(lambda col: self.func(col.values, **self.func_kwargs))
-            transformed_X.append(transformed_df)
+        transformed_data = data.apply(
+            func=self.func,
+            to_X=self.to_X,
+            to_y=self.to_y,
+            **self.func_kwargs
+        )
 
-        # Return a new CAI object with the transformed data
-        if isinstance(X, Dataset):
-            return Dataset(transformed_X, X.y, X._id)
-        elif isinstance(X, RegressionDataset):
-            return RegressionDataset(transformed_X, X.y)
-        else:
-            raise NotImplementedError("Transformer not implemented.")
+        return data.__class__.numpy_to_dataset(
+            *transformed_data,
+            axis_names_X={"axis_1": data.get_axis_names_X()["axis_1"]},
+            axis_names_y={"axis_1": data.get_axis_names_y()["axis_1"]}
+        )
 
     def get_params(self, deep=True):
         """Overrides get_params to include func_kwargs.

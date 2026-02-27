@@ -1,11 +1,17 @@
-from typing import Dict, Callable, Any, Union
+from typing import Dict, Callable, Any, Union, TypeVar
 from sklearn.base import BaseEstimator, TransformerMixin
-from pandas import DataFrame
-from ..dataset import Dataset, RegressionDataset
+from caits.dataset import DatasetBase
+
+T = TypeVar("T", bound="DatasetBase")
 
 
 class FunctionTransformer2D(BaseEstimator, TransformerMixin):
-    def __init__(self, func: Callable, **kwargs: Dict[str, Any]):
+    def __init__(
+            self, func: Callable,
+            to_X=True,
+            to_y=False,
+            **kwargs: Dict[str, Any]
+    ):
         """Initializes the Transformer class.
 
         Args:
@@ -14,6 +20,8 @@ class FunctionTransformer2D(BaseEstimator, TransformerMixin):
         """
         self.func = func
         self.kw_args = kwargs
+        self.to_X = to_X
+        self.to_y = to_y
 
     def fit(self, X, y=None):
         """Fits the transformer
@@ -25,9 +33,10 @@ class FunctionTransformer2D(BaseEstimator, TransformerMixin):
         Returns:
             self: Returns the instance itself.
         """
+        self.fitted_ = True
         return self
 
-    def transform(self, X: Union[Dataset, RegressionDataset]) -> Union[Dataset, RegressionDataset]:
+    def transform(self, data: T) -> T:
         """Applies the transformation function to each DataFrame.
 
         Each DataFrame is treated as a 2D matrix, and the transformation is
@@ -38,23 +47,28 @@ class FunctionTransformer2D(BaseEstimator, TransformerMixin):
             X: The Dataset object containing the data to be transformed.
 
         Returns:
-            Dataset: A new Dataset object with the transformed data.
+            DatasetBase: A new Dataset object with the transformed data.
         """
-        transformed_X = []
-        for df in X.X:
-            # Apply the function directly to the entire 2D matrix
-            transformed_array = self.func(df.values, **self.kw_args)
-            # Convert the transformed array back to a DataFrame
-            transformed_df = DataFrame(transformed_array, index=df.index, columns=df.columns)
-            transformed_X.append(transformed_df)
+        res = data.apply(
+            func=self.func,
+            to_X=self.to_X,
+            to_y=self.to_y,
+            **self.kw_args
+        )
 
-        # Return a new Dataset object with the transformed data
-        if isinstance(X, Dataset):
-            return Dataset(transformed_X, X.y, X._id)
-        elif isinstance(X, RegressionDataset):
-            return RegressionDataset(transformed_X, X.y)
-        else:
-            raise NotImplementedError("Transformer not implemented.")
+        axis_names_X = data.get_axis_names_X()["axis_0"]
+        axis_names_y = data.get_axis_names_y()["axis_0"]
+
+        dfX = data.__class__.numpy_to_dataset(
+            *res,
+            axis_names_X={
+                ("axis_1" if self.to_X else "axis_0"): axis_names_X
+            },
+            axis_names_y={
+                ("axis_1" if self.to_y else "axis_0"): axis_names_y
+            }
+        )
+        return dfX
 
     def get_params(self, deep=True):
         """Overrides get_params to include func_kwargs.

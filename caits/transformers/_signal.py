@@ -2,7 +2,7 @@ import copy
 from typing import Dict, List, Union, TypeVar
 from sklearn.base import BaseEstimator, TransformerMixin
 
-T = TypeVar('T', bound="Dataset")
+T = TypeVar('T', bound="DatasetBase")
 
 
 class FeatureExtractorSignal(BaseEstimator, TransformerMixin):
