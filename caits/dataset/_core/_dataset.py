@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Union, List, Optional, Dict
-from ._coreArray import CoreArray
+from . import CoreArray
 
-class DatasetBase(ABC):
+class CoreDataset(ABC):
     def __init__(
             self,
             X: Union[CoreArray, List[CoreArray]],
