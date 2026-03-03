@@ -3,7 +3,7 @@ from typing import Callable, Dict, List
 from sklearn.base import BaseEstimator, TransformerMixin
 from typing_extensions import TypedDict
 
-from ..dataset import DatasetBase
+from ..dataset import CoreDataset
 
 class Augmentation(TypedDict):
     func: Callable
@@ -31,7 +31,7 @@ class AugmentSignal(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         return self
 
-    def transform(self, X: DatasetBase) -> DatasetBase:
+    def transform(self, X: CoreDataset) -> CoreDataset:
         _X = [X]
 
         for _ in range(self.repeats):

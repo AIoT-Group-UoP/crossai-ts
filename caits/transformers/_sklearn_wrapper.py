@@ -3,8 +3,8 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.pipeline import Pipeline
 from ._data_converters import DatasetToArray, ArrayToDataset
-from ..dataset import DatasetBase
-T = TypeVar('T', bound="DatasetBase")
+from ..dataset import CoreDataset
+T = TypeVar('T', bound="CoreDataset")
 
 class SklearnPipeStep(BaseEstimator, TransformerMixin):
     def __init__(

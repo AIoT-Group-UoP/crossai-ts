@@ -1,8 +1,9 @@
 import copy
 from typing import Dict, Union, TypeVar
 from sklearn.base import BaseEstimator, TransformerMixin
+from ..dataset import CoreDataset
 
-T = TypeVar('T', bound="Dataset")
+T = TypeVar('T', bound="CoreDataset")
 
 class ColumnTransformer(BaseEstimator, TransformerMixin):
     def __init__(self, transformations):
