@@ -1,0 +1,75 @@
+from typing import Dict, List, Union, TypeVar
+from sklearn.base import BaseEstimator, TransformerMixin
+from caits.dataset import CoreDataset
+
+T = TypeVar('T', bound="CoreDataset")
+
+
+class FeatureExtractorScalar(BaseEstimator, TransformerMixin):
+    def __init__(
+            self,
+            feature_extractors: List[Dict],
+            to_X=True,
+            to_y=False,
+            to_dataset: bool = True
+    ):
+        self.feature_extractors = feature_extractors
+        self.to_X = to_X
+        self.to_y = to_y
+        self.to_dataset = to_dataset
+
+    def fit(self, X, y=None):
+        self.fitted_ = True
+        return self
+
+    def transform(self, data: T) -> Union[T, Dict]:
+        transformed_data = data.to_dict()
+
+        if self.to_X:
+            transformed_data["X"] = {}
+
+        if self.to_y:
+            transformed_data["y"] = {}
+
+        for extractor in self.feature_extractors:
+            func = extractor["func"]
+            params = extractor.get("params", {})
+            feature = data.apply(
+                func=func,
+                to_X=self.to_X,
+                to_y=self.to_y,
+                export_to="dict",
+                **params
+            )
+
+            if self.to_X:
+                transformed_data["X"][f"{func.__name__}"] = feature["X"]
+
+            if self.to_y:
+                transformed_data["y"][f"{func.__name__}"] = feature["y"]
+
+        if self.to_dataset:
+            axis_names = {}
+
+            if self.to_X:
+                axis_names["X"] = data.get_axis_names_X()
+                del axis_names["X"][f"axis_0"]
+            else:
+                axis_names["X"] = {}
+
+            if self.to_y:
+                axis_names["y"] = data.get_axis_names_y()
+                del axis_names["y"][f"axis_0"]
+            else:
+                axis_names["y"] = {}
+
+            return data.__class__.features_dict_to_dataset(
+                features=transformed_data,
+                axis_names=axis_names,
+                axis=0,
+                to_X=self.to_X,
+                to_y=self.to_y,
+            )
+
+        else:
+            return transformed_data

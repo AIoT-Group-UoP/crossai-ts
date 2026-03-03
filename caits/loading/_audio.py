@@ -10,6 +10,7 @@ from scipy.io import wavfile
 from tqdm import tqdm
 
 from ..preprocessing import resample_2d
+from ..dataset import CoreArray
 
 
 def wav_loader(
@@ -18,7 +19,7 @@ def wav_loader(
     target_sr: Optional[int] = None,
     dtype: str = "float64",
     channels: Optional[List[str]] = None
-) -> Tuple[pd.DataFrame, int]:
+) -> Tuple[CoreArray, int]:
     """Loads and optionally resamples a mono or multichannel audio
     file into a DataFrame.
 
@@ -48,21 +49,27 @@ def wav_loader(
             # Normalize to [-1, 1] for float types
             audio_data = audio_data / np.iinfo(audio_data.dtype).max
             audio_data = audio_data.astype(dtype)  # Convert to specified type
-        if audio_data.ndim == 1:
-            audio_data = audio_data.reshape(-1, 1)
     else:
         raise ValueError(f"Unsupported mode: {mode}")
 
     if target_sr is not None and target_sr != sample_rate:
         # Resamples audio to target_sr per channel
-        audio_data = resample_2d(audio_data, sample_rate, target_sr, dtype)
+        audio_data = resample_2d(
+            audio_data=audio_data,
+            native_sr=sample_rate,
+            target_sr=target_sr,
+            dtype=dtype
+        )
     else:
         target_sr = sample_rate
 
     if channels is None or len(channels) != audio_data.shape[1]:
         channels = [f"ch_{i + 1}" for i in range(audio_data.shape[1])]
 
-    return pd.DataFrame(audio_data, columns=channels), target_sr
+    return CoreArray(
+        values=audio_data,
+        axis_names={"axis_1": channels}
+    ), target_sr
 
 
 def audio_loader(

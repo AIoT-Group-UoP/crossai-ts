@@ -6,7 +6,7 @@ from sklearn.base import BaseEstimator
 from sklearn.pipeline import Pipeline
 from tensorflow.keras import Model
 
-from ..dataset import Dataset
+from ..dataset import DatasetBase
 from ..filtering import filter_butterworth
 from .detection import (
     apply_duration_threshold,
@@ -273,10 +273,11 @@ def robustness_analysis_many(
     return results
 
 
+# TODO: Adjust for DatasetBase
 def robustness_analysis_batch(
     pipeline: Pipeline,
     model: Union[BaseEstimator, Model],
-    dataset: Dataset,
+    dataset: DatasetBase,
     events: Dict[Any, Any],
     class_names: List[str],
     sample_rate: int,

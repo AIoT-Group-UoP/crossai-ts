@@ -2,8 +2,7 @@ import os
 from typing import List, Optional
 
 from ..loading import audio_loader, csv_loader
-
-from ._dataset import Dataset
+from ._core import CoreDataset
 
 
 class DataLoader:
@@ -25,7 +24,7 @@ class DataLoader:
         return formats
 
     @classmethod
-    def load_from(cls, path: str, classes: Optional[List[str]] = None) -> Dataset:
+    def load_from(cls, path: str, classes: Optional[List[str]] = None) -> CoreDataset:
         # check dataset's dir types
         formats = cls._get_file_types(path)
 
@@ -41,7 +40,7 @@ class DataLoader:
                 raise NotImplementedError(f"Loading for the {_format} format is not implemented.")
 
             # Return loaded data using Dataset Object
-            return Dataset(X=dict_data["X"], y=dict_data["y"], id=dict_data["id"])
+            return CoreDataset(X=dict_data["X"], y=dict_data["y"], id=dict_data["id"])
 
         else:
             # Dataset contains mixed file formats

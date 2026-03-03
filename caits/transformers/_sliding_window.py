@@ -1,6 +1,6 @@
 from sklearn.base import BaseEstimator, TransformerMixin
-from ..dataset import Dataset
-from ..windowing import sliding_window_df
+from ..dataset import CoreDataset
+from ..windowing import sliding_window_arr
 
 
 class SlidingWindow(BaseEstimator, TransformerMixin):
@@ -23,25 +23,20 @@ class SlidingWindow(BaseEstimator, TransformerMixin):
             X: The input data.
             y: The target variables (not used).
         """
+        self.fitted_ = True
         return self
 
-    def transform(self, X: Dataset) -> Dataset:
+    def transform(self, data: CoreDataset) -> CoreDataset:
         """Apply the sliding window transformation to the input data.
 
         Args:
-            X: The input data object containing a list of DataFrames.
+            data: The input data object containing a list of DataFrames.
 
         Returns:
-            Dataset: A new Dataset object with transformed data.
+            DatasetBase: A new Dataset object with transformed data.
         """
-        transformed_X = []
-        new_y = []
-        new_id = []
-
-        for df, label, id_ in X:
-            windowed_dfs = sliding_window_df(df, self.window_size, self.overlap)
-            transformed_X.extend(windowed_dfs)
-            new_y.extend([label] * len(windowed_dfs))
-            new_id.extend([id_] * len(windowed_dfs))
-
-        return Dataset(transformed_X, new_y, new_id)
+        return data.apply_windowing(
+            sliding_window_arr,
+            window_size=self.window_size,
+            overlap=self.overlap
+        )

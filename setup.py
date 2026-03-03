@@ -22,7 +22,7 @@ setup(
     ],
     url="https://github.com/AIoT-Group-UoP/crossai-ts",
     license="Apache License 2.0",
-    author="Pantelis Tzamalis, George Kontogiannis",
+    author="Pantelis Tzamalis, George Kontogiannis, Kyriakos Giannopoulos",
     author_email="tzamalis@ceid.upatras.gr",
     description="An open-source Python library for developing "
                 "end-to-end AI pipelines for Time Series Analysis",

@@ -1,10 +1,11 @@
 import glob
 import os
-from typing import Dict, List, Literal, Optional, Union
+from typing import Dict, List, Literal, Optional, Union, Tuple, Any
 
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+from ..dataset import CoreArray, DatasetArray
 
 
 def csv_loader(
@@ -65,67 +66,11 @@ def csv_loader(
         return {"X": all_features, "y": all_y, "id": all_id}
 
 
-def csv_loader_regression(
-        dataset_path: str,
-        X_cols: Union[List[str], None] = None,
-        y_cols: Union[List[str], None] = None,
-        header: Union[None, int, str] = "infer",
-        export: Literal["df", "dict"] = "dict",
-        **kwargs
-) -> Union[pd.DataFrame, Dict[str, List]]:
-    """Loads CSV files from a directory into a DataFrame or dictionary.
-
-    Args:
-        dataset_path: Path to the dataset directory containing CSV files.
-        X_cols: List of column names to use as input. If None, all columns
-            except those defined by y_cols are used.
-        y_cols: List of column names to use as output. If None, the last
-            column is used.
-        header: Specifies the row(s) to use as the column names.
-                Defaults to "infer".
-        export: Format to export the loaded data, "dict" or "df" for
-            DataFrame. Defaults to "dict".
-
-    Returns:
-        pd.DataFrame or dict: Loaded CSV data.
-    """
-    X = pd.DataFrame()
-    y = pd.DataFrame()
-
-    try:
-        if X_cols is not None:
-            kwargs["usecols"] = X_cols
-            if y_cols is not None:
-                kwargs["usecols"].extend(y_cols)
-
-        X = pd.read_csv(dataset_path, header=header, **kwargs)
-
-        if y_cols is None:
-            y_cols = [X.columns[-1]]
-
-        y = X[y_cols]
-        X = X.drop(columns=y_cols)
-
-        X = [X[[col]] for col in X.columns]
-        y = [y[[col]] for col in y.columns]
-
-    except Exception as e:
-        print(f"Error loading file {dataset_path}: {e}")
-
-    if export == "df":
-        return pd.DataFrame({"X": X, "y": y})
-    elif export == "dict":
-        return {"X": X, "y": y}
-    else:
-        raise ValueError(f"Provide a valid method for exporting the data. "
-                         f"Valid methods: 'df', 'dict'")
-
-
 def csv_loader_single_file(
         file_path: str,
-        delimiter: str = ",",
-        channels: Optional[List[str]] = None
-) -> pd.DataFrame:
+        axis_names: Optional[Dict] = None,
+        **kwargs
+) -> Tuple:
     """Reads a CSV file into a pandas DataFrame with custom header logic.
 
     This function checks if the CSV has a header. If not, it assigns default
@@ -135,7 +80,7 @@ def csv_loader_single_file(
     Args:
         file_path (str): The full path to the CSV file.
         delimiter (str, optional): The CSV delimiter. Defaults to ",".
-        channels (list of str, optional): A list of strings to be used as
+        axis_names (list of str, optional): A list of strings to be used as
             column names. If provided, this will override any existing header
             or default naming. Defaults to None.
 
@@ -152,25 +97,39 @@ def csv_loader_single_file(
         raise FileNotFoundError(
             f"Error: The file '{file_path}' was not found.")
 
-    if channels:
-        df = pd.read_csv(file_path, header=None, delimiter=delimiter)
-        if len(channels) != len(df.columns):
-            raise ValueError(
-                f"Mismatch: The provided list 'channels' has "
-                f"{len(channels)} names, "
-                f"but the CSV file has {len(df.columns)} columns."
-            )
-        df.columns = channels
+    axis_0_flag = axis_names is not None and "axis_0" in axis_names.keys()
+    axis_1_flag = axis_names is not None and "axis_1" in axis_names.keys()
 
-        return df
+    if axis_0_flag:
+        kwargs["index_col"] = None
+    if axis_1_flag:
+        kwargs["header"] = None
     else:
-        df = pd.read_csv(file_path, delimiter=delimiter)
+        kwargs["header"] = "infer"
 
-        is_default_header = all(isinstance(col, int) for col in df.columns)
+    df = pd.read_csv(file_path, **kwargs)
 
-        if is_default_header:
-            num_columns = len(df.columns)
-            new_column_names = [f'ch_{i + 1}' for i in range(num_columns)]
-            df.columns = new_column_names
+    if kwargs["header"] == "infer":
+        if axis_names is None:
+            axis_names = {}
+        axis_names["axis_1"] = df.columns
 
-        return df
+    if (
+            (axis_0_flag and len(axis_names["axis_0"]) != df.nrows)
+            or
+            (axis_1_flag and len(axis_names["axis_1"]) != len(df.columns))
+    ):
+        axis_0 = len(axis_names["axis_0"]) if axis_0_flag else None
+        axis_1 = len(axis_names["axis_1"]) if axis_1_flag else None
+        raise ValueError(
+            f"Mismatch: The provided axis_names dict has "
+            f"({axis_0}, {axis_1}) names, "
+            f"but the CSV file has shape ({df.nrows}, {len(df.columns)})."
+        )
+
+    return (
+        CoreArray(
+            values=df.values,
+            axis_names=axis_names
+        ), None
+    )

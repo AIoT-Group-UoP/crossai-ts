@@ -65,10 +65,8 @@ def filter_median_gen(
         >>> signal = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9])
         >>> filtered_signal = filter_median_gen(array, window_size=3)
     """
-    _array = array if axis == 0 else array.T
-
-    filtered_signal = median_filter(_array, size=window_size, output=output, mode=mode, cval=cval, origin=origin)
-    return filtered_signal if axis == 0 else filtered_signal.T
+    filtered_signal = median_filter(array, size=window_size, output=output, mode=mode, cval=cval, origin=origin, axes=(axis,))
+    return filtered_signal
 
 
 def filter_butterworth(

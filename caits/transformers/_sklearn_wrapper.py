@@ -2,9 +2,11 @@ from typing import Union, TypeVar, List, Dict, Optional
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.pipeline import Pipeline
-from ._data_converters_v2 import DatasetToArray, ArrayToDataset
-from ..dataset import DatasetBase
-T = TypeVar('T', bound="DatasetBase")
+from ._data_converters import DatasetToArray, ArrayToDataset
+from ..dataset import CoreDataset
+from ..dataset import from_numpy
+
+T = TypeVar('T', bound="CoreDataset")
 
 class SklearnPipeStep(BaseEstimator, TransformerMixin):
     def __init__(
@@ -12,7 +14,7 @@ class SklearnPipeStep(BaseEstimator, TransformerMixin):
             transformer,
             to_X=True,
             to_y=False,
-            transformer_kwargs: Optional[Dict]=None
+            **transformer_kwargs
     ):
         """Initializes the Transformer class.
 
@@ -39,8 +41,10 @@ class SklearnPipeStep(BaseEstimator, TransformerMixin):
         Returns:
             self: Returns the instance itself.
         """
-        self.fitted_transformer_X_ = self.transformer(**self.transformer_kwargs).fit(X.X.values)
-        self.fitted_transformer_y_ = self.transformer(**self.transformer_kwargs).fit(X.y.values)
+        if self.to_X:
+            self.fitted_transformer_X_ = self.transformer(**self.transformer_kwargs).fit(X.X.values)
+        if self.to_y:
+            self.fitted_transformer_y_ = self.transformer(**self.transformer_kwargs).fit(X.y.values)
         return self
 
     def transform(self, data: T) -> T:
@@ -62,12 +66,13 @@ class SklearnPipeStep(BaseEstimator, TransformerMixin):
         else:
             transformed_y = data.y.values
 
-        return data.__class__.numpy_to_dataset(
+        # return data.__class__.from_numpy(
+        return from_numpy(
             transformed_X,
             transformed_y,
             axis_names_X=data.X.keys(),
             axis_names_y=data.y.keys(),
-            split=False
+            to="DatasetArray"
         )
 
     def get_params(self, deep=True):
@@ -106,14 +111,18 @@ class SklearnWrapper(Pipeline):
             sklearn_transformers,
             to_X=True,
             to_y=False,
+            export_to=None,
+            flatten=True
     ):
 
         self.to_X = to_X
         self.to_y = to_y
+        self.export_to = export_to
         self.sklearn_transformers = [
             (name, SklearnPipeStep(skt, to_X=to_X, to_y=to_y, **params))
             for name, skt, params in sklearn_transformers
         ]
+        self.flatten = flatten
         super().__init__(self.sklearn_transformers)
 
 
@@ -127,13 +136,18 @@ class SklearnWrapper(Pipeline):
         Args:
             X: The input data (ignored).
         """
-        self.shape_X_ = X.X.shape
+        if self.export_to is None:
+            self.export_to_ = None
+
+
+        self.export_to_ = X.__class__.__name__
+        self.shape_X_ = X.X.shape if self.export_to_ == "DatasetArray" else X.X[0].shape
         self.shape_y_ = X.y.shape
 
         reshaper = (
             "reshaper",
             DatasetToArray(
-                flatten=True,
+                flatten=self.flatten,
                 to_X=self.to_X,
                 to_y=self.to_y
             )
@@ -147,10 +161,11 @@ class SklearnWrapper(Pipeline):
                 to_X=self.to_X,
                 to_y=self.to_y,
                 axis_names={
-                    "X": X.X.keys(),
-                    "y": X.y.keys()
+                    "X": X.get_axis_names_X(),
+                    "y": X.get_axis_names_y()
                 },
-                flattened=True
+                flattened=self.flatten,
+                export_to=self.export_to_
             )
         )
 
@@ -162,3 +177,11 @@ class SklearnWrapper(Pipeline):
 
         super().fit(X, y, **params)
 
+
+    def fit_transform(self, X, y=None, **params):
+        """Fits the transformer
+        Args:
+            X: The input data (ignored).
+        """
+        self.fit(X, y, **params)
+        return super().transform(X, **params)
