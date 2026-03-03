@@ -85,13 +85,13 @@ class DatasetList(CoreDataset):
 
     def __get_single(self, idx: Union[int, slice, List]):
         if isinstance(idx, int):
-            return [self.X[idx]], [self.y.iloc[idx]], [self._id[idx]]
+            return [self.X[idx]], [self.y.iloc[idx, ...]], [self._id[idx]]
 
         elif isinstance(idx, slice):
             return self.X[idx], self.y.iloc[idx, ...], self._id[idx]
 
         elif isinstance(idx, list) and all([isinstance(k, int) for k in idx]):
-            return [self.X[i] for i in idx], [self.y.iloc[i] for i in idx], [self._id[i] for i in idx]
+            return [self.X[i] for i in idx], [self.y.iloc[i, ...] for i in idx], [self._id[i] for i in idx]
 
         else:
             raise ValueError
@@ -116,7 +116,7 @@ class DatasetList(CoreDataset):
 
     def batch(self, batch_size: int):
         for i in range(0, len(self.X), batch_size):
-            yield self.X[i : i + batch_size], self.y[i : i + batch_size], self._id[i : i + batch_size]
+            yield self.X[i : i + batch_size], self.y.iloc[i : i + batch_size, ...], self._id[i : i + batch_size]
 
     def unify(
             self,
@@ -292,7 +292,7 @@ class DatasetList(CoreDataset):
         else:
             tmp = {}
 
-            for i, y in enumerate(self.y):
+            for i, y in enumerate(self.y.values[:, 0]):
                 if y not in tmp.keys():
                     tmp[y] = []
                 tmp[y].append(i)
@@ -441,7 +441,7 @@ class DatasetList(CoreDataset):
         np.random.RandomState(seed).shuffle(idxs)
         return DatasetList(
             X=[self.X[i] for i in idxs],
-            y=[self.y[i] for i in idxs],
+            y=self.y.iloc[idxs, ...],
             id=[self._id[i] for i in idxs]
         )
 

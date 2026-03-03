@@ -1,4 +1,5 @@
 from sklearn.base import BaseEstimator, TransformerMixin
+from caits.dataset import reshape, flatten
 
 class DatasetToArray(BaseEstimator, TransformerMixin):
     def __init__(
@@ -38,7 +39,7 @@ class DatasetToArray(BaseEstimator, TransformerMixin):
         """
         if self.flatten:
             # Reshape to a 2D array by merging window and channel dimensions
-            return X.flatten(self.to_X, self.to_y)
+            return flatten(X, self.to_X, self.to_y)
         else:
             return X
 
@@ -69,7 +70,7 @@ class ArrayToDataset(BaseEstimator, TransformerMixin):
             dtype=None,
             axis_names=None,
             flattened=True,
-            export_to="datasetArray"
+            export_to="DatasetArray"
     ):
         """Initializes the ArrayToDataset transformer.
         """
@@ -89,7 +90,8 @@ class ArrayToDataset(BaseEstimator, TransformerMixin):
     def transform(self, X):
         """Transforms the Dataset into a numpy array."""
         if self.flattened:
-            return X.reshape(
+            return reshape(
+                X,
                 self.shape_X if self.to_X else None,
                 self.shape_y if self.to_y else None,
                 axis_names_X=self.axis_names["X"] if self.to_X else None,
@@ -98,7 +100,6 @@ class ArrayToDataset(BaseEstimator, TransformerMixin):
             )
         else:
             return X
-
 
 
     def get_params(self, deep=True):

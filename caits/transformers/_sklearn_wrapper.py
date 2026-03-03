@@ -4,6 +4,8 @@ from sklearn.preprocessing import FunctionTransformer
 from sklearn.pipeline import Pipeline
 from ._data_converters import DatasetToArray, ArrayToDataset
 from ..dataset import CoreDataset
+from ..dataset import from_numpy
+
 T = TypeVar('T', bound="CoreDataset")
 
 class SklearnPipeStep(BaseEstimator, TransformerMixin):
@@ -64,12 +66,13 @@ class SklearnPipeStep(BaseEstimator, TransformerMixin):
         else:
             transformed_y = data.y.values
 
-        return data.__class__.from_numpy(
+        # return data.__class__.from_numpy(
+        return from_numpy(
             transformed_X,
             transformed_y,
             axis_names_X=data.X.keys(),
             axis_names_y=data.y.keys(),
-            split=False
+            to="DatasetArray"
         )
 
     def get_params(self, deep=True):
@@ -136,13 +139,9 @@ class SklearnWrapper(Pipeline):
         if self.export_to is None:
             self.export_to_ = None
 
-        if X.__class__.__name__ == "DatasetArray":
-            self.export_to_ = "datasetArray"
-            self.shape_X_ = X.X.shape
-        else:
-            self.export_to_ = "datasetList"
-            self.shape_X_ = X.X[0].shape
 
+        self.export_to_ = X.__class__.__name__
+        self.shape_X_ = X.X.shape if self.export_to_ == "DatasetArray" else X.X[0].shape
         self.shape_y_ = X.y.shape
 
         reshaper = (

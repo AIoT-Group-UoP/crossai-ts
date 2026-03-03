@@ -437,16 +437,16 @@ class DatasetArray(CoreDataset):
             self,
             shape_X,
             shape_y,
-            axis_names_X,
-            axis_names_y
+            axis_names_X=None,
+            axis_names_y=None
     ):
         if shape_y is not None:
-            _y = self.y.values.reshape(shape_y)
+            _y = self.y.values.reshape(-1, *shape_y)
         else:
             _y = self.y.values
 
         if shape_X is not None:
-            _X = self.X.values.reshape(shape_X)
+            _X = self.X.values.reshape(-1, *shape_X)
         else:
             _X = self.X.values
 

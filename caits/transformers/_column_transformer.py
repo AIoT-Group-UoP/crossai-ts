@@ -29,7 +29,6 @@ class ColumnTransformer(BaseEstimator, TransformerMixin):
 
         return self
 
-    # TODO: Replaces to the original data we do not want that
     def transform(self, data: T) -> Union[T, Dict]:
 
         tr_data = copy.deepcopy(data)
