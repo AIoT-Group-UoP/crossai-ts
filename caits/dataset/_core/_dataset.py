@@ -80,12 +80,11 @@ class CoreDataset(ABC):
 
     @staticmethod
     @abstractmethod
-    def numpy_to_dataset(
+    def from_numpy(
             X,
             y,
             axis_names_X: Optional[Dict[str, Dict[Union[str, int], int]]] = None,
             axis_names_y = None,
-            split: bool=True
     ):
         pass
 

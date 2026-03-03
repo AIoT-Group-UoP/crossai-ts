@@ -32,7 +32,7 @@ class FeatureExtractorSpectrum(BaseEstimator, TransformerMixin):
         axis_names_X = data.get_axis_names_X()["axis_1"]
         axis_names_y = data.get_axis_names_y()["axis_1"]
 
-        res = data.__class__.numpy_to_dataset(
+        res = data.__class__.from_numpy(
             *features,
             axis_names_X={
                 ("axis_0" if self.to_X else "axis_1"): axis_names_X

@@ -41,7 +41,7 @@ class AugmentSignal(BaseEstimator, TransformerMixin):
                 _params = augmentation['params']
 
                 transformed_x_vals = transformed_x.apply(_callable, **_params)
-                transformed_x = transformed_x.numpy_to_dataset(
+                transformed_x = transformed_x.from_numpy(
                     *transformed_x_vals,
                     axis_names_X={"axis_1": transformed_x.X[0].axis_names["axis_1"]},
                 )

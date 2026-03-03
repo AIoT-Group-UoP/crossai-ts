@@ -59,7 +59,7 @@ class FunctionTransformer2D(BaseEstimator, TransformerMixin):
         axis_names_X = data.get_axis_names_X()["axis_0"]
         axis_names_y = data.get_axis_names_y()["axis_0"]
 
-        dfX = data.__class__.numpy_to_dataset(
+        dfX = data.__class__.from_numpy(
             *res,
             axis_names_X={
                 ("axis_1" if self.to_X else "axis_0"): axis_names_X

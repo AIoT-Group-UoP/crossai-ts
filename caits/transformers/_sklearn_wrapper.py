@@ -64,7 +64,7 @@ class SklearnPipeStep(BaseEstimator, TransformerMixin):
         else:
             transformed_y = data.y.values
 
-        return data.__class__.numpy_to_dataset(
+        return data.__class__.from_numpy(
             transformed_X,
             transformed_y,
             axis_names_X=data.X.keys(),

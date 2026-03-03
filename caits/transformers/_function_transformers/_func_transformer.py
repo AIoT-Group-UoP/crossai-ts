@@ -53,7 +53,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
             **self.func_kwargs
         )
 
-        return data.__class__.numpy_to_dataset(
+        return data.__class__.from_numpy(
             *transformed_data,
             axis_names_X={"axis_1": data.get_axis_names_X()["axis_1"]},
             axis_names_y={"axis_1": data.get_axis_names_y()["axis_1"]}
