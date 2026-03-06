@@ -100,7 +100,7 @@ class DatasetArray(CoreDataset):
         return f"DatasetArray object with {len(self.X)} instances"
 
     def __add__(self, other):
-        return self.unify([other])
+        return DatasetArray.concat([self, other])
 
     def __copy__(self):
         return deepcopy(self)

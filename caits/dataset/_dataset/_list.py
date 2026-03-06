@@ -112,7 +112,7 @@ class DatasetList(CoreDataset):
         return f"DatasetList object with {len(self.X)} instances"
 
     def __add__(self, other):
-        return self.unify([other])
+        return DatasetList.concat([self, other])
 
     def batch(self, batch_size: int):
         for i in range(0, len(self.X), batch_size):
