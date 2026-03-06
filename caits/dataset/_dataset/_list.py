@@ -118,9 +118,9 @@ class DatasetList(CoreDataset):
         for i in range(0, len(self.X), batch_size):
             yield self.X[i : i + batch_size], self.y.iloc[i : i + batch_size, ...], self._id[i : i + batch_size]
 
-    def unify(
-            self,
-            others,
+    @staticmethod
+    def concat(
+            init_data,
             axis_names: Optional = None,
             axis: int=0,
             to_X: bool = True,

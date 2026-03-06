@@ -43,10 +43,10 @@ class CoreDataset(ABC):
     def batch(self, batch_size: int):
         pass
 
+    @staticmethod
     @abstractmethod
-    def unify(
-            self,
-            others,
+    def concat(
+            init_data,
             axis_names: Optional = None,
             axis: int=0,
             to_X: bool=True,
