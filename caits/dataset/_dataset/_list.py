@@ -129,10 +129,6 @@ class DatasetList(CoreDataset):
         if axis == 0:
             y_vals = np.concatenate([o.y.values for o in init_data])
 
-            return self.__class__(
-                X=self.X + sum([o.X for o in others], []),
-                y=CoreArray(values=y_vals, axis_names={"axis_1": self.y.keys()["axis_1"]}),
-                id=self._id + sum([o._id for o in others], []),
             return DatasetList(
                 X=sum([o.X for o in init_data], []),
                 y=CoreArray(values=y_vals, axis_names={"axis_1": init_data[0].y.keys()["axis_1"]}),
