@@ -117,48 +117,42 @@ class DatasetArray(CoreDataset):
             to_X: bool = True,
             to_y: bool = False
     ):
-        init_data = {
-            "X": self.X,
-            "y": self.y
-        }
-        other_data = {}
+        data = {}
+        new_data = {}
 
         if to_X:
-            other_data["X"] = [o.X for o in others]
+            data["X"] = [o.X for o in init_data]
+        else:
+            new_data["X"] = init_data[0].X
 
         if to_y:
-            other_data["y"] = [o.y for o in others]
+            data["y"] = [o.y for o in init_data]
+        else:
+            new_data["y"] = init_data[0].y
 
-        new_data = init_data.copy()
 
-        for applies, data in other_data.items():
-            init_shape = init_data[applies].shape
-            shape = [init_shape[i] for i in range(len(init_shape)) if i != axis]
+        for applies, dt in data.items():
+            shapes = [[s for i, s in enumerate(o.shape) if i != axis] for o in data[applies]]
+            _axis_names = [{k: v for k, v in o.keys().items() if k != f"axis_{axis}"} for o in data[applies]]
 
-            _axis_names = {k: v for k, v in init_data[applies].keys().items() if k != f"axis_{axis}"}
+            if not all(s == shapes[0] for s in shapes[1:]):
+                raise ValueError(f"All DatasetArray.{applies} objects must have equal dimensions except the one "
+                                 f"they will be appended on.")
 
-            for o in data:
-                tmp_shape = [o.shape[i] for i in range(len(o.shape)) if i != axis]
-                tmp_axis_names = {k: v for k, v in o.keys().items() if k != f"axis_{axis}"}
-
-                if shape != tmp_shape:
-                    raise ValueError(f"All DatasetArray.{applies} objects must have equal dimensions except the one "
-                                     f"they will be appended on.")
-
-                if _axis_names != tmp_axis_names:
-                    raise ValueError(f"All DatasetArray.{applies} objects must the same axis names on all dimensions "
-                                     f"except the one they will be appended.")
+            if not all(an == _axis_names[0] for an in _axis_names[1:]):
+                raise ValueError(f"All DatasetArray.{applies} objects must the same axis names on all dimensions "
+                                 f"except the one they will be appended.")
 
             if axis_names is None or applies not in axis_names.keys():
-                new_axis_names = init_data[applies].keys()
-                to_append = sum([o.keys()[f"axis_{axis}"] for o in data], [])
+                new_axis_names = dt[0].keys()
+                to_append = sum([o.keys()[f"axis_{axis}"] for o in dt[1:]], [])
                 new_axis_names[f"axis_{axis}"].extend(to_append)
             else:
                 new_axis_names = axis_names[applies]
 
             new_data[applies] = CoreArray(
                 np.concatenate(
-                    [init_data[applies].values] + [o.values for o in data],
+                    [o.values for o in data[applies]],
                     axis=axis
                 ),
                 axis_names=new_axis_names
