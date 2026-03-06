@@ -34,9 +34,6 @@ def stack(data):
         for axis, vals in axis_names.items()
     }
 
-
-
-
     return DatasetArray(
         X = CoreArray(_X, axis_names=axis_names),
         y = data.y
