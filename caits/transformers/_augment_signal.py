@@ -3,7 +3,8 @@ from typing import Callable, Dict, List
 from sklearn.base import BaseEstimator, TransformerMixin
 from typing_extensions import TypedDict
 
-from ..dataset import CoreDataset
+from ..dataset import CoreDataset, concat
+
 
 class Augmentation(TypedDict):
     func: Callable
@@ -49,6 +50,5 @@ class AugmentSignal(BaseEstimator, TransformerMixin):
             _X.append(transformed_x)
 
 
-        return _X[0].unify(_X[1:])
-
-
+        return concat(_X)
+        # return _X[0].unify(_X[1:])
