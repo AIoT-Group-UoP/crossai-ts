@@ -1,7 +1,7 @@
 import copy
 from typing import Dict, Union, TypeVar
 from sklearn.base import BaseEstimator, TransformerMixin
-from ..dataset import CoreDataset
+from ..dataset import CoreDataset, concat
 
 T = TypeVar('T', bound="CoreDataset")
 
@@ -54,7 +54,7 @@ class ColumnTransformer(BaseEstimator, TransformerMixin):
                     }
 
                     new_data = new_data.rename(renamings)
-                    tr_data = tr_data.unify([new_data], axis=1, to_X=True, to_y=False)
+                    tr_data = concat([tr_data, new_data], axis=1, to_X=True, to_y=False)
                 else:
                     tr_data = tr_data.replace(new_data)
 
@@ -76,7 +76,7 @@ class ColumnTransformer(BaseEstimator, TransformerMixin):
                     }
 
                     new_data = new_data.rename(renamings)
-                    tr_data = tr_data.unify([new_data], axis=1, to_X=False, to_y=True)
+                    tr_data = concat([tr_data, new_data], axis=1, to_X=False, to_y=True)
                 else:
                     tr_data = tr_data.replace(new_data)
 

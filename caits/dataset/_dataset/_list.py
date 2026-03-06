@@ -112,40 +112,40 @@ class DatasetList(CoreDataset):
         return f"DatasetList object with {len(self.X)} instances"
 
     def __add__(self, other):
-        return self.unify([other])
+        return DatasetList.concat([self, other])
 
     def batch(self, batch_size: int):
         for i in range(0, len(self.X), batch_size):
             yield self.X[i : i + batch_size], self.y.iloc[i : i + batch_size, ...], self._id[i : i + batch_size]
 
-    def unify(
-            self,
-            others,
+    @staticmethod
+    def concat(
+            init_data,
             axis_names: Optional = None,
             axis: int=0,
             to_X: bool = True,
             to_y: bool = True
     ):
         if axis == 0:
-            y_vals = np.concatenate([self.y.values] + [o.y.values for o in others])
+            y_vals = np.concatenate([o.y.values for o in init_data])
 
-            return self.__class__(
-                X=self.X + sum([o.X for o in others], []),
-                y=CoreArray(values=y_vals, axis_names={"axis_1": self.y.keys()["axis_1"]}),
-                id=self._id + sum([o._id for o in others], []),
+            return DatasetList(
+                X=sum([o.X for o in init_data], []),
+                y=CoreArray(values=y_vals, axis_names={"axis_1": init_data[0].y.keys()["axis_1"]}),
+                id=sum([o._id for o in init_data], []),
             )
         elif axis == 1:
             caitsX = []
-            for i in range(len(self.X)):
+            for i in range(len(init_data[0].X)):
                 if axis_names is None:
-                    _axis_names = self.X[i].keys()
+                    _axis_names = init_data[0].X[i].keys()
                     axis_1 = _axis_names["axis_1"]
-                    axis_1 += sum([list(d.X[i].keys()["axis_1"]) for d in others], [])
+                    axis_1 += sum([list(d.X[i].keys()["axis_1"]) for d in init_data[1:]], [])
                     _axis_names["axis_1"] = axis_1
                 else:
                     _axis_names = axis_names
 
-                values = np.concatenate([self.X[i].values] + [d.X[i].values for d in others], axis=1)
+                values = np.concatenate([d.X[i].values for d in init_data], axis=1)
 
                 caitsX.append(
                     CoreArray(
@@ -155,8 +155,8 @@ class DatasetList(CoreDataset):
                 )
 
             # TODO: implement for y
-            caitsY = self.y
-            caitsId = self._id
+            caitsY = init_data[0].y
+            caitsId = init_data[0]._id
             return DatasetList(X=caitsX, y=caitsY, id=caitsId)
         else:
             raise ValueError("Invalid axis argument.")

@@ -34,13 +34,17 @@ def stack(data):
         for axis, vals in axis_names.items()
     }
 
-
-
-
     return DatasetArray(
         X = CoreArray(_X, axis_names=axis_names),
         y = data.y
     )
+
+
+def concat(data, axis=0, to_X=True, to_y=False):
+    if not all(d.__class__.__name__ == data[0].__class__.__name__ for d in data[1:]):
+        raise ValueError("Data objects have to be of the same type")
+
+    return data[0].__class__.concat(init_data=data, axis=axis, to_X=to_X, to_y=to_y)
 
 
 def reshape(
