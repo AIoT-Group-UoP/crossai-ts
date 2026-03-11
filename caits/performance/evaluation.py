@@ -6,7 +6,7 @@ from sklearn.base import BaseEstimator
 from sklearn.pipeline import Pipeline
 from tensorflow.keras import Model
 
-from ..dataset import DatasetBase
+from ..dataset import CoreDataset
 from ..filtering import filter_butterworth
 from .detection import (
     apply_duration_threshold,
@@ -273,11 +273,11 @@ def robustness_analysis_many(
     return results
 
 
-# TODO: Adjust for DatasetBase
+# TODO: Adjust for CoreDataset
 def robustness_analysis_batch(
     pipeline: Pipeline,
     model: Union[BaseEstimator, Model],
-    dataset: DatasetBase,
+    dataset: CoreDataset,
     events: Dict[Any, Any],
     class_names: List[str],
     sample_rate: int,
@@ -301,29 +301,31 @@ def robustness_analysis_batch(
     for i, (filename, gt_events) in enumerate(ground_truths_dict.items()):
         # Take advantage of slicing dunder to return the object
         # if single index used, it will return a tuple
-        dataset_instance = dataset[i : i + 1]
+        print(f"Evaluating instance: {filename}")
+        dataset_instance = dataset[i]
 
         # define the label name for the instance
-        label = dataset_instance.y[0]
+        label = dataset_instance.y[0].values
         if isinstance(label, int):
             label = class_names[label]
-
+        print(label)
         # Append Figure Objects
         if "figures" in options_to_include:
             # Since `dataset_instance` is the raw time series instance
             # we can plot it and store it for logging purposes
             pilot_signal = plot_signal(
-                dataset_instance.X[0].values.flatten(),
+                dataset_instance.X[0].values,
                 sr=sample_rate,
-                name="Pilot Signal",
+                title="Pilot Signal",
                 mode="samples",
-                channels=label,
+                # channels=label,
                 figsize=figsize,
             )  # TODO: Modify function to control the x axis mode (samples vs time)
 
             results.setdefault(filename, {}).setdefault("figures", {})["pilot_signal"] = pilot_signal
 
         # transform the data using the pipeline
+        print(type(dataset_instance))
         input_data = pipeline.transform(dataset_instance)
 
         # Evaluate single instance
