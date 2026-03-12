@@ -85,7 +85,7 @@ def load_dir(
                 X.append(single_file_data)
                 # todo: add sample rate, sample width to the dictionary?
                 y.append(subdir)
-                all_id.append(file)
+                all_id.append(".".join(file.split(".")[:-1]))
             except Exception as e:
                 print(f"Error loading file {file_path}: {e}")
 
