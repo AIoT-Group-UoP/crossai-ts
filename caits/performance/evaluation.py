@@ -305,7 +305,7 @@ def robustness_analysis_batch(
         dataset_instance = dataset[i]
 
         # define the label name for the instance
-        label = dataset_instance.y[0].values
+        label = dataset_instance.y.values
         if isinstance(label, int):
             label = class_names[label]
         print(label)
