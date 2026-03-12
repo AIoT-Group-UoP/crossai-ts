@@ -85,7 +85,7 @@ class DatasetList(CoreDataset):
 
     def __get_single(self, idx: Union[int, slice, List]):
         if isinstance(idx, int):
-            return [self.X[idx]], [self.y.iloc[idx, ...]], [self._id[idx]]
+            return [self.X[idx]], self.y.iloc[[idx], ...], [self._id[idx]]
 
         elif isinstance(idx, slice):
             return self.X[idx], self.y.iloc[idx, ...], self._id[idx]
