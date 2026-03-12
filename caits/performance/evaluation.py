@@ -325,8 +325,7 @@ def robustness_analysis_batch(
             results.setdefault(filename, {}).setdefault("figures", {})["pilot_signal"] = pilot_signal
 
         # transform the data using the pipeline
-        print(type(dataset_instance))
-        input_data = pipeline.transform(dataset_instance)
+        input_data = pipeline.transform(dataset_instance).X[0].values
 
         # Evaluate single instance
         instance_results = robustness_analysis(
