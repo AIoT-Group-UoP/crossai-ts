@@ -6,7 +6,7 @@ from sklearn.base import BaseEstimator
 from sklearn.pipeline import Pipeline
 from tensorflow.keras import Model
 
-from ..dataset import DatasetBase
+from ..dataset import CoreDataset
 from ..filtering import filter_butterworth
 from .detection import (
     apply_duration_threshold,
@@ -273,11 +273,11 @@ def robustness_analysis_many(
     return results
 
 
-# TODO: Adjust for DatasetBase
+# TODO: Adjust for CoreDataset
 def robustness_analysis_batch(
     pipeline: Pipeline,
     model: Union[BaseEstimator, Model],
-    dataset: DatasetBase,
+    dataset: CoreDataset,
     events: Dict[Any, Any],
     class_names: List[str],
     sample_rate: int,
@@ -301,45 +301,47 @@ def robustness_analysis_batch(
     for i, (filename, gt_events) in enumerate(ground_truths_dict.items()):
         # Take advantage of slicing dunder to return the object
         # if single index used, it will return a tuple
-        dataset_instance = dataset[i : i + 1]
+        print(f"Evaluating instance: {filename}")
+        dataset_instance = dataset[i]
 
         # define the label name for the instance
-        label = dataset_instance.y[0]
+        label = dataset_instance.y.values
         if isinstance(label, int):
             label = class_names[label]
-
+    
         # Append Figure Objects
         if "figures" in options_to_include:
             # Since `dataset_instance` is the raw time series instance
             # we can plot it and store it for logging purposes
+            print(dataset_instance.X[0].values.shape)
             pilot_signal = plot_signal(
-                dataset_instance.X[0].values.flatten(),
+                dataset_instance.X[0].values,
                 sr=sample_rate,
-                name="Pilot Signal",
+                title="Pilot Signal",
                 mode="samples",
-                channels=label,
+                channels=dataset_instance.X[0].keys()["axis_1"],
                 figsize=figsize,
             )  # TODO: Modify function to control the x axis mode (samples vs time)
 
             results.setdefault(filename, {}).setdefault("figures", {})["pilot_signal"] = pilot_signal
 
         # transform the data using the pipeline
-        input_data = pipeline.transform(dataset_instance)
-
+        input_data = pipeline.transform(dataset_instance).to_numpy()[0]
+        print(input_data.shape)
         # Evaluate single instance
         instance_results = robustness_analysis(
             model=model,
             input_data=input_data,
             class_names=class_names,
             cutoff=cutoff,
-            sample_rate=sample_rate,
+            sr=sample_rate,
             ws=ws,
-            perc_overlap=perc_overlap,
+            overlap_percentage=perc_overlap,
             ground_truths=gt_events,
             repeats=repeats,
             metrics=metrics,
             prob_th=prob_th,
-            duration_th=duration_th,
+            dur_th=duration_th,
             iou_th=iou_th,
             options_to_include=options_to_include,
             figsize=figsize,

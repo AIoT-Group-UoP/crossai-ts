@@ -16,14 +16,16 @@ def generate_probabilities(
     data, optionally repeating the process multiple times. This function is
     designed to accommodate models with different prediction interfaces,
     attempting to use `predict_proba` for probabilistic outcomes and falling
-    back to `predict` for direct predictions if the former is not available.
+    back to Keras `predict`, then to direct callable invocation for TF
+    SavedModel wrapper functions.
 
     Args:
         model: The machine learning model to be used for predictions. This can
-               be either a TensorFlow model or a scikit-learn model. The
-               function attempts to use `predict_proba` for probabilistic
-               outcomes first; if not available, it falls back to `predict`
-               for direct predictions.
+               be either a TensorFlow model (Keras or SavedModel), or a
+               scikit-learn model. The function attempts to use `predict_proba`
+               for probabilistic outcomes first; if not available, it falls
+               back to Keras `predict`, then to direct callable invocation
+               for TF SavedModel wrapper functions.
         X: The dataset on which predictions are to be made. Expected to be
               formatted appropriately for the model's input requirements.
         repeats: The number of times the prediction process should be repeated.
@@ -35,14 +37,72 @@ def generate_probabilities(
         the results are stacked along a new dimension, allowing for further
         analysis of prediction consistency or uncertainty.
     """
-    if hasattr(model, "predict_proba"):
-        # Attempt to use predict_proba for probabilistic outcomes
-        predictions = [model.predict_proba(X) for s in range(repeats)]
-    else:
-        # Fallback to using predict for direct predictions
-        predictions = [model(X) for s in range(repeats)]
+    
+    def _extract_probas(output) -> np.ndarray:
+        """Normalizes a model output into a NumPy probability matrix regardless
+        of the raw return type (dict, tuple/list, Tensor, or ndarray).
 
-    # Stack predictions along a new dimension for repeated predictions
+        Args:
+            output: Raw prediction output from a model call.
+
+        Returns:
+            A NumPy ndarray of prediction probabilities.
+
+        Raises:
+            ValueError: If a dict output contains more than one key and the
+                        correct one cannot be determined automatically.
+        """
+        if isinstance(output, dict):
+            if len(output) == 1:
+                output = next(iter(output.values()))
+            else:
+                raise ValueError(
+                    f"Model returned a dict with multiple keys {list(output.keys())}. "
+                    f"Cannot automatically determine which contains probabilities."
+                )
+
+        if isinstance(output, (list, tuple)):
+            output = output[0]
+
+        if isinstance(output, tf.Tensor):
+            return output.numpy()
+
+        if isinstance(output, np.ndarray):
+            return output
+
+        raise TypeError(
+            f"Unexpected prediction output type: {type(output)}. "
+            f"Expected tf.Tensor, np.ndarray, dict, or tuple."
+        )
+
+    predictions = []
+
+    for _ in range(repeats):
+        if hasattr(model, "predict_proba"):
+            # scikit-learn estimators exposing probabilistic outputs
+            preds = model.predict_proba(X)
+
+        elif hasattr(model, "predict") and callable(getattr(model, "predict")):
+            # Classic Keras model loaded via tf.keras.models.load_model()
+            preds = model.predict(X)
+
+        elif callable(model):
+            # TF SavedModel wrapper function loaded via tf.saved_model.load()
+            # type: tensorflow.python.saved_model.load._WrapperFunction
+            X_tensor = tf.cast(
+                tf.convert_to_tensor(X), dtype=tf.float32
+            ) if not isinstance(X, tf.Tensor) else tf.cast(X, dtype=tf.float32)
+            preds = model(X_tensor)
+
+        else:
+            raise TypeError(
+                f"Unsupported model type: {type(model)}. Expected a scikit-learn "
+                f"estimator, a Keras Model, or a TF SavedModel callable."
+            )
+
+        preds = _extract_probas(preds)
+        predictions.append(preds)
+
     all_predictions = np.stack(predictions, axis=0)
 
     return all_predictions
