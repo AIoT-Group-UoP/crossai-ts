@@ -12,12 +12,14 @@ class FeatureExtractorSignal(BaseEstimator, TransformerMixin):
             feature_extractors: List[Dict],
             to_X=True,
             to_y=False,
-            to_dataset: bool = True
+            to_dataset: bool = True,
+            axis: int = 1
     ):
         self.feature_extractors = feature_extractors
         self.to_X = to_X
         self.to_y = to_y
-        self.to_dataset = to_dataset
+        self.to_dataset = to_dataset,
+        self.axis = axis
 
     def fit(self, X, y=None):
         self.fitted_ = True
@@ -35,8 +37,6 @@ class FeatureExtractorSignal(BaseEstimator, TransformerMixin):
         for extractor in self.feature_extractors:
             func = extractor["func"]
             params = extractor.get("params", {})
-            # params["axis"] = 1
-            params["axis"] = 0
             feature = data.apply(
                 func=func,
                 to_X=self.to_X,
@@ -54,14 +54,17 @@ class FeatureExtractorSignal(BaseEstimator, TransformerMixin):
         if self.to_dataset:
             if self.to_X:
                 axis_names_X = {
-                    f"axis_1": {name: i for i, name in enumerate(features["X"].keys())}
+                    **{
+                        axis: names for axis, names in data.get_axis_names_X().items() if axis != "axis_0"
+                    },
+                    f"axis_{self.axis}": {name: i for i, name in enumerate(features["X"].keys())}
                 }
             else:
                 axis_names_X = {}
 
             if self.to_y:
                 axis_names_y = {
-                    f"axis_1": {name: i for i, name in enumerate(features["y"].keys())}
+                    f"axis_{self.axis}": {name: i for i, name in enumerate(features["y"].keys())}
                 }
             else:
                 axis_names_y = copy.deepcopy(data.y.axis_names)
@@ -72,7 +75,7 @@ class FeatureExtractorSignal(BaseEstimator, TransformerMixin):
                     "X": axis_names_X,
                     "y": axis_names_y
                 },
-                axis=1,
+                axis=self.axis,
                 to_X=self.to_X,
                 to_y=self.to_y
             )
