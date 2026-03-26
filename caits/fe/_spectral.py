@@ -235,9 +235,6 @@ def spectral_bandwidth(
     # Frequency vector
     freqs = np.fft.fftfreq(array.shape[axis], d=1 / fs)[: array.shape[axis] // 2]
 
-    print(freqs.shape, power_spectrum.shape)
-
-
     if array.ndim == 1:
         # Mean frequency (center of gravity)
         mean_freq = np.sum(freqs * power_spectrum, axis=axis)
