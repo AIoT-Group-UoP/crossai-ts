@@ -308,25 +308,26 @@ def robustness_analysis_batch(
         label = dataset_instance.y.values
         if isinstance(label, int):
             label = class_names[label]
-        print(label)
+    
         # Append Figure Objects
         if "figures" in options_to_include:
             # Since `dataset_instance` is the raw time series instance
             # we can plot it and store it for logging purposes
+            print(dataset_instance.X[0].values.shape)
             pilot_signal = plot_signal(
                 dataset_instance.X[0].values,
                 sr=sample_rate,
                 title="Pilot Signal",
                 mode="samples",
-                # channels=label,
+                channels=dataset_instance.X[0].keys()["axis_1"],
                 figsize=figsize,
             )  # TODO: Modify function to control the x axis mode (samples vs time)
 
             results.setdefault(filename, {}).setdefault("figures", {})["pilot_signal"] = pilot_signal
 
         # transform the data using the pipeline
-        input_data = pipeline.transform(dataset_instance).X[0].values
-
+        input_data = pipeline.transform(dataset_instance).to_numpy()[0]
+        print(input_data.shape)
         # Evaluate single instance
         instance_results = robustness_analysis(
             model=model,

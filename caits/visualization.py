@@ -133,11 +133,14 @@ def plot_prediction_probabilities(
     non_op_step = ws_samples - op_samples
     # Number of instances, classes
     n_instances, num_classes = probabilities.shape
-
+    print(f"Window size (samples): {ws_samples}, Overlap (samples): {op_samples}, "
+          f"Non-overlapping step (samples): {non_op_step}, "
+          f"Number of instances: {n_instances}, Number of classes: {num_classes}")
     # Color palette selection
-    palette_name = "tab10" if num_classes <= 10 else "viridis"
-    colors = sns.color_palette(palette_name, n_colors=num_classes)
-
+    total_colors = num_classes + 1
+    palette_name = "tab10" if total_colors <= 10 else "viridis"
+    colors = sns.color_palette(palette_name, n_colors=total_colors)
+    event_color = colors[-1]  # Last color reserved for event regions
     fig, ax = plt.subplots(figsize=figsize)
 
     # Calculate starting and ending indices for each non-overlapping segment
@@ -156,16 +159,11 @@ def plot_prediction_probabilities(
 
     # Fill events (optional)
     if events is not None:
-        unique_classes = set([event[2] for event in events])
-        palette = sns.color_palette("pastel", len(unique_classes))
-        class_colors = {cls: color for cls, color in zip(unique_classes, palette)}
-
         for start, end, cls in events:
             if mode == "time":
                 start = start / sr
                 end = end / sr
-            class_label = class_names[cls] if class_names else f"Class {cls}"
-            ax.axvspan(start, end, color=class_colors[cls], alpha=0.5, label=class_label)
+            ax.axvspan(start, end, color=event_color, alpha=0.3, label="Event")
 
     # Set labels and title
     ax.set_xlabel("Time (s)" if mode == "time" else "Samples")
