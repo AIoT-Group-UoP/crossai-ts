@@ -35,7 +35,8 @@ class FeatureExtractorSignal(BaseEstimator, TransformerMixin):
         for extractor in self.feature_extractors:
             func = extractor["func"]
             params = extractor.get("params", {})
-            params["axis"] = 1
+            # params["axis"] = 1
+            params["axis"] = 0
             feature = data.apply(
                 func=func,
                 to_X=self.to_X,
