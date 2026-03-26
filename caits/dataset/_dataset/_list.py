@@ -239,23 +239,15 @@ class DatasetList(CoreDataset):
 
         # Processing X
         if to_X:
-            features_tmp = {}
-            for feat, values in features["X"].items():
-                if values[0].ndim == 1:
-                    features_tmp[feat] = values
-                else:
-                    for i in range(values[0].shape[0]):
-                        features_tmp[f"{feat}_{i}"] = [values[j][i, ...] for j in range(len(values))]
-
             tmp = [
                 np.stack(
-                    [feat[i] for feat in features_tmp.values()],
-                    axis=axis,
-                ) for i in range(len(list(features_tmp.values())[0]))
+                    [feat_val[i] for feat_name, feat_val in features["X"].items()],
+                    axis=axis
+                )
+                for i in range(len(features["X"][list(features["X"].keys())[0]]))
             ]
 
-            ret_axis_names["X"][f"axis_{axis}"] = list(features_tmp.keys())
-
+            ret_axis_names["X"][f"axis_{(axis if axis != -1 else len(ret_axis_names['X']))}"] = {feat: i for i, feat in enumerate(features["X"].keys())}
             ret_values["X"] = [CoreArray(x, ret_axis_names["X"]) for x in tmp]
         else:
             ret_values["X"] = features["X"]
@@ -271,9 +263,7 @@ class DatasetList(CoreDataset):
                         features_tmp[f"{feat}_{i}"] = values[i, ...]
 
             tmp = np.stack([feat for feat in features_tmp.values()], axis=axis)
-
             ret_axis_names["y"][f"axis_{axis}"] = list(features_tmp.keys())
-
             ret_values["y"] = CoreArray(tmp, ret_axis_names["y"])
         else:
             ret_values["y"] = features["y"]
