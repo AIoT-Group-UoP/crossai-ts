@@ -1,10 +1,12 @@
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, Literal
 
 import numpy as np
 import scipy.interpolate as spi
 from sklearn.base import BaseEstimator
 import tensorflow as tf
 from tensorflow.keras import Model
+
+Stats = Literal["mean", "std", "min", "max", "var", "entropy"]
 
 
 def multiple_model_inference(
@@ -200,3 +202,20 @@ def get_gt_events_from_dict(
     }
 
     return intervals
+
+
+def multiple_model_inference_statistics(results, stats: Optional[List[Stats]] = None):
+    if stats is None:
+        stats = ["mean", "std", "min", "max", "var", "entopy"]
+
+    stats_funs = {
+        "mean": np.mean,
+        "std": np.std,
+        "min": np.min,
+        "max": np.max,
+        "var": np.var,
+        "entropy": lambda probs: -np.sum(probs * np.log(probs))
+    }
+
+    return {stat: stats_funs[stat](results) for stat in stats}
+
