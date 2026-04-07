@@ -214,8 +214,8 @@ def multiple_model_inference_statistics(results, stats: Optional[List[Stats]] = 
         "min": np.min,
         "max": np.max,
         "var": np.var,
-        "entropy": lambda probs: -np.sum(probs * np.log(probs))
+        "entropy": lambda probs, axis: -np.sum(probs * np.log(probs), axis=axis)
     }
 
-    return {stat: stats_funs[stat](results) for stat in stats}
+    return {stat: stats_funs[stat](results, axis=0) for stat in stats}
 
