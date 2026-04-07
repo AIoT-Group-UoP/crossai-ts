@@ -19,7 +19,7 @@ from .metrics import (
     reliability,
 )
 from .utils import (
-    generate_probabilities,
+    multiple_model_inference,
     get_gt_events_from_dict,
     interpolate_probabilities,
 )
@@ -39,7 +39,7 @@ __all__ = [
     "detection_ratio",
     "reliability",
     "erer",
-    "generate_probabilities",
+    "multiple_model_inference",
     "interpolate_probabilities",
     "get_gt_events_from_dict",
 ]

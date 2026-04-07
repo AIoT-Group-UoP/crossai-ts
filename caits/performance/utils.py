@@ -7,7 +7,7 @@ import tensorflow as tf
 from tensorflow.keras import Model
 
 
-def generate_probabilities(
+def multiple_model_inference(
     model: Union[BaseEstimator, Model],
     X: Union[np.ndarray, tf.Tensor],
     repeats: int = 1

@@ -15,7 +15,7 @@ from .detection import (
     classify_events,
 )
 from .metrics import detection_ratio, erer, prediction_statistics, reliability
-from .utils import generate_probabilities, get_gt_events_from_dict, interpolate_probabilities
+from .utils import multiple_model_inference, get_gt_events_from_dict, interpolate_probabilities
 from ..visualization import plot_prediction_probabilities, plot_signal
 
 _OPTIONS = [
@@ -103,7 +103,7 @@ def robustness_analysis(
         results["transformed_data"] = input_data
 
     # Generate prediction probabilities of the model
-    prediction_probas = generate_probabilities(model, input_data, repeats)
+    prediction_probas = multiple_model_inference(model, input_data, repeats)
     # Append prediction probabilities
     if "prediction_probas" in options_to_include:
         results["prediction_probas"] = prediction_probas
