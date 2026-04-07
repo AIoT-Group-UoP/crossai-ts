@@ -206,7 +206,7 @@ def get_gt_events_from_dict(
 
 def multiple_model_inference_statistics(results, stats: Optional[List[Stats]] = None):
     if stats is None:
-        stats = ["mean", "std", "min", "max", "var", "entopy"]
+        stats = ["mean", "std", "min", "max", "var", "entropy"]
 
     stats_funs = {
         "mean": np.mean,
