@@ -4,6 +4,9 @@
 # macOS
 .DS_Store
 
+# ai
+/.claude
+
 # User-specific stuff
 .idea/**/workspace.xml
 .idea/**/tasks.xml
