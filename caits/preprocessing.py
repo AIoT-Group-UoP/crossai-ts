@@ -1,5 +1,7 @@
 import numpy as np
 
+from .core._core_resample import resample
+
 
 def normalize_signal(sig: np.ndarray, axis: int = 0) -> np.ndarray:
     """Normalizes a signal to the proper range.
@@ -22,17 +24,19 @@ def normalize_signal(sig: np.ndarray, axis: int = 0) -> np.ndarray:
 
 
 def resample_signal(
-    sig: np.ndarray, 
-    native_sr: int, 
-    target_sr: int, 
+    sig: np.ndarray,
+    native_sr: int,
+    target_sr: int,
     dtype: str = "float32"
 ) -> np.ndarray:
-    """Resamples an audio signal to the target sampling rate.
+    """Resamples an audio signal to the target sampling rate via linear interpolation.
 
-    This function prioritizes computational accuracy by performing the resampling
-    internally using the highest precision available (usually float64). However,
-    the final result is cast to the specified `dtype` to ensure the output matches
-    the desired format.
+    .. deprecated::
+        This function uses ``np.interp`` and does NOT apply an anti-aliasing
+        filter. When downsampling, frequencies above the target Nyquist will
+        alias into the output. Prefer :func:`resample_2d` (which delegates to
+        :func:`caits.core._core_resample.resample` with a proper AAF) or call
+        ``caits.core._core_resample.resample`` directly.
 
     Args:
         sig: The input audio signal as a NumPy array.
@@ -61,24 +65,38 @@ def resample_signal(
 
 
 def resample_2d(
-    audio_data: np.ndarray, 
-    native_sr: int, 
+    audio_data: np.ndarray,
+    native_sr: int,
     target_sr: int,
     axis: int = 0,
-    dtype: str = "float32"
+    dtype: str = "float32",
+    res_type: str = "soxr_hq",
 ) -> np.ndarray:
     """Resamples 2D audio data (multi-channel) to a target sampling rate.
 
+    Resampling is delegated to :func:`caits.core._core_resample.resample`, which
+    applies a proper anti-aliasing filter (AAF) before decimation. The default
+    ``res_type="soxr_hq"`` uses SoX's high-quality Kaiser-windowed sinc filter.
+
     Args:
         audio_data: The input audio data as a 2D numpy (n_samples, n_channels).
+            A 1D array of shape (n_samples,) is also accepted and expanded to
+            (n_samples, 1).
         native_sr: The native sampling rate of the input audio data.
         target_sr: The target sampling rate as integer.
+        axis: Axis along which to resample. Defaults to 0 (samples axis).
+        dtype: Output dtype.
+        res_type: Resampling backend / quality. Forwarded to
+            :func:`caits.core._core_resample.resample`. Common choices:
+            ``"soxr_hq"`` (default, high quality), ``"polyphase"``
+            (scipy.signal.resample_poly, integer rates only), ``"scipy"``
+            (FFT-based), ``"sinc_best"`` (libsamplerate). All apply AAF.
 
     Returns:
         np.ndarray: The resampled audio data as a 2D numpy.ndarray.
 
     Raises:
-        ValueError: If the input `audio_data` is not a 2-dimensional NumPy array.
+        ValueError: If the input ``audio_data`` is not 1-D or 2-D.
     """
 
     # If audio data is 1D (n_samples, ), make it 2D (n_samples, 1)
@@ -88,16 +106,21 @@ def resample_2d(
     # Check if audio data is 2D
     elif audio_data.ndim != 2:
         raise ValueError(
-            "Input audio data must be a 1-dimensional or 2-dimensional NumPy array " "(n_samples, n_channels).")
+            "Input audio data must be a 1-dimensional or 2-dimensional NumPy "
+            "array (n_samples, n_channels)."
+        )
 
-    return np.apply_along_axis(
-        func1d=resample_signal,
-        axis=axis,
-        arr=audio_data,
-        native_sr=native_sr,
+    if native_sr == target_sr:
+        return audio_data.astype(dtype, copy=False)
+
+    resampled = resample(
+        audio_data,
+        orig_sr=native_sr,
         target_sr=target_sr,
-        dtype=dtype
+        res_type=res_type,
+        axis=axis,
     )
+    return resampled.astype(dtype, copy=False)
 
 
 def trim_signal(

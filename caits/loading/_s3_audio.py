@@ -17,9 +17,13 @@ def s3_wav_loader(
     target_sr: Optional[int] = None,
     dtype: str = "float64",
     channels: Optional[List[str]] = None,
+    res_type: str = "soxr_hq",
 ) -> Tuple[pd.DataFrame, int]:
     """Loads and optionally resamples a mono or multichannel audio
     file from bytes into a DataFrame.
+
+    Resampling (when ``target_sr`` differs from the file's native sample rate)
+    applies an anti-aliasing filter via :func:`caits.preprocessing.resample_2d`.
 
     Args:
         file_content: The audio file as bytes.
@@ -31,6 +35,8 @@ def s3_wav_loader(
             - "int16": 16-bit signed integer, no normalization
             - "int32": 32-bit signed integer, no normalization
         channels: List of channel names for the DataFrame.
+        res_type: Resampling backend / quality (default ``"soxr_hq"``).
+            Forwarded to :func:`caits.preprocessing.resample_2d`.
 
     Returns:
         pd.DataFrame: Loaded and optionally resampled audio data in 2D shape.
@@ -52,8 +58,14 @@ def s3_wav_loader(
         raise ValueError(f"Unsupported mode: {mode}")
 
     if target_sr is not None and target_sr != sample_rate:
-        # Resamples audio to target_sr per channel
-        audio_data = resample_2d(audio_data, sample_rate, target_sr, dtype)
+        # Resamples audio to target_sr per channel (with anti-aliasing).
+        audio_data = resample_2d(
+            audio_data=audio_data,
+            native_sr=sample_rate,
+            target_sr=target_sr,
+            dtype=dtype,
+            res_type=res_type,
+        )
         sample_rate = target_sr
 
     if channels is None or len(channels) != audio_data.shape[1]:
@@ -73,6 +85,7 @@ def s3_audio_loader(
     classes: Optional[List[str]] = None,
     channels: Optional[List[str]] = None,
     export: Literal["df", "dict"] = "dict",
+    res_type: str = "soxr_hq",
 ) -> Union[pd.DataFrame, dict]:
     """Loads audio files from an S3 bucket into a DataFrame or dictionary with optional resampling.
 
@@ -128,6 +141,7 @@ def s3_audio_loader(
                     target_sr=target_sr,
                     dtype=dtype,
                     channels=channels,
+                    res_type=res_type,
                 )
                 all_features.append(df)
                 all_y.append(subdir)

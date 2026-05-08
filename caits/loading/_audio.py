@@ -18,10 +18,14 @@ def wav_loader(
     mode: str = "soundfile",
     target_sr: Optional[int] = None,
     dtype: str = "float64",
-    channels: Optional[List[str]] = None
+    channels: Optional[List[str]] = None,
+    res_type: str = "soxr_hq",
 ) -> Tuple[CoreArray, int]:
     """Loads and optionally resamples a mono or multichannel audio
     file into a DataFrame.
+
+    Resampling (when ``target_sr`` differs from the file's native sample rate)
+    applies an anti-aliasing filter via :func:`caits.preprocessing.resample_2d`.
 
     Args:
         file_path: Path to the audio file.
@@ -35,6 +39,8 @@ def wav_loader(
             - "int16": 16-bit signed integer, no normalization
             - "int32": 32-bit signed integer, no normalization
         channels: List of channel names for the DataFrame.
+        res_type: Resampling backend / quality (default ``"soxr_hq"``).
+            Forwarded to :func:`caits.preprocessing.resample_2d`.
 
     Returns:
         pd.DataFrame: Loaded and optionally resampled audio data in 2D shape.
@@ -53,12 +59,13 @@ def wav_loader(
         raise ValueError(f"Unsupported mode: {mode}")
 
     if target_sr is not None and target_sr != sample_rate:
-        # Resamples audio to target_sr per channel
+        # Resamples audio to target_sr per channel (with anti-aliasing).
         audio_data = resample_2d(
             audio_data=audio_data,
             native_sr=sample_rate,
             target_sr=target_sr,
-            dtype=dtype
+            dtype=dtype,
+            res_type=res_type,
         )
     else:
         target_sr = sample_rate
@@ -80,10 +87,14 @@ def audio_loader(
     target_sr: Optional[List[int]] = None,
     classes: Optional[List[str]] = None,
     channels: List[str] = ["Ch_1"],
-    export: Literal["df", "dict"] = "dict"
+    export: Literal["df", "dict"] = "dict",
+    res_type: str = "soxr_hq",
 ) -> Union[pd.DataFrame, Dict[str, List]]:
     """Loads audio files from a directory into a DataFrame
     or dictionary with optional resampling.
+
+    Resampling (when ``target_sr`` differs from the file's native sample rate)
+    applies an anti-aliasing filter via :func:`caits.preprocessing.resample_2d`.
 
     Args:
         dataset_path: Path to the dataset directory.
@@ -101,6 +112,8 @@ def audio_loader(
                  if None, all directories are included.
         channels: List of channel names for the DataFrame.
         export: Format to export the loaded data, "dict" or "df" for DataFrame.
+        res_type: Resampling backend / quality (default ``"soxr_hq"``).
+            Forwarded to :func:`wav_loader`.
 
     Returns:
         pd.DataFrame or dict: Loaded and optionally resampled audio
@@ -120,7 +133,10 @@ def audio_loader(
         if classes is None or subdir in classes:
             file = os.path.basename(file_path)
             try:
-                df, _ = wav_loader(file_path, mode, target_sr, dtype, channels)
+                df, _ = wav_loader(
+                    file_path, mode, target_sr, dtype, channels,
+                    res_type=res_type,
+                )
                 all_features.append(df)
                 # todo: add sample rate, sample width to the dictionary?
                 all_y.append(subdir)
